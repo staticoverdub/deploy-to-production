@@ -1,0 +1,314 @@
+{
+  "scene": "lobby",
+  "hotspots": {
+    "entrance_doors": {
+      "id": "entrance_doors",
+      "name": "Entrance Doors",
+      "position": { "x": 48, "y": 180 },
+      "polygon": [0, 100, 96, 100, 96, 280, 0, 280],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Glass doors with the D.A.S.H. seal. 'Department of Administrative Services and Helpdesk.' Catchy. I bet the acronym came first and they reverse-engineered the name.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "I just got here. I'm not leaving until I have a working badge, a desk, and at least one ally.",
+          "speaker": "casey",
+          "portrait": "casey_determined",
+          "condition": { "notFlags": { "has_temp_badge": true } }
+        },
+        "use__has_badge": {
+          "text": "No turning back now.",
+          "speaker": "casey",
+          "portrait": "casey_determined",
+          "condition": { "flags": { "has_temp_badge": true } }
+        }
+      }
+    },
+
+    "potted_plant": {
+      "id": "potted_plant",
+      "name": "Sad Potted Plant",
+      "position": { "x": 80, "y": 220 },
+      "polygon": [64, 200, 96, 200, 96, 260, 64, 260],
+      "verbs": ["look", "use", "pickup"],
+      "interactions": {
+        "look": {
+          "text": "This ficus has seen things. Budget cuts. Reorganizations. That time someone microwaved fish in the break room. It endures.",
+          "speaker": "casey",
+          "portrait": "casey_sympathetic"
+        },
+        "use": {
+          "text": "I give the leaf a gentle pat. Solidarity, little guy.",
+          "speaker": "casey",
+          "portrait": "casey_gentle",
+          "animation": "casey_pats_plant"
+        },
+        "pickup": {
+          "text": "I can't take this. It's the only living thing in this lobby that isn't waiting in line.",
+          "speaker": "casey",
+          "portrait": "casey_sympathetic"
+        }
+      }
+    },
+
+    "waiting_chairs": {
+      "id": "waiting_chairs",
+      "name": "Waiting Chairs",
+      "position": { "x": 180, "y": 240 },
+      "polygon": [130, 220, 240, 220, 240, 270, 130, 270],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "The chairs from every DMV, VA office, and social services lobby in America. I'm pretty sure there's one factory that makes all of them, and it's run by someone who hates sitting.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "Nope. I've got work to do. Also, ouch.",
+          "speaker": "casey",
+          "portrait": "casey_wincing",
+          "animation": "casey_sits_then_stands"
+        }
+      }
+    },
+
+    "water_cooler": {
+      "id": "water_cooler",
+      "name": "Water Cooler",
+      "position": { "x": 200, "y": 200 },
+      "polygon": [186, 180, 214, 180, 214, 230, 186, 230],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Water cooler. Full of water. Zero cups. A perfect metaphor for government services: the resource exists, but good luck accessing it.",
+          "speaker": "casey",
+          "portrait": "casey_wry",
+          "flagsSet": { "examined_water_cooler": true }
+        },
+        "use": {
+          "text": "I press the tap. Water gurgles out and splashes directly into the drip tray. This is fine.",
+          "speaker": "casey",
+          "portrait": "casey_resigned",
+          "animation": "water_cooler_gurgle",
+          "condition": { "notItems": ["paper_cup"] }
+        },
+        "use_paper_cup": {
+          "text": "Water acquired. I feel like I've already accomplished more than most day-one employees.",
+          "speaker": "casey",
+          "portrait": "casey_satisfied",
+          "animation": "casey_fills_cup",
+          "itemRemoved": "paper_cup",
+          "itemGiven": "cup_of_water"
+        }
+      }
+    },
+
+    "now_serving_display": {
+      "id": "now_serving_display",
+      "name": "\"Now Serving\" Display",
+      "position": { "x": 320, "y": 60 },
+      "polygon": [290, 40, 350, 40, 350, 80, 290, 80],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Now Serving: 847. I have a feeling 847 was served during the Clinton administration and nobody thought to update this.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "No visible buttons. This thing updates on its own schedule. Or, more likely, never.",
+          "speaker": "casey",
+          "portrait": "casey_shrug"
+        }
+      }
+    },
+
+    "motivational_poster": {
+      "id": "motivational_poster",
+      "name": "Motivational Poster",
+      "position": { "x": 240, "y": 80 },
+      "polygon": [215, 55, 265, 55, 265, 105, 215, 105],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Someone in 2006 thought this was inspiring. Someone in 2007 added the 'Paperwork' part with a Sharpie. Honestly? The edit improved it.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "I straighten it on the wall. The least I can do.",
+          "speaker": "casey",
+          "portrait": "casey_gentle",
+          "animation": "casey_straightens_poster"
+        }
+      }
+    },
+
+    "bulletin_board": {
+      "id": "bulletin_board",
+      "name": "Bulletin Board",
+      "position": { "x": 440, "y": 120 },
+      "polygon": [400, 80, 480, 80, 480, 170, 400, 170],
+      "verbs": ["look", "use", "pickup"],
+      "interactions": {
+        "look": {
+          "text": "This bulletin board is an archaeological dig site. I can see layers of memos going back at least a decade. There's a 'Y2K Preparedness' flyer under a 'Cloud Migration Survey' printout. History is a flat circle.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated",
+          "flagsSet": { "examined_bulletin_board": true }
+        },
+        "look__detail_cat": {
+          "text": "Missing: Patches. Orange tabby. Last seen in the server room, B2 level. If found, contact Hal, ext. 1997.",
+          "speaker": "casey",
+          "portrait": "casey_curious",
+          "condition": { "flags": { "examined_bulletin_board": true } },
+          "flagsSet": { "seen_cat_flyer": true },
+          "subHotspot": "lost_cat_flyer_on_board"
+        },
+        "look__detail_security": {
+          "text": "SECURITY AWARENESS WEEK 2009. 'Your Password Is Your First Line of Defense!' The example password on the poster is 'P@ssw0rd123.' I wish I were surprised.",
+          "speaker": "casey",
+          "portrait": "casey_incredulous",
+          "condition": { "flags": { "examined_bulletin_board": true } },
+          "subHotspot": "security_poster_on_board"
+        },
+        "pickup": {
+          "text": "I'll keep an eye out for Patches.",
+          "speaker": "casey",
+          "portrait": "casey_gentle",
+          "animation": "casey_takes_flyer",
+          "condition": { "flags": { "seen_cat_flyer": true } },
+          "itemGiven": "lost_cat_flyer"
+        }
+      }
+    },
+
+    "security_desk": {
+      "id": "security_desk",
+      "name": "Security Desk",
+      "position": { "x": 320, "y": 200 },
+      "polygon": [270, 170, 370, 170, 370, 240, 270, 240],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "The security desk. It's the gateway between the outside world and the inside world. Right now, I'm on the wrong side.",
+          "speaker": "casey",
+          "portrait": "casey_determined"
+        },
+        "use": {
+          "text": "Access denied. Shocking. I need to talk to whoever's in charge of this checkpoint.",
+          "speaker": "casey",
+          "portrait": "casey_frustrated",
+          "animation": "badge_reader_beep_red",
+          "soundEffect": "beep_fail",
+          "condition": { "notItems": ["temporary_badge"] }
+        },
+        "use_temporary_badge": {
+          "text": "We're in. Casey Park, Solutions Engineer, reporting for duty.",
+          "speaker": "casey",
+          "portrait": "casey_triumphant",
+          "animation": "badge_reader_beep_green_turnstile_unlocks",
+          "soundEffect": "beep_success",
+          "flagsSet": { "lobby_complete": true },
+          "triggerSceneTransition": "bullpen"
+        }
+      }
+    },
+
+    "turnstile": {
+      "id": "turnstile",
+      "name": "Turnstile",
+      "position": { "x": 400, "y": 210 },
+      "polygon": [380, 190, 420, 190, 420, 250, 380, 250],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Standard government turnstile. It only respects one thing: a valid badge. Kind of like a nightclub bouncer, but with less personality.",
+          "speaker": "casey",
+          "portrait": "casey_wry"
+        },
+        "use": {
+          "text": "I push the bar. It doesn't move. I push harder. It still doesn't move. I consider climbing over it, then notice the security camera.",
+          "speaker": "casey",
+          "portrait": "casey_straining",
+          "animation": "camera_pans_to_casey",
+          "condition": { "notItems": ["temporary_badge"] }
+        },
+        "use_temporary_badge": {
+          "text": "We're in. Casey Park, Solutions Engineer, reporting for duty.",
+          "speaker": "casey",
+          "portrait": "casey_triumphant",
+          "animation": "badge_reader_beep_green_turnstile_unlocks",
+          "soundEffect": "beep_success",
+          "flagsSet": { "lobby_complete": true },
+          "triggerSceneTransition": "bullpen"
+        }
+      }
+    },
+
+    "american_flag": {
+      "id": "american_flag",
+      "name": "American Flag",
+      "position": { "x": 580, "y": 100 },
+      "polygon": [560, 60, 610, 60, 610, 150, 560, 150],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Old Glory. A reminder that this place, despite everything, exists to serve the public. That's why I'm here.",
+          "speaker": "casey",
+          "portrait": "casey_sincere"
+        },
+        "look__beat": {
+          "text": "Also it's slightly crooked.",
+          "speaker": "casey",
+          "portrait": "casey_amused",
+          "delay": 1500
+        },
+        "use": {
+          "text": "I straighten the flag. It feels important.",
+          "speaker": "casey",
+          "portrait": "casey_sincere",
+          "animation": "casey_straightens_flag"
+        }
+      }
+    }
+  },
+
+  "genericFallbacks": {
+    "look": [
+      "Nothing special about that.",
+      "Yep, that's definitely a thing.",
+      "I've seen more interesting things in a government training video.",
+      "Not exactly what I came here to investigate."
+    ],
+    "use": [
+      "I can't use that here.",
+      "That doesn't seem productive.",
+      "I'm a Solutions Engineer, not a magician.",
+      "I don't think that's in my job description."
+    ],
+    "pickup": [
+      "I can't take that.",
+      "That's government property. There's probably a form for that.",
+      "I don't think that fits in my pockets.",
+      "Pretty sure taking that would violate at least one policy."
+    ],
+    "talkto": [
+      "It doesn't seem very talkative.",
+      "I've had more engaging conversations with a firewall.",
+      "No response. Classic.",
+      "It's giving me the silent treatment."
+    ]
+  },
+
+  "hintMessages": {
+    "INIT": "I should probably talk to the person at the security desk.",
+    "CATCH_22": "Form 11-B is past the turnstile. There has to be another way to get a badge.",
+    "VOSS_HINT": "Director Voss comes through at 10. Maybe I should look around while I wait.",
+    "VOSS_ARRIVES": "That woman who just walked in looks important. I should talk to her.",
+    "BADGE_GET": "I've got my badge. Time to use it on that turnstile."
+  }
+}

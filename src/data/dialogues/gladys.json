@@ -1,0 +1,403 @@
+{
+  "gladys_first_contact": {
+    "id": "gladys_first_contact",
+    "startNode": "gc_open",
+    "nodes": {
+      "gc_open": {
+        "id": "gc_open",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Sign in. Badge on the reader. No tailgating.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_intro"
+      },
+      "gc_casey_intro": {
+        "id": "gc_casey_intro",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "Hi! I'm Casey Park, new Solutions Engineer. It's my first day and I don't actually have a\u2014",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_badge"
+      },
+      "gc_gladys_badge": {
+        "id": "gc_gladys_badge",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Badge?",
+        "animation": "gladys_still_not_looking_up",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_yeah"
+      },
+      "gc_casey_yeah": {
+        "id": "gc_casey_yeah",
+        "speaker": "casey",
+        "portrait": "casey_sheepish",
+        "text": "...badge, yeah.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_firstday"
+      },
+      "gc_gladys_firstday": {
+        "id": "gc_gladys_firstday",
+        "speaker": "gladys",
+        "portrait": "gladys_looks_up",
+        "text": "First day. No badge. Manager?",
+        "animation": "gladys_looks_up",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "My manager is Jordan Reeves. I was told to report to the 3rd floor.",
+            "nextNodeId": "gc_manager_name",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "I was hoping you could help me figure that out.",
+            "nextNodeId": "gc_help_me",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "Is that a crossword? What's 17 across?",
+            "nextNodeId": "gc_crossword",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "gc_manager_name": {
+        "id": "gc_manager_name",
+        "speaker": "gladys",
+        "portrait": "gladys_checking_screen",
+        "text": "Reeves. Third floor. Reeves is on PTO until... next Thursday.",
+        "animation": "gladys_checks_screen",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_of_course"
+      },
+      "gc_casey_of_course": {
+        "id": "gc_casey_of_course",
+        "speaker": "casey",
+        "portrait": "casey_frustrated",
+        "text": "Of course they are.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_form"
+      },
+      "gc_gladys_form": {
+        "id": "gc_gladys_form",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "I can issue a Temporary Visitor Badge. Lasts 24 hours. But I need a Form 11-B, signed by any GS-13 or above currently on premises.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_where"
+      },
+      "gc_casey_where": {
+        "id": "gc_casey_where",
+        "speaker": "casey",
+        "portrait": "casey_curious",
+        "text": "And where do I get a Form 11-B?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_badge_office"
+      },
+      "gc_gladys_badge_office": {
+        "id": "gc_gladys_badge_office",
+        "speaker": "gladys",
+        "portrait": "gladys_points",
+        "text": "Badge Office. Down the hall past the turnstile.",
+        "animation": "gladys_points_right",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_turnstile"
+      },
+      "gc_casey_turnstile": {
+        "id": "gc_casey_turnstile",
+        "speaker": "casey",
+        "portrait": "casey_deadpan",
+        "text": "The turnstile I can't get through because I don't have a badge.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_hm"
+      },
+      "gc_gladys_hm": {
+        "id": "gc_gladys_hm",
+        "speaker": "gladys",
+        "portrait": "gladys_pause",
+        "text": "...hm.",
+        "animation": "gladys_long_pause",
+        "flagsSet": {
+          "badge_quest_active": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      },
+
+      "gc_help_me": {
+        "id": "gc_help_me",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "I'm security, not onboarding. But... who's your manager?",
+        "animation": "gladys_slight_softening",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_manager_name"
+      },
+
+      "gc_crossword": {
+        "id": "gc_crossword",
+        "speaker": "gladys",
+        "portrait": "gladys_surprised",
+        "text": "Seven letters. 'Government technology from the 1960s, still in production.'",
+        "animation": "gladys_surprised_then_amused",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_cobol"
+      },
+      "gc_casey_cobol": {
+        "id": "gc_casey_cobol",
+        "speaker": "casey",
+        "portrait": "casey_thinking",
+        "text": "COBOL.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_five"
+      },
+      "gc_gladys_five": {
+        "id": "gc_gladys_five",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "That's five letters.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_casey_fortran"
+      },
+      "gc_casey_fortran": {
+        "id": "gc_casey_fortran",
+        "speaker": "casey",
+        "portrait": "casey_thinking",
+        "text": "FORTRAN?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gc_gladys_fits"
+      },
+      "gc_gladys_fits": {
+        "id": "gc_gladys_fits",
+        "speaker": "gladys",
+        "portrait": "gladys_slight_smile",
+        "text": "...fits. Alright, you're okay.",
+        "animation": "gladys_writes_and_smiles",
+        "flagsSet": {},
+        "relationshipChanges": {
+          "gladys": 1
+        },
+        "options": [],
+        "autoAdvance": "gc_gladys_firstday_post_crossword"
+      },
+      "gc_gladys_firstday_post_crossword": {
+        "id": "gc_gladys_firstday_post_crossword",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "So. First day, no badge. Who's your manager?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "My manager is Jordan Reeves. I was told to report to the 3rd floor.",
+            "nextNodeId": "gc_manager_name",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      }
+    }
+  },
+
+  "gladys_badge_quest": {
+    "id": "gladys_badge_quest",
+    "startNode": "gbq_open",
+    "triggerCondition": {
+      "flags": { "badge_quest_active": true },
+      "notFlags": { "voss_convinced": true }
+    },
+    "nodes": {
+      "gbq_open": {
+        "id": "gbq_open",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Still here?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "So the form I need is past the door I can't open. Any workaround?",
+            "nextNodeId": "gbq_workaround",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "Can you just... let me through? I promise I work here.",
+            "nextNodeId": "gbq_let_me_through",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "What if I got someone on this side to sign something?",
+            "nextNodeId": "gbq_someone_this_side",
+            "condition": {
+              "minRelationship": { "gladys": 1 }
+            },
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "Can I get a paper cup? I'm really thirsty.",
+            "nextNodeId": "gbq_paper_cup",
+            "condition": {
+              "flags": { "examined_water_cooler": true }
+            },
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "gbq_workaround": {
+        "id": "gbq_workaround",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Officially? No. The process is the process.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gbq_workaround_2"
+      },
+      "gbq_workaround_2": {
+        "id": "gbq_workaround_2",
+        "speaker": "gladys",
+        "portrait": "gladys_leaning_in",
+        "text": "Unofficially... Director Voss is in the building today. She has signing authority. And she comes through this lobby for her 10 AM coffee.",
+        "animation": "gladys_leans_in",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gbq_casey_time"
+      },
+      "gbq_casey_time": {
+        "id": "gbq_casey_time",
+        "speaker": "casey",
+        "portrait": "casey_curious",
+        "text": "What time is it now?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gbq_gladys_947"
+      },
+      "gbq_gladys_947": {
+        "id": "gbq_gladys_947",
+        "speaker": "gladys",
+        "portrait": "gladys_glances_clock",
+        "text": "9:47.",
+        "animation": "gladys_glances_at_clock",
+        "flagsSet": {
+          "wait_for_voss": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      },
+
+      "gbq_let_me_through": {
+        "id": "gbq_let_me_through",
+        "speaker": "gladys",
+        "portrait": "gladys_deadpan",
+        "text": "If I let everyone who said 'I promise I work here' through that turnstile, we'd have a building full of people who don't work here. And honestly? Nobody would notice for weeks.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gbq_open"
+      },
+
+      "gbq_someone_this_side": {
+        "id": "gbq_someone_this_side",
+        "speaker": "gladys",
+        "portrait": "gladys_leaning_in",
+        "text": "Smart. If you can get a GS-13 or above to vouch for you in person, I can issue the temp badge right here. No form needed.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "gbq_someone_tip"
+      },
+      "gbq_someone_tip": {
+        "id": "gbq_someone_tip",
+        "speaker": "gladys",
+        "portrait": "gladys_leaning_in",
+        "text": "Between you and me, Director Voss walks through here every morning around 10 for coffee. She's the kind of person who'd help.",
+        "animation": "gladys_leans_in",
+        "flagsSet": {
+          "wait_for_voss": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      },
+
+      "gbq_paper_cup": {
+        "id": "gbq_paper_cup",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Government-issue. They're not great, but they hold water. Usually.",
+        "animation": "gladys_reaches_under_desk",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "itemGiven": "paper_cup",
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "mrs_gutierrez_first": {
+    "id": "mrs_gutierrez_first",
+    "startNode": "mg_open",
+    "typewriterSpeed": 40,
+    "nodes": {
+      "mg_open": {
+        "id": "mg_open",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_smiling",
+        "text": "Oh, you look lost. Don't worry, we all look like that in here.",
+        "animation": "mrs_g_looks_up_smiles",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_casey_intro"
+      },
+      "mg_casey_intro": {
+        "id": "mg_casey_intro",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "First day on the job. I'm here to help fix things.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_fix_things"
+      },
+      "mg_fix_things": {
+        "id": "mg_fix_things",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_warm",
+        "text": "Fix things! That's what the last one said. And the one before that.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_same_documents"
+      },
+      "mg_same_documents": {
+        "id": "mg_same_documents",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_tired",
+        "text": "I've been coming here every month for my benefits review. They keep asking me for the same documents. Every. Single. Time.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "That shouldn't happen. Can I see what they're asking for?",
+            "nextNodeId": "mg_converge_folder",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "I'm sorry. I know that's frustrating.",
+            "nextNodeId": "mg_converge_folder",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "What if I could make it so you only had to submit those once?",
+            "nextNodeId": "mg_converge_folder",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "mg_converge_folder": {
+        "id": "mg_converge_folder",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_showing_folder",
+        "text": "Look. I have everything organized. I bring it every time. But their computer loses it and we start over.",
+        "animation": "mrs_g_shows_folder",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_casey_examining"
+      },
+      "mg_casey_examining": {
+        "id": "mg_casey_examining",
+        "speaker": "casey",
+        "portrait": "casey_impressed",
+        "text": "This is incredibly organized. You've got dates, reference numbers, everything.",
+        "animation": "casey_examines_folder",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_librarian"
+      },
+      "mg_librarian": {
+        "id": "mg_librarian",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_warm",
+        "text": "I used to be a librarian. Organization is the only weapon I have.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "mg_casey_why"
+      },
+      "mg_casey_why": {
+        "id": "mg_casey_why",
+        "speaker": "casey",
+        "portrait": "casey_determined",
+        "text": "This is why I'm here.",
+        "animation": "casey_quiet_to_self",
+        "flagsSet": {
+          "casey_motivation": true,
+          "talked_to_mrs_g": true
+        },
+        "relationshipChanges": {
+          "mrs_gutierrez": 1
+        },
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  }
+}

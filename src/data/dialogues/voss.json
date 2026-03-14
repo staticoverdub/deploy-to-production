@@ -1,0 +1,269 @@
+{
+  "voss_arrival": {
+    "id": "voss_arrival",
+    "startNode": "va_casey_excuse",
+    "triggerCondition": {
+      "flags": { "voss_present": true },
+      "notFlags": { "voss_convinced": true }
+    },
+    "nodes": {
+      "va_casey_excuse": {
+        "id": "va_casey_excuse",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "Excuse me\u2014Director Voss?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_voss_ninety"
+      },
+      "va_voss_ninety": {
+        "id": "va_voss_ninety",
+        "speaker": "voss",
+        "portrait": "voss_checking_watch",
+        "text": "You've got about ninety seconds before I'm in a meeting that will feel like ninety years. What do you need?",
+        "animation": "voss_checks_watch",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "I'm Casey Park, your new CfA Solutions Engineer. My badge is stuck behind your badge office, which is stuck behind your turnstile. Classic dependency loop.",
+            "nextNodeId": "va_pitch_best",
+            "condition": {},
+            "flagsSet": {
+              "voss_impression": "best"
+            },
+            "relationshipChanges": {}
+          },
+          {
+            "text": "Hi! I'm new here and I can't get a badge because my manager's on PTO and the form is behind a locked door.",
+            "nextNodeId": "va_pitch_good",
+            "condition": {},
+            "flagsSet": {
+              "voss_impression": "good"
+            },
+            "relationshipChanges": {}
+          },
+          {
+            "text": "I really need someone important to vouch for me. Are you important?",
+            "nextNodeId": "va_pitch_funny",
+            "condition": {},
+            "flagsSet": {
+              "voss_impression": "funny"
+            },
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "va_pitch_best": {
+        "id": "va_pitch_best",
+        "speaker": "voss",
+        "portrait": "voss_impressed",
+        "text": "A dependency loop on day one. And you identified it in under an hour.",
+        "animation": "voss_stops_looks_at_casey",
+        "flagsSet": {},
+        "relationshipChanges": {
+          "voss": 2
+        },
+        "options": [],
+        "autoAdvance": "va_best_to_gladys"
+      },
+      "va_best_to_gladys": {
+        "id": "va_best_to_gladys",
+        "speaker": "voss",
+        "portrait": "voss_commanding",
+        "text": "Give this one a temp badge.",
+        "animation": "voss_turns_to_gladys",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_best_gladys_auth"
+      },
+      "va_best_gladys_auth": {
+        "id": "va_best_gladys_auth",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Need your verbal authorization on record, Director.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_best_voss_auth"
+      },
+      "va_best_voss_auth": {
+        "id": "va_best_voss_auth",
+        "speaker": "voss",
+        "portrait": "voss_commanding",
+        "text": "Authorized. Casey Park, Solutions Engineer, CfA fellowship. I requested this position personally.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_best_voss_priya"
+      },
+      "va_best_voss_priya": {
+        "id": "va_best_voss_priya",
+        "speaker": "voss",
+        "portrait": "voss_brisk",
+        "text": "Third floor. Find Priya Kapoor. She'll get you oriented until Reeves is back.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_best_casey_thanks"
+      },
+      "va_best_casey_thanks": {
+        "id": "va_best_casey_thanks",
+        "speaker": "casey",
+        "portrait": "casey_grateful",
+        "text": "Thank you, Director.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_best_voss_exit"
+      },
+      "va_best_voss_exit": {
+        "id": "va_best_voss_exit",
+        "speaker": "voss",
+        "portrait": "voss_walking_away",
+        "text": "Don't thank me. Fix our systems. That's what I hired you for.",
+        "animation": "voss_exits_through_turnstile",
+        "flagsSet": {
+          "voss_convinced": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "badge_acquisition"
+      },
+
+      "va_pitch_good": {
+        "id": "va_pitch_good",
+        "speaker": "voss",
+        "portrait": "voss_brisk",
+        "text": "PTO, locked form, no badge. Got it.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {
+          "voss": 1
+        },
+        "options": [],
+        "autoAdvance": "va_good_to_gladys"
+      },
+      "va_good_to_gladys": {
+        "id": "va_good_to_gladys",
+        "speaker": "voss",
+        "portrait": "voss_commanding",
+        "text": "Temp badge for the new CfA hire.",
+        "animation": "voss_turns_to_gladys",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_good_gladys_auth"
+      },
+      "va_good_gladys_auth": {
+        "id": "va_good_gladys_auth",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Authorized?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_good_voss_auth"
+      },
+      "va_good_voss_auth": {
+        "id": "va_good_voss_auth",
+        "speaker": "voss",
+        "portrait": "voss_brisk",
+        "text": "Authorized. Third floor, find Priya.",
+        "animation": "voss_exits_through_turnstile",
+        "flagsSet": {
+          "voss_convinced": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "badge_acquisition"
+      },
+
+      "va_pitch_funny": {
+        "id": "va_pitch_funny",
+        "speaker": "voss",
+        "portrait": "voss_eyebrow",
+        "text": "I run this building. Does that count?",
+        "animation": "voss_one_eyebrow_raise",
+        "flagsSet": {},
+        "relationshipChanges": {
+          "voss": 1
+        },
+        "options": [],
+        "autoAdvance": "va_funny_casey"
+      },
+      "va_funny_casey": {
+        "id": "va_funny_casey",
+        "speaker": "casey",
+        "portrait": "casey_confident",
+        "text": "That'll do.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "va_funny_voss_badge"
+      },
+      "va_funny_voss_badge": {
+        "id": "va_funny_voss_badge",
+        "speaker": "voss",
+        "portrait": "voss_faintest_smile",
+        "text": "Gladys, temp badge. And keep an eye on this one.",
+        "animation": "voss_faintest_smile_exits",
+        "flagsSet": {
+          "voss_convinced": true
+        },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "badge_acquisition"
+      },
+
+      "badge_acquisition": {
+        "id": "badge_acquisition",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "Temporary badge. Valid 24 hours. Don't lose it. Replacements take six weeks.",
+        "animation": "gladys_prints_badge",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "soundEffect": "badge_printer",
+        "options": [],
+        "autoAdvance": "ba_casey_six_weeks"
+      },
+      "ba_casey_six_weeks": {
+        "id": "ba_casey_six_weeks",
+        "speaker": "casey",
+        "portrait": "casey_incredulous",
+        "text": "Six weeks for a replacement but three seconds to print? That's\u2014",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "ba_gladys_procedure"
+      },
+      "ba_gladys_procedure": {
+        "id": "ba_gladys_procedure",
+        "speaker": "gladys",
+        "portrait": "gladys_deadpan",
+        "text": "Procedure.",
+        "animation": null,
+        "flagsSet": {
+          "has_temp_badge": true
+        },
+        "relationshipChanges": {},
+        "itemGiven": "temporary_badge",
+        "tutorialTrigger": "Use items from your inventory on objects in the world. Try the badge on the turnstile reader.",
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "items": {
+    "temporary_badge": {
+      "id": "temporary_badge",
+      "name": "Temporary Badge",
+      "description": "A D.A.S.H. visitor badge. Valid 24 hours. Smells like warm laminate. My name is slightly misspelled.",
+      "icon": "icon_badge",
+      "usableOn": ["badge_reader", "turnstile"]
+    },
+    "paper_cup": {
+      "id": "paper_cup",
+      "name": "Paper Cup",
+      "description": "Government-issue paper cup. It's thinner than a campaign promise.",
+      "icon": "icon_cup_empty",
+      "usableOn": ["water_cooler"],
+      "combinesWith": {
+        "water_cooler_hotspot": "cup_of_water"
+      }
+    },
+    "cup_of_water": {
+      "id": "cup_of_water",
+      "name": "Cup of Water",
+      "description": "A paper cup full of lukewarm water. It's not coffee, but it's honest work.",
+      "icon": "icon_cup_water",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "lost_cat_flyer": {
+      "id": "lost_cat_flyer",
+      "name": "Lost Cat Flyer",
+      "description": "Missing: Patches. Orange tabby. Last seen in the server room, B2 level. If found, contact Hal, ext. 1997. There's a crude drawing of the cat that's honestly kind of adorable.",
+      "icon": "icon_flyer",
+      "usableOn": [],
+      "carriesForward": true
+    }
+  },
+
+  "combinations": [
+    {
+      "item1": "paper_cup",
+      "item2": "cup_of_water",
+      "result": null,
+      "failMessage": "It's already full."
+    }
+  ]
+}
