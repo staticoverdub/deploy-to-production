@@ -164,7 +164,7 @@
           "text": "Missing: Patches. Orange tabby. Last seen in the server room, B2 level. If found, contact Hal, ext. 1997.",
           "speaker": "casey",
           "portrait": "casey_curious",
-          "condition": { "flags": { "examined_bulletin_board": true } },
+          "condition": { "flags": { "examined_bulletin_board": true }, "notFlags": { "seen_cat_flyer": true } },
           "flagsSet": { "seen_cat_flyer": true },
           "subHotspot": "lost_cat_flyer_on_board"
         },
@@ -180,7 +180,7 @@
           "speaker": "casey",
           "portrait": "casey_gentle",
           "animation": "casey_takes_flyer",
-          "condition": { "flags": { "seen_cat_flyer": true } },
+          "condition": { "flags": { "seen_cat_flyer": true }, "notItems": ["lost_cat_flyer"] },
           "itemGiven": "lost_cat_flyer"
         }
       }
@@ -203,7 +203,7 @@
           "speaker": "casey",
           "portrait": "casey_frustrated",
           "animation": "badge_reader_beep_red",
-          "soundEffect": "beep_fail",
+          "soundEffect": "sfx_badge_fail",
           "condition": { "notItems": ["temporary_badge"] }
         },
         "use_temporary_badge": {
@@ -211,7 +211,7 @@
           "speaker": "casey",
           "portrait": "casey_triumphant",
           "animation": "badge_reader_beep_green_turnstile_unlocks",
-          "soundEffect": "beep_success",
+          "soundEffect": "sfx_badge_success",
           "flagsSet": { "lobby_complete": true },
           "triggerSceneTransition": "bullpen"
         }
@@ -242,7 +242,7 @@
           "speaker": "casey",
           "portrait": "casey_triumphant",
           "animation": "badge_reader_beep_green_turnstile_unlocks",
-          "soundEffect": "beep_success",
+          "soundEffect": "sfx_badge_success",
           "flagsSet": { "lobby_complete": true },
           "triggerSceneTransition": "bullpen"
         }
@@ -252,8 +252,8 @@
     "american_flag": {
       "id": "american_flag",
       "name": "American Flag",
-      "position": { "x": 580, "y": 100 },
-      "polygon": [560, 60, 610, 60, 610, 150, 560, 150],
+      "position": { "x": 510, "y": 100 },
+      "polygon": [486, 66, 534, 66, 534, 114, 486, 114],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {

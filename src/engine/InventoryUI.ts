@@ -105,12 +105,16 @@ export class InventoryUI {
         slotContainer.add(label);
       }
 
-      slotBg.setInteractive({ useHandCursor: true });
+      slotBg.setInteractive({});
 
       slotBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         if (pointer.rightButtonDown()) {
           if (this.onExamineItem) this.onExamineItem(def.description);
           return;
+        }
+
+        if (this.scene.cache.audio.exists('sfx_ui_click')) {
+          this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
         }
 
         if (this.selectedItem === itemId) {

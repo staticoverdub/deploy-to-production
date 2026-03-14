@@ -1,18 +1,61 @@
 import Phaser from 'phaser';
-import { Player } from '../engine/Player';
+import { Player, CHAR_FRAMES, GLADYS_FRAMES, MRSG_FRAMES } from '../engine/Player';
 import { HotspotManager, SceneHotspotFile, HotspotInteraction } from '../engine/HotspotManager';
 import { DialogueManager, DialogueTree } from '../engine/DialogueManager';
 import { InventoryUI } from '../engine/InventoryUI';
 import { GameState } from '../engine/GameState';
+import { CursorManager, CursorState } from '../engine/CursorManager';
 import lobbyHotspotsRaw from '../data/hotspots/lobby.json';
 import gladysData from '../data/dialogues/gladys.json';
 import mrsGutierrezData from '../data/dialogues/mrs_gutierrez.json';
 import vossData from '../data/dialogues/voss.json';
 
+// Asset imports (Vite resolves these to URLs)
+import lobbyBgUrl from '../assets/backgrounds/lobby_bg.png';
+import caseyUrl from '../assets/sprites/characters/casey_sheet.png';
+import gladysCharUrl from '../assets/sprites/characters/gladys_sheet.png';
+import mrsgCharUrl from '../assets/sprites/characters/mrsg_sheet.png';
+import vossCharUrl from '../assets/sprites/characters/voss_sheet.png';
+import nowServingUrl from '../assets/tilesets/custom/now_serving_display.png';
+import posterUrl from '../assets/tilesets/custom/motivational_poster.png';
+import bulletinUrl from '../assets/tilesets/custom/bulletin_board.png';
+import ficusUrl from '../assets/tilesets/custom/sad_ficus.png';
+import turnstileUrl from '../assets/tilesets/custom/security_turnstile.png';
+import coolerUrl from '../assets/tilesets/custom/water_cooler.png';
+import chairsUrl from '../assets/tilesets/custom/waiting_chairs.png';
+import flagUrl from '../assets/tilesets/custom/american_flag.png';
+// Dialogue portraits
+import caseyPortraitUrl from '../assets/sprites/portraits/casey_default.png';
+import gladysPortraitUrl from '../assets/sprites/portraits/gladys_default.png';
+import mrsgPortraitUrl from '../assets/sprites/portraits/mrs_g_default.png';
+import vossPortraitUrl from '../assets/sprites/portraits/voss_default.png';
+// Audio
+import lobbyMusicUrl from '../assets/audio/lobby_music.mp3';
+// SFX
+import sfxUiClickUrl from '../assets/audio/sfx/sfx_ui_click.mp3';
+import sfxBadgeFailUrl from '../assets/audio/sfx/sfx_badge_fail.mp3';
+import sfxBadgeSuccessUrl from '../assets/audio/sfx/sfx_badge_success.mp3';
+import sfxTurnstileUrl from '../assets/audio/sfx/sfx_turnstile.mp3';
+import sfxDoorOpenUrl from '../assets/audio/sfx/sfx_door_open.mp3';
+import sfxWaterBubbleUrl from '../assets/audio/sfx/sfx_water_bubble.mp3';
+import sfxFluorescentHumUrl from '../assets/audio/sfx/sfx_fluorescent_hum.mp3';
+import sfxBadgePrintUrl from '../assets/audio/sfx/sfx_badge_print.mp3';
+import sfxTextBlipUrl from '../assets/audio/sfx/sfx_text_blip.mp3';
+import sfxSelectUrl from '../assets/audio/sfx/sfx_select.mp3';
+// Voice babble
+import voiceCaseyUrl from '../assets/audio/sfx/voices/voice_casey.mp3';
+import voiceGladysUrl from '../assets/audio/sfx/voices/voice_gladys.mp3';
+import voiceMrsGUrl from '../assets/audio/sfx/voices/voice_mrs_g.mp3';
+import voiceVossUrl from '../assets/audio/sfx/voices/voice_voss.mp3';
+import voiceKevinUrl from '../assets/audio/sfx/voices/voice_kevin.mp3';
+
 const lobbyHotspots = lobbyHotspotsRaw as unknown as SceneHotspotFile;
 
-const WALK_MIN_Y = 240;
-const WALK_MAX_Y = 310;
+// Walkable floor area (the tiled floor, not the walls above)
+const WALK_MIN_X = 10;
+const WALK_MAX_X = 630;
+const WALK_MIN_Y = 190;
+const WALK_MAX_Y = 320;
 const CASEY_SPAWN_X = 50;
 const CASEY_SPAWN_Y = 270;
 
@@ -31,26 +74,96 @@ export class LobbyScene extends Phaser.Scene {
   private vossSpawned = false;
   private vossSprite: Phaser.GameObjects.Container | null = null;
 
+  // Cursor
+  private cursorManager: CursorManager | null = null;
+  private hotspotHovered = false;
+
   // Hint system
   private hintTimer: number = 0;
   private lastFlagCount: number = 0;
   private hintsShown: Set<string> = new Set();
 
+  // Ambient life references
+  private turnstileLed: Phaser.GameObjects.Arc | null = null;
+  private nowServingText: Phaser.GameObjects.Text | null = null;
+
+  // Load support
+  private shouldLoadSave = false;
+
   constructor() {
     super({ key: 'LobbyScene' });
+  }
+
+  init(data?: { loadSave?: boolean }): void {
+    this.shouldLoadSave = data?.loadSave ?? false;
+  }
+
+  preload(): void {
+    // Background
+    this.load.image('lobby_bg', lobbyBgUrl);
+
+    // Character spritesheets (64x64 frames, LucasArts side-view style)
+    const ssConfig = { frameWidth: 64, frameHeight: 64 };
+    this.load.spritesheet('char_casey', caseyUrl, ssConfig);
+    this.load.spritesheet('char_gladys', gladysCharUrl, ssConfig);
+    this.load.spritesheet('char_mrsg', mrsgCharUrl, ssConfig);
+    this.load.spritesheet('char_voss', vossCharUrl, ssConfig);
+
+    // Custom objects (PixelLab-generated)
+    this.load.image('obj_now_serving', nowServingUrl);
+    this.load.image('obj_poster', posterUrl);
+    this.load.image('obj_bulletin', bulletinUrl);
+    this.load.image('obj_ficus', ficusUrl);
+    this.load.image('obj_turnstile', turnstileUrl);
+    this.load.image('obj_cooler', coolerUrl);
+    this.load.image('obj_chairs', chairsUrl);
+    this.load.image('obj_flag', flagUrl);
+
+    // Audio
+    this.load.audio('lobby_music', lobbyMusicUrl);
+    // SFX
+    this.load.audio('sfx_ui_click', sfxUiClickUrl);
+    this.load.audio('sfx_badge_fail', sfxBadgeFailUrl);
+    this.load.audio('sfx_badge_success', sfxBadgeSuccessUrl);
+    this.load.audio('sfx_turnstile', sfxTurnstileUrl);
+    this.load.audio('sfx_door_open', sfxDoorOpenUrl);
+    this.load.audio('sfx_water_bubble', sfxWaterBubbleUrl);
+    this.load.audio('sfx_fluorescent_hum', sfxFluorescentHumUrl);
+    this.load.audio('sfx_badge_print', sfxBadgePrintUrl);
+    this.load.audio('sfx_text_blip', sfxTextBlipUrl);
+    this.load.audio('sfx_select', sfxSelectUrl);
+    // Voice babble
+    this.load.audio('voice_casey', voiceCaseyUrl);
+    this.load.audio('voice_gladys', voiceGladysUrl);
+    this.load.audio('voice_mrs_g', voiceMrsGUrl);
+    this.load.audio('voice_voss', voiceVossUrl);
+    this.load.audio('voice_kevin', voiceKevinUrl);
+
+    // Dialogue portraits (96x96, LucasArts style)
+    this.load.image('portrait_casey', caseyPortraitUrl);
+    this.load.image('portrait_gladys', gladysPortraitUrl);
+    this.load.image('portrait_mrs_gutierrez', mrsgPortraitUrl);
+    this.load.image('portrait_voss', vossPortraitUrl);
   }
 
   create(): void {
     this.game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    GameState.getInstance().reset();
+    const state = GameState.getInstance();
+    if (this.shouldLoadSave) {
+      state.load();
+    } else {
+      state.reset();
+    }
+    state.enableAutoSave();
 
     this.drawBackground();
     this.drawFurniture();
     this.drawNPCs();
+    this.setupAmbientLife();
 
     // --- Engine systems ---
-    this.player = new Player(this, CASEY_SPAWN_X, CASEY_SPAWN_Y);
+    this.player = new Player(this, CASEY_SPAWN_X, CASEY_SPAWN_Y, 'char_casey');
 
     this.hotspotManager = new HotspotManager(this);
     this.hotspotManager.loadFromSceneFile(lobbyHotspots);
@@ -99,19 +212,31 @@ export class LobbyScene extends Phaser.Scene {
     this.inventoryUI = new InventoryUI(this);
     this.inventoryUI.refresh();
 
-    // --- Wire systems ---
-    this.hotspotManager.onWalkTo = (x, y, cb) => this.player.walkTo(x, y, cb);
-    this.hotspotManager.getSelectedItem = () => this.inventoryUI.getSelectedItem();
+    // --- Custom cursor ---
+    this.cursorManager = new CursorManager(this);
 
-    this.hotspotManager.onSceneTransition = (sceneKey) => {
-      console.log(`[Scene Transition] → ${sceneKey}`);
-      GameState.getInstance().save();
-      this.scene.start('EndSliceScene');
+    const verbToCursor: Record<string, CursorState> = {
+      talkto: 'talk', look: 'look', use: 'use', pickup: 'pickup',
+    };
+    this.hotspotManager.onCursorChange = (verb) => {
+      if (verb) {
+        this.hotspotHovered = true;
+        this.cursorManager?.setState(verbToCursor[verb] ?? 'default');
+      } else {
+        this.hotspotHovered = false;
+      }
     };
 
+    // --- Wire systems ---
+    this.hotspotManager.onWalkTo = (x, y, cb) => {
+      const clamped = this.clampToWalkArea(x, y);
+      this.player.walkTo(clamped.x, clamped.y, cb);
+    };
+    this.hotspotManager.getSelectedItem = () => this.inventoryUI.getSelectedItem();
+
     this.hotspotManager.onInteraction = (hotspotId, _verb, response) => {
-      const state = GameState.getInstance();
-      state.setFlag(`examined_${hotspotId}`, true);
+      const st = GameState.getInstance();
+      st.setFlag(`examined_${hotspotId}`, true);
       this.inventoryUI.clearSelection();
 
       // NPC talkto — start conversation
@@ -131,6 +256,10 @@ export class LobbyScene extends Phaser.Scene {
       // Regular hotspot interaction
       if (response.text) {
         this.showMonologue(response.text, response.speaker, response.portrait);
+      } else if (this.hotspotManager.getPendingTransition()) {
+        this.hotspotManager.clearPendingTransition();
+        this.performWipeTransition();
+        return;
       }
 
       this.inventoryUI.refresh();
@@ -138,14 +267,33 @@ export class LobbyScene extends Phaser.Scene {
       this.checkVossSpawn();
     };
 
-    this.dialogueManager.onDialogueEnd = () => {
+    this.dialogueManager.onDialogueEnd = (treeId) => {
       this.inventoryUI.refresh();
       this.resetHintTimer();
       this.checkVossSpawn();
+
+      if (treeId === 'voss_arrival' && GameState.getInstance().hasFlag('voss_convinced')) {
+        this.vossExits();
+      }
+
+      const pending = this.hotspotManager.getPendingTransition();
+      if (pending) {
+        this.hotspotManager.clearPendingTransition();
+        // Badge used — turn LED green before wipe
+        if (this.turnstileLed) {
+          this.tweens.killTweensOf(this.turnstileLed);
+          this.turnstileLed.setFillStyle(0x33cc33);
+          this.turnstileLed.setAlpha(1);
+        }
+        this.time.delayedCall(400, () => this.performWipeTransition());
+      }
     };
 
-    this.dialogueManager.onItemGiven = () => {
+    this.dialogueManager.onItemGiven = (itemId) => {
       this.inventoryUI.refresh();
+      if (itemId === 'temporary_badge' && this.cache.audio.exists('sfx_badge_print')) {
+        this.sound.play('sfx_badge_print', { volume: 0.3 });
+      }
     };
 
     this.inventoryUI.onExamineItem = (text) => {
@@ -164,12 +312,34 @@ export class LobbyScene extends Phaser.Scene {
       const hitHotspot = hitObjects.some((obj) => obj.getData('hotspotId') !== undefined);
       if (hitHotspot) return;
 
-      const walkY = Phaser.Math.Clamp(pointer.y, WALK_MIN_Y, WALK_MAX_Y);
-      this.player.walkTo(pointer.x, walkY);
+      const clamped = this.clampToWalkArea(pointer.x, pointer.y);
+      this.player.walkTo(clamped.x, clamped.y);
     });
+
+    // Pause menu
+    this.input.keyboard?.on('keydown-ESC', () => {
+      if (this.dialogueManager.isActive) return;
+      this.scene.pause();
+      this.scene.launch('PauseMenuScene', { parentScene: 'LobbyScene' });
+    });
+
+    // Restore visual state if loading a save
+    if (this.shouldLoadSave) {
+      this.restoreVisualState();
+      this.inventoryUI.refresh();
+    }
 
     // Initialize hint timer
     this.lastFlagCount = Object.keys(GameState.getInstance().flags).length;
+  }
+
+  // --- Walk area clamping ---
+
+  private clampToWalkArea(x: number, y: number): { x: number; y: number } {
+    return {
+      x: Phaser.Math.Clamp(x, WALK_MIN_X, WALK_MAX_X),
+      y: Phaser.Math.Clamp(y, WALK_MIN_Y, WALK_MAX_Y),
+    };
   }
 
   // --- NPC Conversations ---
@@ -189,8 +359,8 @@ export class LobbyScene extends Phaser.Scene {
   private checkVossSpawn(): void {
     if (this.vossSpawned) return;
 
-    const state = GameState.getInstance();
-    if (!state.hasFlag('wait_for_voss')) return;
+    const st = GameState.getInstance();
+    if (!st.hasFlag('wait_for_voss')) return;
 
     const examined = this.hotspotManager.getExaminedCount();
     if (examined < 3) return;
@@ -198,48 +368,132 @@ export class LobbyScene extends Phaser.Scene {
     this.spawnVoss();
   }
 
-  private spawnVoss(): void {
+  private spawnVoss(immediate = false): void {
     this.vossSpawned = true;
-    const state = GameState.getInstance();
+    const st = GameState.getInstance();
 
-    // Voss walk-in cutscene
-    this.vossSprite = this.add.container(-30, 200);
+    const startX = immediate ? 250 : -30;
+    this.vossSprite = this.add.container(startX, 200);
     this.vossSprite.setDepth(490);
 
-    const body = this.add.rectangle(0, 0, 16, 30, 0x665599).setOrigin(0.5, 1);
-    const head = this.add.circle(0, -30, 7, 0xddbb99);
-    const nameLabel = this.add.text(0, -42, 'Dir. Voss', {
-      fontFamily: 'monospace', fontSize: '7px', color: '#ccaaff', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    // Voss character sprite (64x64 LucasArts style)
+    const vossChar = this.add.sprite(0, 0, 'char_voss', CHAR_FRAMES.IDLE_S);
+    vossChar.setOrigin(0.5, 1);
+    this.vossSprite.add(vossChar);
 
-    this.vossSprite.add([body, head, nameLabel]);
+    // Create Voss walk animations (uses VOSS_FRAMES which has north walk)
+    if (!this.anims.exists('char_voss_walk_e')) {
+      this.anims.create({
+        key: 'char_voss_walk_s',
+        frames: this.anims.generateFrameNumbers('char_voss', {
+          start: CHAR_FRAMES.WALK_S.start, end: CHAR_FRAMES.WALK_S.end,
+        }),
+        frameRate: 10, repeat: -1,
+      });
+      this.anims.create({
+        key: 'char_voss_walk_e',
+        frames: this.anims.generateFrameNumbers('char_voss', {
+          start: CHAR_FRAMES.WALK_E.start, end: CHAR_FRAMES.WALK_E.end,
+        }),
+        frameRate: 10, repeat: -1,
+      });
+    }
 
-    // Walk in animation
-    this.tweens.add({
-      targets: this.vossSprite,
-      x: 250,
-      y: 200,
-      duration: 2000,
-      ease: 'Power1',
-      onComplete: () => {
-        state.setFlag('voss_present', true);
+    const finishSpawn = () => {
+      st.setFlag('voss_present', true);
+      vossChar.stop();
+      vossChar.setFlipX(false);
+      vossChar.setFrame(CHAR_FRAMES.IDLE_S);
 
-        // Add Voss as clickable NPC hotspot
-        this.hotspotManager.addHotspot({
-          id: 'npc_voss',
-          name: 'Director Voss',
-          position: { x: 240, y: 265 },
-          polygon: [235, 170, 265, 170, 265, 210, 235, 210],
-          verbs: ['talkto', 'look'],
-          interactions: {
-            look: {
-              text: "Mid-50s, sharp business attire, sensible shoes. Radiates competence. She looks like she's in a hurry.",
-            },
-            talkto: { text: '' },
+      this.hotspotManager.addHotspot({
+        id: 'npc_voss',
+        name: 'Director Voss',
+        position: { x: 240, y: 265 },
+        polygon: [235, 170, 265, 170, 265, 210, 235, 210],
+        verbs: ['talkto', 'look'],
+        interactions: {
+          look: {
+            text: "Mid-50s, sharp business attire, sensible shoes. Radiates competence. She looks like she's in a hurry.",
           },
-        });
+          talkto: { text: '' },
+        },
+      });
+      this.resetHintTimer();
+    };
 
-        this.resetHintTimer();
+    if (immediate) {
+      finishSpawn();
+    } else {
+      // Walk east into the lobby
+      vossChar.play('char_voss_walk_e');
+      this.tweens.add({
+        targets: this.vossSprite,
+        x: 250,
+        y: 200,
+        duration: 2000,
+        ease: 'Power1',
+        onComplete: finishSpawn,
+      });
+    }
+  }
+
+  private restoreVisualState(): void {
+    const st = GameState.getInstance();
+    if (st.hasFlag('voss_convinced')) {
+      this.vossSpawned = true;
+    } else if (st.hasFlag('voss_present')) {
+      this.spawnVoss(true);
+    }
+  }
+
+  // --- Voss Exit ---
+
+  private vossExits(): void {
+    if (this.vossSprite) {
+      // Play walk east animation during exit (walks toward turnstile)
+      const vossChar = this.vossSprite.getAt(0) as Phaser.GameObjects.Sprite;
+      if (vossChar?.play) {
+        vossChar.setFlipX(false);
+        vossChar.play('char_voss_walk_e');
+      }
+
+      this.tweens.add({
+        targets: this.vossSprite,
+        x: 640,
+        duration: 1500,
+        ease: 'Power1',
+        onComplete: () => {
+          this.vossSprite?.destroy();
+          this.vossSprite = null;
+          this.hotspotManager.removeHotspot('npc_voss');
+        },
+      });
+    }
+  }
+
+  // --- Scene Transition (horizontal wipe) ---
+
+  private performWipeTransition(): void {
+    this.input.enabled = false;
+    if (this.cache.audio.exists('sfx_turnstile')) {
+      this.sound.play('sfx_turnstile', { volume: 0.35 });
+    }
+
+    const { width, height } = this.cameras.main;
+    const wipe = this.add.rectangle(0, 0, width, height, 0x000000)
+      .setOrigin(0, 0)
+      .setDepth(2000)
+      .setScrollFactor(0);
+    wipe.x = -width;
+
+    this.tweens.add({
+      targets: wipe,
+      x: 0,
+      duration: 600,
+      ease: 'Power2',
+      onComplete: () => {
+        GameState.getInstance().save();
+        this.scene.start('EndSliceScene');
       },
     });
   }
@@ -277,11 +531,11 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private getHintState(): string {
-    const state = GameState.getInstance();
-    if (state.hasFlag('has_temp_badge')) return 'BADGE_GET';
-    if (state.hasFlag('voss_present')) return 'VOSS_ARRIVES';
-    if (state.hasFlag('wait_for_voss')) return 'VOSS_HINT';
-    if (state.hasFlag('badge_quest_active')) return 'CATCH_22';
+    const st = GameState.getInstance();
+    if (st.hasFlag('has_temp_badge')) return 'BADGE_GET';
+    if (st.hasFlag('voss_present')) return 'VOSS_ARRIVES';
+    if (st.hasFlag('wait_for_voss')) return 'VOSS_HINT';
+    if (st.hasFlag('badge_quest_active')) return 'CATCH_22';
     return 'INIT';
   }
 
@@ -315,7 +569,7 @@ export class LobbyScene extends Phaser.Scene {
     this.tweens.add({
       targets: bubble,
       alpha: { from: 1, to: 0 },
-      delay: 3000,
+      delay: 4000,
       duration: 1000,
       onComplete: () => bubble.destroy(),
     });
@@ -324,122 +578,353 @@ export class LobbyScene extends Phaser.Scene {
   // --- Background & Environment ---
 
   private drawBackground(): void {
-    this.add.rectangle(320, 50, 640, 100, 0xc8c4b8);
-    this.add.rectangle(320, 130, 640, 60, 0xd4d0c4);
-    this.add.rectangle(320, 160, 640, 4, 0x888078);
-    this.add.rectangle(320, 241, 640, 162, 0xc4b898);
-    this.add.rectangle(200, 260, 30, 3, 0xb8aa88, 0.4);
-    this.add.rectangle(400, 280, 25, 2, 0xb8aa88, 0.3);
-    this.add.rectangle(520, 250, 20, 3, 0xb8aa88, 0.35);
-    this.add.rectangle(610, 120, 60, 100, 0x555550);
-    this.add.text(590, 75, 'AUTHORIZED\nPERSONNEL\nONLY', {
-      fontFamily: 'monospace', fontSize: '5px', color: '#999988', align: 'center',
-    }).setOrigin(0.5, 0);
+    // Composited background from LimeZu tiles
+    this.add.image(320, 180, 'lobby_bg').setDepth(0);
+
+    // American flag — wall-mounted, left of hallway entrance
+    this.add.image(510, 90, 'obj_flag').setOrigin(0.5, 0.5).setDepth(5);
   }
 
   private drawFurniture(): void {
-    // Entrance Doors
-    this.add.rectangle(30, 125, 48, 110, 0x7788aa);
-    this.add.rectangle(20, 125, 16, 100, 0x99bbdd, 0.6);
-    this.add.rectangle(40, 125, 16, 100, 0x99bbdd, 0.6);
-    this.add.circle(30, 105, 8, 0x667799);
-    this.add.text(30, 105, 'D', { fontFamily: 'monospace', fontSize: '8px', color: '#ddd', fontStyle: 'bold' }).setOrigin(0.5);
+    // Custom PixelLab objects at hotspot positions
+    // Sad Ficus Plant — at potted_plant hotspot area
+    this.add.image(75, 168, 'obj_ficus').setOrigin(0.5, 1).setDepth(20);
 
-    // Sad Plant
-    this.add.rectangle(75, 178, 14, 16, 0x885533);
-    this.add.rectangle(75, 158, 18, 24, 0x338833);
-    this.add.rectangle(82, 165, 6, 3, 0x447744).setAngle(25);
+    // Water Cooler — at water_cooler hotspot area
+    this.add.image(201, 182, 'obj_cooler').setOrigin(0.5, 1).setDepth(20);
 
-    // Waiting Chairs
-    this.add.rectangle(115, 178, 16, 16, 0xcc7733);
-    this.add.rectangle(135, 178, 16, 16, 0xcc7733);
-    this.add.rectangle(155, 178, 16, 16, 0xcc7733);
-    this.add.rectangle(135, 188, 56, 3, 0x999999);
+    // Now Serving Display — on wall
+    this.add.image(297, 42, 'obj_now_serving').setOrigin(0.5, 0.5).setDepth(10);
 
-    // Water Cooler
-    this.add.rectangle(201, 165, 16, 30, 0x7799bb);
-    this.add.rectangle(201, 148, 12, 14, 0xaaddff, 0.7);
-    this.add.rectangle(208, 168, 4, 3, 0xcccccc);
+    // Motivational Poster — on wall
+    this.add.image(240, 78, 'obj_poster').setOrigin(0.5, 0.5).setDepth(10);
 
-    // Now Serving
-    this.add.rectangle(297, 42, 52, 24, 0x222211);
-    this.add.rectangle(297, 42, 48, 20, 0x110808);
-    this.add.text(297, 42, '847', { fontFamily: 'monospace', fontSize: '14px', color: '#cc2222', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(297, 28, 'NOW SERVING', { fontFamily: 'monospace', fontSize: '5px', color: '#888877' }).setOrigin(0.5);
+    // Bulletin Board — on wall
+    this.add.image(440, 122, 'obj_bulletin').setOrigin(0.5, 0.5).setDepth(10);
 
-    // Motivational Poster
-    this.add.rectangle(240, 78, 32, 42, 0xddddcc);
-    this.add.rectangle(240, 71, 26, 14, 0xee9944);
-    this.add.text(240, 84, 'TEAMWORK', { fontFamily: 'monospace', fontSize: '4px', color: '#333333', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(240, 92, '...Paperwork', { fontFamily: 'monospace', fontSize: '3px', color: '#666666' }).setOrigin(0.5);
+    // Security Turnstile — at turnstile hotspot area
+    this.add.image(400, 210, 'obj_turnstile').setOrigin(0.5, 0.5).setDepth(30);
 
-    // Bulletin Board
-    this.add.rectangle(440, 122, 50, 80, 0xaa8844);
-    this.add.rectangle(440, 122, 46, 76, 0xbb9955);
-    this.add.rectangle(428, 105, 18, 14, 0xeeeedd).setAngle(-3);
-    this.add.rectangle(443, 112, 16, 12, 0xddddee).setAngle(5);
-    this.add.rectangle(453, 100, 14, 18, 0xffeecc).setAngle(-2);
-    this.add.rectangle(431, 130, 14, 16, 0xffddaa);
-    this.add.text(431, 130, '🐱', { fontSize: '6px' }).setOrigin(0.5);
-    this.add.rectangle(451, 138, 16, 14, 0xccddee).setAngle(2);
-    this.add.rectangle(438, 150, 12, 10, 0xeeffee).setAngle(-1);
+    // Waiting Chairs — connected orange plastic row
+    this.add.image(135, 180, 'obj_chairs').setOrigin(0.5, 0.5).setDepth(15);
 
-    // Security Desk
-    this.add.rectangle(320, 198, 96, 40, 0x606672);
-    this.add.rectangle(320, 216, 96, 8, 0x50555f);
-    this.add.rectangle(320, 178, 80, 4, 0xaaccee, 0.5);
-    this.add.rectangle(285, 176, 2, 20, 0x88aabb);
-    this.add.rectangle(355, 176, 2, 20, 0x88aabb);
-    this.add.rectangle(355, 202, 10, 8, 0x333333);
-    this.add.circle(355, 200, 2, 0xcc3333);
-    this.add.rectangle(300, 200, 12, 8, 0xddcc99);
-    this.add.rectangle(340, 195, 6, 7, 0xeeeeee);
-
-    // Turnstile
-    this.add.rectangle(400, 210, 6, 36, 0x888888);
-    this.add.rectangle(400, 203, 22, 4, 0x999999);
-    this.add.rectangle(400, 213, 22, 4, 0x999999);
-    this.add.circle(400, 193, 3, 0xcc3333);
-
-    // American Flag
-    this.add.rectangle(587, 75, 2, 50, 0xccaa44);
-    this.add.rectangle(580, 68, 18, 24, 0xcc3333);
-    this.add.rectangle(580, 64, 18, 4, 0xffffff);
-    this.add.rectangle(580, 72, 18, 4, 0xffffff);
-    this.add.rectangle(574, 62, 8, 10, 0x334488);
-
-    // Labels
-    const ls = { fontFamily: 'monospace', fontSize: '6px', color: '#777766' } as Phaser.Types.GameObjects.Text.TextStyle;
-    this.add.text(30, 68, 'Doors', ls).setOrigin(0.5);
-    this.add.text(75, 142, 'Plant', ls).setOrigin(0.5);
-    this.add.text(135, 195, 'Chairs', ls).setOrigin(0.5);
-    this.add.text(201, 135, 'Cooler', ls).setOrigin(0.5);
-    this.add.text(440, 75, 'Board', ls).setOrigin(0.5);
-    this.add.text(400, 180, 'Turnstile', ls).setOrigin(0.5);
+    // Security Desk (drawn with improved detail)
+    this.add.rectangle(320, 198, 96, 40, 0x505868).setDepth(30);
+    this.add.rectangle(320, 216, 96, 8, 0x40454f).setDepth(31);
+    this.add.rectangle(320, 178, 80, 4, 0x8899aa, 0.4).setDepth(32);
+    this.add.rectangle(285, 176, 2, 20, 0x667788).setDepth(32);
+    this.add.rectangle(355, 176, 2, 20, 0x667788).setDepth(32);
+    // Badge reader with blinking red LED
+    this.add.rectangle(355, 202, 10, 8, 0x222222).setDepth(33);
+    this.turnstileLed = this.add.circle(355, 200, 2, 0xcc3333).setDepth(34);
+    // Crossword puzzle paper
+    this.add.rectangle(300, 200, 12, 8, 0xddcc99).setDepth(33);
+    // Monitor
+    this.add.rectangle(340, 195, 6, 7, 0xcccccc).setDepth(33);
   }
 
   private drawNPCs(): void {
-    // Gladys
-    this.add.rectangle(325, 188, 16, 28, 0x445588).setOrigin(0.5, 1);
-    this.add.circle(325, 162, 7, 0xddaa77);
-    this.add.rectangle(325, 162, 14, 3, 0x444444, 0.6);
-    this.add.text(325, 150, 'Gladys', {
-      fontFamily: 'monospace', fontSize: '7px', color: '#ffcc88', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    // Gladys — standing behind security desk, facing south
+    const gladys = this.add.sprite(325, 195, 'char_gladys', CHAR_FRAMES.IDLE_S);
+    gladys.setOrigin(0.5, 1);
+    gladys.setDepth(200);
 
-    // Mrs. Gutierrez
-    this.add.rectangle(135, 170, 14, 20, 0xcc6666).setOrigin(0.5, 1);
-    this.add.circle(135, 152, 6, 0xddaa88);
-    this.add.rectangle(135, 168, 10, 6, 0xddcc88);
-    this.add.text(135, 140, 'Mrs. G', {
-      fontFamily: 'monospace', fontSize: '7px', color: '#ffaaaa', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    // Mrs. Gutierrez — in waiting chairs area, facing south
+    const mrsG = this.add.sprite(135, 185, 'char_mrsg', CHAR_FRAMES.IDLE_S);
+    mrsG.setOrigin(0.5, 1);
+    mrsG.setDepth(200);
+  }
+
+  // --- Ambient Life ---
+
+  private setupAmbientLife(): void {
+    // Stagger all timers with random offsets so nothing syncs
+    const rOff = () => Math.random() * 3000;
+
+    // 1. Background music — low volume, looping
+    if (this.cache.audio.exists('lobby_music')) {
+      this.sound.play('lobby_music', { loop: true, volume: 0.18 });
+    }
+
+    // 2a. Fluorescent hum — looping ambient drone at very low volume
+    if (this.cache.audio.exists('sfx_fluorescent_hum')) {
+      this.sound.play('sfx_fluorescent_hum', { loop: true, volume: 0.05 });
+    }
+
+    // 2b. Water cooler bubble SFX — random interval 10-15 seconds
+    if (this.cache.audio.exists('sfx_water_bubble')) {
+      const scheduleBubbleSfx = () => {
+        const delay = Phaser.Math.Between(10000, 15000);
+        this.time.delayedCall(delay, () => {
+          this.sound.play('sfx_water_bubble', { volume: 0.15 });
+          scheduleBubbleSfx();
+        });
+      };
+      this.time.delayedCall(rOff(), () => scheduleBubbleSfx());
+    }
+
+    // 2. Potted plant — gentle leaf bob using a Graphics overlay
+    // The main ficus sprite stays static. A small green leaf triangle
+    // is drawn at the top-right of the plant and bobs with a sine wave.
+    const leafGfx = this.add.graphics();
+    leafGfx.fillStyle(0x3b7a2a, 0.85);
+    leafGfx.fillTriangle(0, 0, 4, -3, 2, -6);
+    // Generate a tiny canvas texture from the graphics
+    leafGfx.generateTexture('leaf_overlay', 6, 8);
+    leafGfx.destroy();
+    const leaf = this.add.image(83, 120, 'leaf_overlay')
+      .setOrigin(0.5, 1)
+      .setDepth(21);
+    this.time.addEvent({
+      delay: 4000 + rOff(),
+      callback: () => {
+        this.time.addEvent({
+          delay: 3000 + Math.random() * 4000,
+          loop: true,
+          callback: () => {
+            this.tweens.add({
+              targets: leaf,
+              y: leaf.y - 1.5,
+              duration: 900,
+              yoyo: true,
+              ease: 'Sine.inOut',
+            });
+          },
+        });
+      },
+    });
+
+    // 3. Now Serving display — dying LED glitch with segment dropout
+    this.nowServingText = this.add.text(297, 44, '847', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#cc2222', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(11);
+
+    // Subtle red glow pulse on the text (alpha oscillation)
+    this.tweens.add({
+      targets: this.nowServingText,
+      alpha: { from: 1, to: 0.7 },
+      duration: 2200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut',
+    });
+
+    // Dying-LED glitch: segments disappear, corrupted chars, then snap back
+    this.time.addEvent({
+      delay: 15000 + rOff() * 3,
+      loop: true,
+      callback: () => {
+        if (!this.nowServingText) return;
+        // Simulate segment dropout: underscores = missing segments,
+        // garbled chars = misread digits on a seven-segment display
+        const corruptedFrames = [
+          '8_7', '_ 7', '  7', '  _', '   ',  // segments dying
+          ' 4_', '_47', '§_7', '8∆_',          // garbled recovery
+          '847',                                 // snap back to normal
+        ];
+        let step = 0;
+        this.time.addEvent({
+          delay: 70,
+          repeat: corruptedFrames.length - 1,
+          callback: () => {
+            if (!this.nowServingText) return;
+            this.nowServingText.setText(corruptedFrames[step]);
+            // Flash brightness on corruption frames
+            if (step < corruptedFrames.length - 1) {
+              this.nowServingText.setAlpha(0.4 + Math.random() * 0.6);
+            } else {
+              this.nowServingText.setAlpha(1);
+            }
+            step++;
+          },
+        });
+      },
+    });
+
+    // 4. Water cooler — multi-bubble rise with wobble
+    // 2-3 tiny bubbles rise at staggered intervals, wobble side to side,
+    // and fade out near the top of the jug.
+    this.time.addEvent({
+      delay: 8000 + rOff() * 2,
+      loop: true,
+      callback: () => {
+        const bubbleCount = Phaser.Math.Between(2, 3);
+        for (let i = 0; i < bubbleCount; i++) {
+          this.time.delayedCall(i * Phaser.Math.Between(100, 200), () => {
+            const radius = Phaser.Math.Between(1, 2);
+            const startX = 201 + Phaser.Math.Between(-2, 2);
+            const startY = 160;
+            const endY = 144;
+            const bubble = this.add.circle(startX, startY, radius, 0xaaddff, 0.65)
+              .setDepth(21);
+
+            // Rise + fade
+            this.tweens.add({
+              targets: bubble,
+              y: endY,
+              alpha: 0,
+              duration: 700 + Phaser.Math.Between(0, 300),
+              ease: 'Sine.out',
+              onComplete: () => bubble.destroy(),
+            });
+
+            // Wobble side-to-side (sine movement on x)
+            this.tweens.add({
+              targets: bubble,
+              x: startX + Phaser.Math.Between(-2, 2),
+              duration: 350,
+              yoyo: true,
+              repeat: 1,
+              ease: 'Sine.inOut',
+            });
+          });
+        }
+      },
+    });
+
+    // 5. Fluorescent light flicker — dying tube double-flash pattern
+    // A rectangle overlay on the wall does rapid alpha spikes mimicking
+    // a failing fluorescent ballast. Random interval 8-25 seconds.
+    const lightPatch = this.add.rectangle(180, 20, 120, 30, 0xffffff, 0).setDepth(2);
+    const scheduleFlicker = () => {
+      const nextDelay = Phaser.Math.Between(8000, 25000);
+      this.time.delayedCall(nextDelay, () => {
+        // Double-flash pattern: spike, drop, spike (weaker), drop
+        this.tweens.chain({
+          targets: lightPatch,
+          tweens: [
+            { alpha: 0.05, duration: 30 },    // first flash ON
+            { alpha: 0, duration: 50 },        // OFF
+            { alpha: 0.03, duration: 30 },     // second flash ON (weaker)
+            { alpha: 0, duration: 40 },        // OFF
+            // Occasional third flicker (50% chance)
+            ...(Math.random() > 0.5 ? [
+              { alpha: 0.02, duration: 25 },
+              { alpha: 0, duration: 60 },
+            ] : []),
+          ],
+          onComplete: () => {
+            lightPatch.setAlpha(0);
+            scheduleFlicker();
+          },
+        });
+      });
+    };
+    // Kick off with initial random offset
+    this.time.delayedCall(rOff(), () => scheduleFlicker());
+
+    // 6. Turnstile LED blink — crisp on/off like a real LED
+    if (this.turnstileLed) {
+      this.tweens.add({
+        targets: this.turnstileLed,
+        alpha: { from: 1, to: 0.1 },
+        duration: 80,
+        yoyo: true,
+        hold: 420,        // stay at alpha=1 for 420ms
+        repeatDelay: 420,  // stay at alpha=0.1 for 420ms
+        repeat: -1,
+        ease: 'Stepped',
+      });
+    }
+
+    // 7. Gladys crossword idle — PixelLab sprite animation
+    if (!this.anims.exists('gladys_crossword')) {
+      this.anims.create({
+        key: 'gladys_crossword',
+        frames: this.anims.generateFrameNumbers('char_gladys', {
+          start: GLADYS_FRAMES.CROSSWORD.start,
+          end: GLADYS_FRAMES.CROSSWORD.end,
+        }),
+        frameRate: 5,
+        repeat: -1,
+      });
+    }
+    const gladysSprite = this.children.list.find(
+      (c) => c instanceof Phaser.GameObjects.Sprite
+        && (c as Phaser.GameObjects.Sprite).texture.key === 'char_gladys'
+    ) as Phaser.GameObjects.Sprite | undefined;
+    if (gladysSprite) {
+      // Start crossword animation after a staggered delay
+      this.time.delayedCall(2000 + rOff(), () => {
+        gladysSprite.play('gladys_crossword');
+      });
+    }
+
+    // 8. Entrance doors — sweeping vertical light bar reflection
+    // A thin bright bar sweeps left-to-right across the door glass,
+    // simulating someone walking past outside.
+    const doorBarGfx = this.add.graphics();
+    doorBarGfx.fillStyle(0xffffff, 1);
+    doorBarGfx.fillRect(0, 0, 3, 80);
+    doorBarGfx.generateTexture('door_light_bar', 3, 80);
+    doorBarGfx.destroy();
+    const doorLightBar = this.add.image(10, 120, 'door_light_bar')
+      .setOrigin(0.5, 0.5)
+      .setAlpha(0)
+      .setDepth(2);
+    this.time.addEvent({
+      delay: 20000 + rOff() * 5,
+      loop: true,
+      callback: () => {
+        // Fade in, sweep across door area (x 10 -> 50), fade out
+        doorLightBar.setPosition(10, 120);
+        doorLightBar.setAlpha(0);
+        this.tweens.chain({
+          targets: doorLightBar,
+          tweens: [
+            { alpha: Phaser.Math.FloatBetween(0.04, 0.06), duration: 80 },
+            { x: 50, duration: 600, ease: 'Sine.inOut' },
+            { alpha: 0, duration: 80 },
+          ],
+        });
+      },
+    });
+
+    // 9. Mrs. Gutierrez — seated idle — PixelLab sprite animation
+    if (!this.anims.exists('mrsg_seated')) {
+      this.anims.create({
+        key: 'mrsg_seated',
+        frames: this.anims.generateFrameNumbers('char_mrsg', {
+          start: MRSG_FRAMES.SEATED.start,
+          end: MRSG_FRAMES.SEATED.end,
+        }),
+        frameRate: 4,
+        repeat: -1,
+      });
+    }
+    const mrsgSprite = this.children.list.find(
+      (c) => c instanceof Phaser.GameObjects.Sprite
+        && (c as Phaser.GameObjects.Sprite).texture.key === 'char_mrsg'
+    ) as Phaser.GameObjects.Sprite | undefined;
+    if (mrsgSprite) {
+      this.time.delayedCall(5000 + rOff(), () => {
+        mrsgSprite.play('mrsg_seated');
+      });
+    }
   }
 
   // --- Update loop ---
 
   update(time: number, delta: number): void {
     this.player.update(time, delta);
+
+    // Update custom cursor
+    if (this.cursorManager) {
+      const pointer = this.input.activePointer;
+      if (!this.hotspotHovered) {
+        const cam = this.cameras.main;
+        if (this.dialogueManager.isActive) {
+          this.cursorManager.setState('default');
+        } else if (pointer.y > cam.height - 38) {
+          this.cursorManager.setState('inventory');
+        } else if (pointer.y >= WALK_MIN_Y - 10 && pointer.y <= WALK_MAX_Y + 10) {
+          this.cursorManager.setState('walk');
+        } else {
+          this.cursorManager.setState('default');
+        }
+      }
+      this.cursorManager.update(pointer);
+    }
 
     // Hint timer: show hint after 60s of no progress
     const currentFlagCount = Object.keys(GameState.getInstance().flags).length;

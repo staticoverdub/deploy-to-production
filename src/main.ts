@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
+import { TitleScene } from './scenes/TitleScene';
 import { BootScene } from './scenes/BootScene';
 import { TestScene } from './scenes/TestScene';
 import { LobbyScene } from './scenes/LobbyScene';
 import { EndSliceScene } from './scenes/EndSliceScene';
+import { PauseMenuScene } from './scenes/PauseMenuScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -15,7 +17,12 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, LobbyScene, TestScene, EndSliceScene],
+  callbacks: {
+    postBoot: (game) => {
+      game.canvas.style.cursor = 'none';
+    },
+  },
+  scene: [TitleScene, BootScene, LobbyScene, TestScene, EndSliceScene, PauseMenuScene],
 };
 
 new Phaser.Game(config);

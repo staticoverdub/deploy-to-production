@@ -70,6 +70,15 @@ const PORTRAIT_COLORS: Record<string, number> = {
   voss: 0x8866cc,
 };
 
+// Speaker to voice babble audio key mapping
+const VOICE_KEYS: Record<string, string> = {
+  casey: 'voice_casey',
+  gladys: 'voice_gladys',
+  mrs_gutierrez: 'voice_mrs_g',
+  voss: 'voice_voss',
+  kevin: 'voice_kevin',
+};
+
 // Formatted display names for speakers
 const SPEAKER_DISPLAY_NAMES: Record<string, string> = {
   casey: 'Casey',
@@ -91,6 +100,9 @@ export class DialogueManager {
   private typingTimer: Phaser.Time.TimerEvent | null = null;
   private isTyping: boolean = false;
   private charIndex: number = 0;
+
+  // Voice babble
+  private voiceBabble: Phaser.Sound.BaseSound | null = null;
 
   // UI elements
   private bgBox: Phaser.GameObjects.Rectangle | null = null;
@@ -279,9 +291,10 @@ export class DialogueManager {
     border.setFillStyle(0x111122, 0.8);
     this.portraitContainer.add(border);
 
-    // Try to use a loaded sprite, otherwise use placeholder
-    if (portraitKey && this.scene.textures.exists(portraitKey)) {
-      const portrait = this.scene.add.image(0, 0, portraitKey);
+    // Try to use a loaded portrait: exact key first, then speaker default, then placeholder
+    const textureKey = this.resolvePortraitTexture(speaker, portraitKey);
+    if (textureKey) {
+      const portrait = this.scene.add.image(0, 0, textureKey);
       portrait.setDisplaySize(PORTRAIT_SIZE, PORTRAIT_SIZE);
       this.portraitContainer.add(portrait);
     } else {
@@ -312,6 +325,19 @@ export class DialogueManager {
       initial.setOrigin(0.5);
       this.portraitContainer.add(initial);
     }
+  }
+
+  private resolvePortraitTexture(speaker: string, portraitKey: string | null): string | null {
+    // Try exact portrait key (e.g. "casey_friendly")
+    if (portraitKey && this.scene.textures.exists(portraitKey)) {
+      return portraitKey;
+    }
+    // Fall back to speaker's default portrait (e.g. "portrait_casey")
+    const defaultKey = `portrait_${speaker}`;
+    if (this.scene.textures.exists(defaultKey)) {
+      return defaultKey;
+    }
+    return null;
   }
 
   private showNode(nodeId: string): void {
@@ -362,8 +388,8 @@ export class DialogueManager {
       state.removeItem(node.itemRemoved);
     }
 
-    if (node.soundEffect) {
-      console.log(`[Sound Effect] ${node.soundEffect}`);
+    if (node.soundEffect && this.scene.cache.audio.exists(node.soundEffect)) {
+      this.scene.sound.play(node.soundEffect, { volume: 0.4 });
     }
 
     if (node.tutorialTrigger) {
@@ -392,6 +418,16 @@ export class DialogueManager {
     this.isTyping = true;
     this.bodyText?.setText('');
 
+    // Start voice babble loop for current speaker
+    this.stopVoiceBabble();
+    if (this.currentNode) {
+      const voiceKey = VOICE_KEYS[this.currentNode.speaker];
+      if (voiceKey && this.scene.cache.audio.exists(voiceKey)) {
+        this.voiceBabble = this.scene.sound.add(voiceKey, { loop: true, volume: 0.3 });
+        this.voiceBabble.play();
+      }
+    }
+
     this.typingTimer = this.scene.time.addEvent({
       delay: speed,
       repeat: text.length - 1,
@@ -400,6 +436,12 @@ export class DialogueManager {
         this.charIndex++;
         this.bodyText?.setText(this.displayedText);
 
+        // Text blip on non-space characters
+        const ch = this.fullText[this.charIndex - 1];
+        if (ch && ch !== ' ' && this.scene.cache.audio.exists('sfx_text_blip')) {
+          this.scene.sound.play('sfx_text_blip', { volume: 0.1 });
+        }
+
         if (this.charIndex >= this.fullText.length) {
           this.finishTyping();
         }
@@ -407,8 +449,17 @@ export class DialogueManager {
     });
   }
 
+  private stopVoiceBabble(): void {
+    if (this.voiceBabble) {
+      this.voiceBabble.stop();
+      this.voiceBabble.destroy();
+      this.voiceBabble = null;
+    }
+  }
+
   private finishTyping(): void {
     this.isTyping = false;
+    this.stopVoiceBabble();
     if (this.typingTimer) {
       this.typingTimer.destroy();
       this.typingTimer = null;
@@ -466,10 +517,14 @@ export class DialogueManager {
           wordWrap: { width: cam.width - BOX_MARGIN * 2 - 32 },
         },
       );
-      text.setInteractive({ useHandCursor: true });
+      text.setInteractive({});
       text.on('pointerover', () => text.setColor('#ffffff'));
       text.on('pointerout', () => text.setColor('#aaaacc'));
       text.on('pointerdown', () => {
+        // Play select SFX
+        if (this.scene.cache.audio.exists('sfx_select')) {
+          this.scene.sound.play('sfx_select', { volume: 0.25 });
+        }
         // Apply option side effects
         if (opt.flagsSet) {
           for (const [flag, value] of Object.entries(opt.flagsSet)) {
@@ -567,6 +622,7 @@ export class DialogueManager {
     this.currentNode = null;
     this.isTyping = false;
 
+    this.stopVoiceBabble();
     if (this.typingTimer) {
       this.typingTimer.destroy();
       this.typingTimer = null;

@@ -3,6 +3,9 @@
     "id": "mrs_gutierrez_first",
     "startNode": "mg_open",
     "typewriterSpeed": 40,
+    "triggerCondition": {
+      "notFlags": { "talked_to_mrs_g": true }
+    },
     "nodes": {
       "mg_open": {
         "id": "mg_open",
@@ -116,6 +119,28 @@
         "relationshipChanges": {
           "mrs_gutierrez": 1
         },
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "mrs_gutierrez_post": {
+    "id": "mrs_gutierrez_post",
+    "startNode": "mgp_open",
+    "triggerCondition": {
+      "flags": { "talked_to_mrs_g": true }
+    },
+    "typewriterSpeed": 40,
+    "nodes": {
+      "mgp_open": {
+        "id": "mgp_open",
+        "speaker": "mrs_gutierrez",
+        "portrait": "mrs_g_warm",
+        "text": "Still working on getting through? Don't give up. You're the first person here who actually listened.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
         "options": [],
         "autoAdvance": null
       }
