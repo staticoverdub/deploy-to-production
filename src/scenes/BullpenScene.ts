@@ -16,6 +16,13 @@ import kevinData from '../data/dialogues/kevin.json';
 // Shared assets
 import caseyUrl from '../assets/sprites/characters/casey_sheet.png';
 import caseyPortraitUrl from '../assets/sprites/portraits/casey_default.png';
+import priyaPortraitUrl from '../assets/sprites/portraits/priya_default.png';
+import kevinPortraitUrl from '../assets/sprites/portraits/kevin_default.png';
+// Bullpen item icons
+import iconNoteFadedUrl from '../assets/sprites/items/icon_note_faded.png';
+import iconUmbrellaUrl from '../assets/sprites/items/icon_umbrella.png';
+import iconNoteCodeUrl from '../assets/sprites/items/icon_note_code.png';
+import iconLaptopUrl from '../assets/sprites/items/icon_laptop.png';
 import sfxTextBlipUrl from '../assets/audio/sfx/sfx_text_blip.mp3';
 import sfxSelectUrl from '../assets/audio/sfx/sfx_select.mp3';
 import sfxUiClickUrl from '../assets/audio/sfx/sfx_ui_click.mp3';
@@ -64,6 +71,12 @@ const WALK_MAX_X = 950;
 const WALK_MIN_Y = 200;
 const WALK_MAX_Y = 320;
 
+// ── Layout constants ──
+// FLOOR_LINE: where furniture bases sit (same as Lobby's visual floor)
+const FLOOR_LINE = 160;
+// Characters walk at WALK_MIN_Y=200 (below furniture, on the floor area)
+// Wall: y=0..FLOOR_LINE. Floor: y=FLOOR_LINE..360
+
 export class BullpenScene extends Phaser.Scene {
   private player!: Player;
   private hotspotManager!: HotspotManager;
@@ -95,6 +108,8 @@ export class BullpenScene extends Phaser.Scene {
     const ssConfig = { frameWidth: 64, frameHeight: 64 };
     this.load.spritesheet('char_casey', caseyUrl, ssConfig);
     this.load.image('portrait_casey', caseyPortraitUrl);
+    this.load.image('portrait_priya', priyaPortraitUrl);
+    this.load.image('portrait_kevin', kevinPortraitUrl);
 
     this.load.audio('sfx_text_blip', sfxTextBlipUrl);
     this.load.audio('sfx_select', sfxSelectUrl);
@@ -116,6 +131,10 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('icon_cup_empty', iconCupEmptyUrl);
     this.load.image('icon_cup_water', iconCupWaterUrl);
     this.load.image('icon_badge', iconBadgeUrl);
+    this.load.image('icon_note_faded', iconNoteFadedUrl);
+    this.load.image('icon_umbrella', iconUmbrellaUrl);
+    this.load.image('icon_note_code', iconNoteCodeUrl);
+    this.load.image('icon_laptop', iconLaptopUrl);
 
     // Bullpen object sprites
     this.load.image('bp_dead_printer', bpDeadPrinterUrl);
@@ -447,141 +466,173 @@ export class BullpenScene extends Phaser.Scene {
 
   // ── Drawing ──
 
-  // Layout left to right: coat rack (30) -> Casey desk (120) -> cubicles+Kevin (220-380)
-  //   -> printer (420) -> supply closet (460 wall) -> break area (520-600) -> Priya+whiteboard (660-720)
-  //   -> War Room (790) -> hallway exit (920)
+  // ── Visual layout ──
+  // ════════════════════════════════════════════════════
+  // DRAWING — follows Lobby proportions exactly
+  // FL (FLOOR_LINE=160): furniture bases sit here
+  // Wall: y=0..160. Floor: y=160..360
+  // Characters walk at y=200..320 (WALK_MIN_Y..WALK_MAX_Y)
+  // Layout L→R across 960px:
+  //   coat rack(50) → Casey desk(140) → cubicles(250,330,410,490)
+  //   → printer(570) → supply closet door(660 wall) → break area(760)
+  //   → Priya desk(880) → whiteboard(930) → exit(945)
+  // ════════════════════════════════════════════════════
 
   private drawBackground(): void {
+    const FL = FLOOR_LINE;
     const g = this.add.graphics().setDepth(0);
 
-    // Floor — beige linoleum with checkerboard pattern
+    // ── WALL (y=0..FL) — off-white, same as Lobby ──
+    g.fillStyle(0xe8e0cc);
+    g.fillRect(0, 0, SCENE_W, FL);
+    // Baseboard
+    g.fillStyle(0x8a7e60);
+    g.fillRect(0, FL - 2, SCENE_W, 4);
+
+    // ── FLOOR (y=FL..360) — beige linoleum checkerboard ──
     g.fillStyle(0xd4c8a0);
-    g.fillRect(0, 0, SCENE_W, SCENE_H);
-    g.fillStyle(0xc8bc94);
-    for (let y = WALK_MIN_Y; y < SCENE_H; y += 32) {
-      for (let x = 0; x < SCENE_W; x += 32) {
-        if ((x / 32 + y / 32) % 2 === 0) g.fillRect(x, y, 32, 32);
+    g.fillRect(0, FL + 2, SCENE_W, SCENE_H - FL - 2);
+    g.fillStyle(0xc8bc94, 0.4);
+    for (let y = FL + 2; y < SCENE_H; y += 24) {
+      for (let x = 0; x < SCENE_W; x += 24) {
+        if ((Math.floor(x / 24) + Math.floor(y / 24)) % 2 === 0) g.fillRect(x, y, 24, 24);
       }
     }
 
-    // Walls — off-white institutional
-    g.fillStyle(0xe8e0cc);
-    g.fillRect(0, 0, SCENE_W, 140);
-    // Baseboard strip
-    g.fillStyle(0x8a7e60);
-    g.fillRect(0, 138, SCENE_W, 4);
+    // Fluorescent lights
+    g.fillStyle(0xffffff, 0.035);
+    for (let x = 60; x < SCENE_W; x += 180) g.fillRect(x, 8, 100, 8);
 
-    // Fluorescent light panels on ceiling
-    g.fillStyle(0xffffff, 0.04);
-    for (let x = 60; x < SCENE_W; x += 160) g.fillRect(x, 8, 100, 8);
+    // ── WALL-MOUNTED ITEMS ──
 
-    // DAY 1 OF 90 banner — on wall between cubicles and break area
-    this.add.image(480, 55, 'bp_day90_banner').setOrigin(0.5, 0.5).setDepth(1).setScale(0.6);
-
-    // Dashboard TV — on wall near War Room
-    this.add.image(730, 65, 'bp_dashboard_tv').setOrigin(0.5, 0.5).setDepth(1);
-
-    // Hallway exit door (far right)
-    g.fillStyle(0x444444);
-    g.fillRect(910, 142, 50, 80);
-    g.fillStyle(0x555555);
-    g.fillRect(912, 144, 46, 76);
-    // Door handle
-    g.fillStyle(0xaaaaaa);
-    g.fillRect(950, 178, 4, 8);
-    this.add.text(935, 150, 'B2 LEVEL', {
-      fontFamily: 'monospace', fontSize: '4px', color: '#999999',
+    // Banner: x=480, y=60
+    const bx = 480, by = 60;
+    this.add.rectangle(bx, by, 120, 28, 0xffffff).setDepth(1).setStrokeStyle(1, 0xdddddd);
+    this.add.text(bx, by - 5, 'D.A.S.H. MODERNIZATION INITIATIVE', {
+      fontFamily: 'monospace', fontSize: '3px', color: '#666666',
     }).setOrigin(0.5).setDepth(2);
-    this.add.text(935, 158, 'AUTHORIZED', {
+    this.add.text(bx, by + 5, 'DAY 1 OF 90', {
+      fontFamily: 'monospace', fontSize: '7px', color: '#cc3333', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(2);
+    const tape = this.add.graphics().setDepth(2);
+    tape.fillStyle(0xeeddaa, 0.6);
+    tape.fillRect(bx - 60, by - 14, 10, 4);
+    tape.fillRect(bx + 50, by - 14, 10, 4);
+
+    // Dashboard TV: x=720, y=80
+    this.add.image(720, 80, 'bp_dashboard_tv').setOrigin(0.5, 0.5).setDepth(1).setScale(0.85);
+
+    // Supply closet door: x=660 — spans wall to floor
+    this.add.image(660, FL + 2, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(3).setScale(0.65);
+
+    // B2 Level exit door: x=940
+    g.fillStyle(0x3a3a3a);
+    g.fillRect(925, 70, 35, FL - 68);
+    g.fillStyle(0x4a4a4a);
+    g.fillRect(927, 72, 31, FL - 72);
+    g.fillStyle(0x888888);
+    g.fillRect(952, 110, 3, 6);
+    this.add.text(942, 78, 'B2 LEVEL', {
+      fontFamily: 'monospace', fontSize: '4px', color: '#aaaaaa',
+    }).setOrigin(0.5).setDepth(2);
+    this.add.text(942, 86, 'AUTHORIZED', {
       fontFamily: 'monospace', fontSize: '3px', color: '#999999',
     }).setOrigin(0.5).setDepth(2);
   }
 
   private drawFurniture(): void {
-    // ── FAR LEFT: Coat rack ──
-    this.add.image(30, 190, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(10);
+    const FL = FLOOR_LINE;
 
-    // ── LEFT: Casey's desk (moved right to feel part of the office) ──
-    this.add.image(120, 220, 'bp_casey_desk').setOrigin(0.5, 1).setDepth(20);
+    // ── COAT RACK: x=50, base at FL ──
+    this.add.image(50, FL, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(10).setScale(0.55);
 
-    // ── LEFT-CENTER: Cubicle cluster (4 cubicles, Kevin in #2) ──
-    // Cubicle partition walls
-    const cubStartX = 210;
+    // ── CASEY'S DESK: x=140, base at FL ──
+    this.add.image(140, FL, 'bp_casey_desk').setOrigin(0.5, 1).setDepth(30).setScale(0.55);
+
+    // ── CUBICLES: x=250,330,410,490 — each 60px wide ──
+    const cubX = [250, 330, 410, 490];
+    const cubOccupied = [true, true, true, false]; // #4 vacant
     for (let i = 0; i < 4; i++) {
-      const cx = cubStartX + i * 55;
-      // Back wall
-      this.add.rectangle(cx, 172, 48, 4, 0x999999).setDepth(15);
-      // Side walls
-      this.add.rectangle(cx - 23, 188, 4, 28, 0x999999).setDepth(15);
-      this.add.rectangle(cx + 23, 188, 4, 28, 0x999999).setDepth(15);
-      // Desk surface inside cubicle
-      this.add.rectangle(cx, 196, 40, 16, 0x8a7e60).setDepth(16);
-      // Monitor on desk
-      this.add.rectangle(cx, 190, 10, 8, 0x222222).setDepth(17);
+      const cx = cubX[i];
+      // Cubicle back wall (~chest height = 33px above FL)
+      this.add.rectangle(cx, FL - 33, 56, 3, 0x9a9a9a).setDepth(15);
+      // Side partitions
+      this.add.rectangle(cx - 27, FL - 17, 3, 30, 0x9a9a9a).setDepth(15);
+      this.add.rectangle(cx + 27, FL - 17, 3, 30, 0x9a9a9a).setDepth(15);
+      // Desk surface (~waist height = 22px above FL)
+      this.add.rectangle(cx, FL - 22, 48, 10, 0x8a7e60).setDepth(28);
+      // Monitor
+      this.add.rectangle(cx, FL - 30, 10, 7, 0x222222).setDepth(29);
+
+      if (!cubOccupied[i]) {
+        // Vacant cubicle clutter
+        const dg = this.add.graphics().setDepth(29);
+        dg.fillStyle(0xeeeedd); dg.fillRect(cx - 10, FL - 27, 8, 5);
+        dg.fillStyle(0xddddcc); dg.fillRect(cx + 4, FL - 26, 6, 4);
+        dg.fillStyle(0x887744); dg.fillRect(cx + 14, FL - 32, 4, 6);
+        dg.fillStyle(0x665533); dg.fillRect(cx + 13, FL - 27, 6, 3);
+        this.add.text(cx, FL - 17, 'RESERVED', {
+          fontFamily: 'monospace', fontSize: '3px', color: '#cc4444',
+        }).setOrigin(0.5).setDepth(30);
+      }
     }
 
-    // ── CENTER-LEFT: Dead printer ──
-    this.add.image(420, 255, 'bp_dead_printer').setOrigin(0.5, 1).setDepth(20);
+    // ── PRINTER: x=570, base at FL ──
+    this.add.image(570, FL, 'bp_dead_printer').setOrigin(0.5, 1).setDepth(30).setScale(0.55);
 
-    // ── CENTER-LEFT WALL: Supply closet ──
-    this.add.image(460, 165, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(5);
+    // ── BREAK AREA: x=720..820 ──
+    // Counter (waist height)
+    this.add.rectangle(760, FL - 15, 100, 14, 0x8a7e60).setDepth(28);
+    this.add.rectangle(760, FL - 9, 100, 3, 0x7a6e50).setDepth(29);
+    // Coffee maker
+    this.add.image(730, FL - 16, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30).setScale(0.45);
+    // Microwave
+    this.add.image(760, FL - 16, 'bp_microwave').setOrigin(0.5, 1).setDepth(30).setScale(0.45);
+    // Dirty mugs
+    const mugG = this.add.graphics().setDepth(31);
+    mugG.fillStyle(0xddddcc); mugG.fillRect(780, FL - 22, 3, 5);
+    mugG.fillRect(785, FL - 21, 3, 4);
+    mugG.fillStyle(0xbbaa99); mugG.fillRect(790, FL - 22, 3, 5);
+    // Mini fridge (floor-standing)
+    this.add.image(810, FL, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(30).setScale(0.5);
 
-    // ── CENTER: Break area ──
-    // Counter surface
-    this.add.rectangle(550, 195, 120, 28, 0x8a7e60).setDepth(18);
-    this.add.rectangle(550, 207, 120, 5, 0x7a6e50).setDepth(19);
-    // Coffee maker on counter
-    this.add.image(510, 192, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(22);
-    // Microwave on counter
-    this.add.image(545, 192, 'bp_microwave').setOrigin(0.5, 1).setDepth(22);
-    // Mini fridge beside counter
-    this.add.image(590, 212, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(22);
-    // Dirty mugs on counter
-    const mugG = this.add.graphics().setDepth(23);
-    mugG.fillStyle(0xddddcc);
-    mugG.fillRect(558, 185, 6, 6);
-    mugG.fillRect(566, 186, 5, 5);
-    mugG.fillStyle(0xccbbaa);
-    mugG.fillRect(572, 185, 6, 6);
-
-    // ── RIGHT-CENTER: Priya's desk area ──
-    // Priya's desk (wider, more detailed)
-    this.add.rectangle(670, 200, 80, 36, 0x8a7e60).setDepth(20);
-    this.add.rectangle(670, 216, 80, 5, 0x7a6e50).setDepth(21);
-    // Dual monitors
-    this.add.rectangle(656, 190, 14, 10, 0x222222).setDepth(22);
-    this.add.rectangle(672, 190, 14, 10, 0x222222).setDepth(22);
-    // Colorful sticky note clusters on desk
-    const noteColors = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44, 0xcc88ff];
+    // ── PRIYA'S DESK: x=870..910 ──
+    this.add.rectangle(880, FL - 18, 70, 14, 0x8a7e60).setDepth(28);
+    this.add.rectangle(880, FL - 12, 70, 3, 0x7a6e50).setDepth(29);
+    this.add.rectangle(870, FL - 28, 10, 8, 0x222222).setDepth(30);
+    this.add.rectangle(884, FL - 28, 10, 8, 0x222222).setDepth(30);
+    // Sticky notes on bezels
+    const nc = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44, 0xcc88ff];
     for (let i = 0; i < 6; i++) {
-      this.add.rectangle(688 + (i % 3) * 5, 188 + Math.floor(i / 3) * 5, 4, 4, noteColors[i]).setDepth(22);
+      this.add.rectangle(898 + (i % 3) * 4, FL - 26 + Math.floor(i / 3) * 4, 3, 3, nc[i]).setDepth(30);
     }
-    // Whiteboard on wheels — PixelLab sprite
-    this.add.image(720, 195, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10);
+    // Thriving plant
+    const pl = this.add.graphics().setDepth(31);
+    pl.fillStyle(0x44aa44); pl.fillCircle(912, FL - 30, 5);
+    pl.fillStyle(0x55cc55); pl.fillCircle(910, FL - 33, 3);
+    pl.fillStyle(0x664422); pl.fillRect(910, FL - 26, 4, 5);
 
-    // ── RIGHT: War Room — PixelLab sprite ──
-    this.add.image(810, 200, 'bp_war_room').setOrigin(0.5, 1).setDepth(5);
-    this.add.text(810, 130, 'WAR ROOM', {
-      fontFamily: 'monospace', fontSize: '5px', color: '#666688',
-    }).setOrigin(0.5).setDepth(6);
+    // Whiteboard on wheels (next to Priya, slightly taller than Casey)
+    this.add.image(930, FL, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10).setScale(0.5);
   }
 
   private drawNPCs(): void {
-    // Priya at her desk — PixelLab sprite
-    this.add.image(660, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(200);
+    const FL = FLOOR_LINE;
+    // NPCs sit BEHIND desks — depth < desk depth (28) so desks cover lower body
+    // Scale: 48px sprites at 0.7 = ~34px. Casey's character is ~38px in his 64px frame.
+    const S = 0.7;
 
-    // Kevin in cubicle #2 (x=265) — PixelLab sprite
-    this.add.image(265, 202, 'bp_kevin').setOrigin(0.5, 1).setDepth(200);
+    // Cubicle #1 (x=250): typing woman
+    this.add.image(250, FL + 2, 'bp_npc_typing').setOrigin(0.5, 1).setDepth(20).setScale(S);
+    // Cubicle #2 (x=330): KEVIN
+    this.add.image(330, FL + 2, 'bp_kevin').setOrigin(0.5, 1).setDepth(20).setScale(S);
+    // Cubicle #3 (x=410): man on phone
+    this.add.image(410, FL + 2, 'bp_npc_phone').setOrigin(0.5, 1).setDepth(20).setScale(S);
+    // Cubicle #4 (x=490): VACANT
 
-    // Background NPCs in cubicles — PixelLab sprites
-    // Cubicle #1 (x=210): typing woman
-    this.add.image(210, 202, 'bp_npc_typing').setOrigin(0.5, 1).setDepth(190);
-    // Cubicle #3 (x=320): man on phone
-    this.add.image(320, 202, 'bp_npc_phone').setOrigin(0.5, 1).setDepth(190);
-    // Cubicle #4 (x=375): woman staring at screen
-    this.add.image(375, 202, 'bp_npc_staring').setOrigin(0.5, 1).setDepth(190);
+    // Priya at her desk (x=880) — 64px sprite, scale 0.55
+    this.add.image(878, FL + 2, 'bp_priya').setOrigin(0.5, 1).setDepth(20).setScale(0.55);
 
-    // Store NPC image refs for printer reaction
     this.bgNpcGraphics = [];
   }
 
@@ -799,7 +850,7 @@ export class BullpenScene extends Phaser.Scene {
     }
 
     // One NPC shouts — floating text above cubicle area
-    const shoutX = 320;
+    const shoutX = 330;
     const shoutY = 155;
     const shout = this.add.text(shoutX, shoutY, '"Hey, new person\nfixed the printer!"', {
       fontFamily: 'monospace', fontSize: '7px', color: '#ffffff',
@@ -863,14 +914,13 @@ export class BullpenScene extends Phaser.Scene {
 
   private setupNavGrid(): void {
     this.navGrid = new NavGrid(WALK_MIN_X, WALK_MIN_Y, WALK_MAX_X, WALK_MAX_Y);
-    this.navGrid.addObstacle(90, 200, 64, 24);       // Casey's desk
-    this.navGrid.addObstacle(187, 172, 230, 36);     // Cubicle cluster (4 cubicles)
-    this.navGrid.addObstacle(400, 230, 48, 30);      // Dead printer
-    this.navGrid.addObstacle(490, 195, 120, 22);     // Break counter
-    this.navGrid.addObstacle(630, 200, 80, 22);      // Priya's desk
-    this.navGrid.addObstacle(696, 145, 48, 55);      // Whiteboard
-    this.navGrid.addObstacle(746, 120, 128, 82);     // War Room
-    this.navGrid.addObstacle(910, 142, 50, 80);      // Hallway exit
+    this.navGrid.addObstacle(110, WALK_MIN_Y, 60, 14);   // Casey's desk
+    this.navGrid.addObstacle(223, WALK_MIN_Y, 300, 12);   // Cubicle row (250-490 + side walls)
+    this.navGrid.addObstacle(545, WALK_MIN_Y, 50, 14);    // Printer
+    this.navGrid.addObstacle(710, WALK_MIN_Y, 100, 10);   // Break counter
+    this.navGrid.addObstacle(800, WALK_MIN_Y, 20, 10);    // Mini fridge
+    this.navGrid.addObstacle(845, WALK_MIN_Y, 70, 12);    // Priya's desk
+    this.navGrid.addObstacle(910, WALK_MIN_Y, 40, 14);    // Whiteboard
   }
 
   // ── Ambient Life ──
@@ -888,7 +938,7 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_typing_0' }, { key: 'bp_typing_1' }, { key: 'bp_typing_2' }, { key: 'bp_typing_1' }],
       frameRate: 4, repeat: -1,
     });
-    const typingNpc = this.add.sprite(310, 185, 'bp_typing_0').setOrigin(0.5, 0.5).setDepth(191);
+    const typingNpc = this.add.sprite(250, FLOOR_LINE - 10, 'bp_typing_0').setOrigin(0.5, 0.5).setDepth(19).setScale(0.5);
     this.time.delayedCall(rOff(), () => typingNpc.play('bp_npc_typing'));
 
     // NPC at x=370: on phone
@@ -898,7 +948,7 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_phone_0' }, { key: 'bp_phone_1' }, { key: 'bp_phone_0' }],
       frameRate: 3, repeat: -1,
     });
-    const phoneNpc = this.add.sprite(370, 185, 'bp_phone_0').setOrigin(0.5, 0.5).setDepth(191);
+    const phoneNpc = this.add.sprite(410, FLOOR_LINE - 10, 'bp_phone_0').setOrigin(0.5, 0.5).setDepth(19).setScale(0.5);
     this.time.delayedCall(rOff() + 1000, () => phoneNpc.play('bp_npc_phone'));
 
     // 2. Coffee maker brew light blink
@@ -908,11 +958,11 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_brew_on' }, { key: 'bp_brew_off' }],
       frameRate: 1, repeat: -1,
     });
-    const brewLight = this.add.sprite(420, 183, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(24);
+    const brewLight = this.add.sprite(730, FLOOR_LINE - 20, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(31);
     brewLight.play('bp_brew_blink');
 
     // 3. Dashboard TV screen flicker
-    const tvFlicker = this.add.rectangle(700, 70, 76, 46, 0xffffff, 0).setDepth(4);
+    const tvFlicker = this.add.rectangle(720, 80, 55, 40, 0xffffff, 0).setDepth(4);
     const scheduleTvFlicker = () => {
       const delay = Phaser.Math.Between(20000, 30000);
       this.time.delayedCall(delay, () => {
@@ -965,7 +1015,7 @@ export class BullpenScene extends Phaser.Scene {
       ],
       frameRate: 2, repeat: -1,
     });
-    const priyaIdle = this.add.sprite(648, 178, 'bp_priya_write_0').setOrigin(0.5, 0.5).setDepth(201);
+    const priyaIdle = this.add.sprite(878, FLOOR_LINE - 8, 'bp_priya_write_0').setOrigin(0.5, 0.5).setDepth(19).setScale(0.45);
     this.time.delayedCall(rOff() + 2000, () => priyaIdle.play('bp_priya_idle'));
 
     // 6. Kevin idle: minimal typing
@@ -975,11 +1025,11 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_kevin_0' }, { key: 'bp_kevin_1' }],
       frameRate: 2, repeat: -1,
     });
-    const kevinIdle = this.add.sprite(248, 185, 'bp_kevin_0').setOrigin(0.5, 0.5).setDepth(201);
+    const kevinIdle = this.add.sprite(330, FLOOR_LINE - 10, 'bp_kevin_0').setOrigin(0.5, 0.5).setDepth(19).setScale(0.5);
     this.time.delayedCall(rOff() + 1500, () => kevinIdle.play('bp_kevin_idle'));
 
     // 7. Printer paper jam LED blink (if not fixed)
-    const printerLed = this.add.circle(275, 240, 2, 0xff4444).setDepth(22);
+    const printerLed = this.add.circle(578, FLOOR_LINE - 8, 2, 0xff4444).setDepth(31);
     const scheduleJamBlink = () => {
       this.time.delayedCall(800, () => {
         if (GameState.getInstance().hasFlag('printer_fixed')) {
