@@ -1,0 +1,27 @@
+{
+  "lines": [
+    "LOADING LEGACY MODULES.............. OK",
+    "MOUNTING SHARED DRIVE F:\\........... OK",
+    "CONNECTING TO MAINFRAME............. OK",
+    "AUTHENTICATING BADGE................ PENDING",
+    "INITIALIZING FICUS LIFE SUPPORT..... OK",
+    "BREWING COFFEE...................... FAILED",
+    "  >> LAST KNOWN CUP: BEHIND WATER COOLER, LOBBY",
+    "CHECKING PRINTER STATUS............. JAMMED",
+    "DEPLOYING EMPATHY MODULE............ OK",
+    "COUNTING REMAINING BUDGET........... $4.37",
+    "LOCATING MANAGER.................... NOT FOUND",
+    "DEFRAGMENTING BUREAUCRACY........... 47% (TIMEOUT)",
+    "UPDATING SECURITY POLICY............ DENIED",
+    "SYNCING OUTLOOK CALENDAR............ 1,247 CONFLICTS",
+    "LOADING MOTIVATIONAL POSTERS........ OK",
+    "CLEARING PRINTER QUEUE.............. 47 JOBS REMAINING",
+    "VERIFYING FOIA COMPLIANCE........... PROBABLY",
+    "INDEXING STICKY NOTES............... 2,847 FOUND",
+    "APPLYING CSS TO FORM 11-B.......... UNSUPPORTED",
+    "REBOOTING MORALE.................... LOW",
+    "CONTACTING HELP DESK............... HOLD TIME: 3 HRS"
+  ],
+  "newGameEnd": "ALL SYSTEMS NOMINAL. GOOD LUCK.\n\n> PRESS [ENTER] TO REPORT FOR DUTY_",
+  "continueEnd": "RESTORING SESSION................... OK\nREHEATING COFFEE.................... STILL FAILED\n\n> PRESS [ENTER] TO CONTINUE_"
+}

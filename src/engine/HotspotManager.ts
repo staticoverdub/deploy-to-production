@@ -22,6 +22,8 @@ export interface HotspotInteraction {
   itemRemoved?: string;
   soundEffect?: string;
   triggerSceneTransition?: string;
+  triggerEvent?: string;
+  triggerCutscene?: string;
   subHotspot?: string;
   delay?: number;
 }
@@ -58,46 +60,35 @@ const VERB_COLORS: Record<Verb, number> = {
   talkto: 0xff88ff,
 };
 
-const VERB_CURSORS: Record<Verb, string> = {
-  look: '🔍',
-  use: '⚙️',
-  pickup: '✋',
-  talkto: '💬',
-};
+// Verb priority for cursor display: talkto > use > pickup > look
+const VERB_PRIORITY: Verb[] = ['talkto', 'use', 'pickup', 'look'];
 
 export class HotspotManager {
   private scene: Phaser.Scene;
   private hotspots: Map<string, HotspotData> = new Map();
   private zones: Map<string, Phaser.GameObjects.Zone> = new Map();
-  private highlights: Map<string, Phaser.GameObjects.Graphics> = new Map();
   private verbMenu: Phaser.GameObjects.Container | null = null;
-  private cursorLabel: Phaser.GameObjects.Text | null = null;
   private fallbacks: Record<string, string[]> = {};
   private fallbackCounters: Record<string, number> = {};
   hintMessages: Record<string, string> = {};
   private sceneInputBound = false;
 
+  // Pending scene transition (deferred until after dialogue/monologue ends)
+  private _pendingSceneTransition: string | null = null;
+
+  // Debug
+  private debugGraphics: Phaser.GameObjects.Graphics | null = null;
+  private debugMode = false;
+
   // Callbacks
   onInteraction: ((hotspotId: string, verb: Verb, response: HotspotInteraction) => void) | null = null;
   onWalkTo: ((x: number, y: number, callback: () => void) => void) | null = null;
   getSelectedItem: (() => string | null) | null = null;
-  onSceneTransition: ((sceneKey: string) => void) | null = null;
+  onCursorChange: ((verb: string | null) => void) | null = null;
+  onTriggerEvent: ((eventName: string) => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.createCursorLabel();
-  }
-
-  private createCursorLabel(): void {
-    this.cursorLabel = this.scene.add.text(0, 0, '', { fontSize: '16px' });
-    this.cursorLabel.setDepth(1200);
-    this.cursorLabel.setVisible(false);
-
-    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (this.cursorLabel?.visible) {
-        this.cursorLabel.setPosition(pointer.x + 14, pointer.y - 4);
-      }
-    });
   }
 
   // --- Loading ---
@@ -156,33 +147,17 @@ export class HotspotManager {
     zone.setData('hotspotId', data.id);
     zone.input!.dropZone = true;
 
-    // Highlight
-    const gfx = this.scene.add.graphics();
-    gfx.setVisible(false);
-    gfx.setDepth(50);
-    gfx.lineStyle(1, 0xffffff, 0.5);
-    gfx.fillStyle(0xffffff, 0.08);
-    gfx.beginPath();
-    gfx.moveTo(poly[0], poly[1]);
-    for (let i = 2; i < poly.length; i += 2) {
-      gfx.lineTo(poly[i], poly[i + 1]);
-    }
-    gfx.closePath();
-    gfx.strokePath();
-    gfx.fillPath();
-
+    // No hover highlight — cursor change is the only feedback (LucasArts style)
     zone.on('pointerover', () => {
-      gfx.setVisible(true);
-      const defaultVerb = (data.verbs[0] ?? 'look') as Verb;
-      if (this.cursorLabel) {
-        this.cursorLabel.setText(VERB_CURSORS[defaultVerb] ?? '🔍');
-        this.cursorLabel.setVisible(true);
+      if (this.onCursorChange) {
+        this.onCursorChange(this.getPriorityVerb(data.verbs));
       }
     });
 
     zone.on('pointerout', () => {
-      gfx.setVisible(false);
-      if (this.cursorLabel) this.cursorLabel.setVisible(false);
+      if (this.onCursorChange) {
+        this.onCursorChange(null);
+      }
     });
 
     // Left-click
@@ -201,7 +176,6 @@ export class HotspotManager {
     });
 
     this.zones.set(data.id, zone);
-    this.highlights.set(data.id, gfx);
   }
 
   private bindSceneInput(): void {
@@ -227,7 +201,14 @@ export class HotspotManager {
     });
   }
 
-  // --- Verb menu ---
+  // --- Verb menu (LucasArts-style radial) ---
+  // Uses bounds-based click detection (no setInteractive on buttons)
+  // to avoid Phaser container input bugs.
+
+  private verbMenuButtons: { wx: number; wy: number; w: number; h: number; verb: Verb; hotspotId: string }[] = [];
+  private verbMenuTimeout: Phaser.Time.TimerEvent | null = null;
+  private verbMenuClickHandler: ((pointer: Phaser.Input.Pointer) => void) | null = null;
+  private verbMenuEscHandler: (() => void) | null = null;
 
   private showVerbMenu(x: number, y: number, hotspotId: string): void {
     this.closeVerbMenu();
@@ -236,48 +217,98 @@ export class HotspotManager {
     if (!data) return;
 
     const verbs: Verb[] = (data.verbs.length > 0 ? data.verbs : ['look', 'use', 'pickup', 'talkto']) as Verb[];
-    const container = this.scene.add.container(x, y);
-    container.setDepth(1000);
 
-    const radius = 40;
+    const radius = 36;
+    const btnW = 72;
+    const btnH = 24;
+    const menuExtent = radius + btnH / 2 + 4;
     const angles = this.distributeAngles(verbs.length);
 
-    const bgCircle = this.scene.add.graphics();
-    bgCircle.fillStyle(0x0a0a1a, 0.85);
-    bgCircle.fillCircle(0, 0, radius + 20);
-    bgCircle.lineStyle(1, 0x444466, 0.6);
-    bgCircle.strokeCircle(0, 0, radius + 20);
-    container.add(bgCircle);
+    // Clamp position so the full wheel stays within the canvas
+    const cam = this.scene.cameras.main;
+    const cx = Phaser.Math.Clamp(x, menuExtent + 2, cam.width - menuExtent - 2);
+    const cy = Phaser.Math.Clamp(y, menuExtent + 2, cam.height - menuExtent - 2);
+
+    const container = this.scene.add.container(cx, cy);
+    container.setDepth(1000).setScrollFactor(0);
+
+    // Dark translucent background disc
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x0a0a1a, 0.88);
+    bg.fillCircle(0, 0, menuExtent);
+    bg.lineStyle(2, 0x333355, 0.8);
+    bg.strokeCircle(0, 0, menuExtent);
+    container.add(bg);
+
+    // Center dot
+    const dot = this.scene.add.graphics();
+    dot.fillStyle(0x444466, 1);
+    dot.fillCircle(0, 0, 3);
+    container.add(dot);
+
+    // Store button world positions for bounds-based click detection
+    this.verbMenuButtons = [];
 
     verbs.forEach((verb, i) => {
       const vx = Math.cos(angles[i]) * radius;
       const vy = Math.sin(angles[i]) * radius;
 
-      const label = this.scene.add.text(vx, vy, `${VERB_CURSORS[verb] ?? ''} ${VERB_LABELS[verb] ?? verb}`, {
-        fontFamily: 'monospace', fontSize: '9px', color: '#cccccc',
+      const btnBg = this.scene.add.rectangle(vx, vy, btnW, btnH, 0x1a1a2e, 0.95);
+      btnBg.setStrokeStyle(1, 0x444466);
+
+      const label = this.scene.add.text(vx, vy, VERB_LABELS[verb] ?? verb, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc', fontStyle: 'bold',
+      }).setOrigin(0.5);
+
+      container.add([btnBg, label]);
+
+      // Store world-space bounds for this button
+      this.verbMenuButtons.push({
+        wx: cx + vx, wy: cy + vy,
+        w: btnW, h: btnH,
+        verb, hotspotId,
       });
-      label.setOrigin(0.5);
-
-      const hitArea = this.scene.add.rectangle(vx, vy, 68, 16);
-      hitArea.setFillStyle(0x000000, 0.01);
-      hitArea.setInteractive({ useHandCursor: true });
-      hitArea.on('pointerover', () => { label.setColor('#ffffff'); hitArea.setFillStyle(VERB_COLORS[verb] ?? 0xaaaaaa, 0.3); });
-      hitArea.on('pointerout', () => { label.setColor('#cccccc'); hitArea.setFillStyle(0x000000, 0.01); });
-      hitArea.on('pointerdown', () => { this.closeVerbMenu(); this.triggerInteraction(hotspotId, verb); });
-
-      container.add([hitArea, label]);
     });
 
-    const cam = this.scene.cameras.main;
-    const menuR = radius + 20;
-    container.setX(Phaser.Math.Clamp(x, menuR, cam.width - menuR));
-    container.setY(Phaser.Math.Clamp(y, menuR, cam.height - menuR));
-
     this.verbMenu = container;
+
+    // Global left-click handler: check button hits or close if outside
+    this.verbMenuClickHandler = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) return;
+      const px = pointer.x, py = pointer.y;
+
+      // Check each button
+      for (const btn of this.verbMenuButtons) {
+        if (px >= btn.wx - btn.w / 2 && px <= btn.wx + btn.w / 2
+          && py >= btn.wy - btn.h / 2 && py <= btn.wy + btn.h / 2) {
+          if (this.scene.cache.audio.exists('sfx_ui_click')) {
+            this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
+          }
+          const v = btn.verb;
+          const hid = btn.hotspotId;
+          this.closeVerbMenu();
+          this.triggerInteraction(hid, v);
+          return;
+        }
+      }
+
+      // Click was outside all buttons — close menu
+      this.closeVerbMenu();
+    };
+    this.scene.input.on('pointerdown', this.verbMenuClickHandler);
+
+    // Escape key closes menu
+    this.verbMenuEscHandler = () => this.closeVerbMenu();
+    this.scene.input.keyboard?.once('keydown-ESC', this.verbMenuEscHandler);
+
+    // Auto-close after 10 seconds
+    this.verbMenuTimeout = this.scene.time.delayedCall(10000, () => this.closeVerbMenu());
   }
 
   private distributeAngles(count: number): number[] {
-    if (count <= 4) return [-Math.PI / 2, 0, Math.PI / 2, Math.PI].slice(0, count);
+    if (count <= 4) {
+      return [-Math.PI / 2, 0, Math.PI / 2, Math.PI].slice(0, count);
+    }
     const angles: number[] = [];
     for (let i = 0; i < count; i++) {
       angles.push(-Math.PI / 2 + (2 * Math.PI * i) / count);
@@ -286,7 +317,23 @@ export class HotspotManager {
   }
 
   closeVerbMenu(): void {
-    if (this.verbMenu) { this.verbMenu.destroy(); this.verbMenu = null; }
+    if (this.verbMenu) {
+      this.verbMenu.destroy();
+      this.verbMenu = null;
+    }
+    this.verbMenuButtons = [];
+    if (this.verbMenuClickHandler) {
+      this.scene.input.off('pointerdown', this.verbMenuClickHandler);
+      this.verbMenuClickHandler = null;
+    }
+    if (this.verbMenuEscHandler) {
+      this.scene.input.keyboard?.off('keydown-ESC', this.verbMenuEscHandler);
+      this.verbMenuEscHandler = null;
+    }
+    if (this.verbMenuTimeout) {
+      this.verbMenuTimeout.destroy();
+      this.verbMenuTimeout = null;
+    }
   }
 
   // --- Interaction resolution ---
@@ -328,10 +375,20 @@ export class HotspotManager {
     }
 
     // 3. Check variants (verb__*) first, then base verb
+    // Sort variants: ones WITH conditions first (more specific match wins)
     const variants = candidates.filter(([k]) => k.includes('__'));
     const base = candidates.filter(([k]) => !k.includes('__'));
 
-    for (const [, interaction] of variants) {
+    // Conditioned variants first, then unconditioned variants
+    const conditioned = variants.filter(([, i]) => i.condition && (i.condition.flags || i.condition.notFlags || i.condition.notItems));
+    const unconditioned = variants.filter(([, i]) => !i.condition || !(i.condition.flags || i.condition.notFlags || i.condition.notItems));
+
+    for (const [, interaction] of conditioned) {
+      if (this.checkCondition(interaction.condition, state)) {
+        return interaction;
+      }
+    }
+    for (const [, interaction] of unconditioned) {
       if (this.checkCondition(interaction.condition, state)) {
         return interaction;
       }
@@ -395,16 +452,39 @@ export class HotspotManager {
     if (response.itemRemoved) {
       state.removeItem(response.itemRemoved);
     }
-    if (response.soundEffect) {
-      console.log(`[Sound Effect] ${response.soundEffect}`);
+    if (response.soundEffect && this.scene.cache.audio.exists(response.soundEffect)) {
+      this.scene.sound.play(response.soundEffect, { volume: 0.4 });
     }
-    if (response.triggerSceneTransition && this.onSceneTransition) {
-      this.onSceneTransition(response.triggerSceneTransition);
+    if (response.triggerSceneTransition) {
+      this._pendingSceneTransition = response.triggerSceneTransition;
+    }
+    if (response.triggerEvent && this.onTriggerEvent) {
+      // Fire after a short delay so the dialogue text shows first
+      this.scene.time.delayedCall(200, () => {
+        if (this.onTriggerEvent) this.onTriggerEvent(response.triggerEvent!);
+      });
     }
 
     if (this.onInteraction) {
       this.onInteraction(hotspotId, verb, response);
     }
+  }
+
+  private getPriorityVerb(verbs: string[]): string {
+    for (const v of VERB_PRIORITY) {
+      if (verbs.includes(v)) return v;
+    }
+    return verbs[0] ?? 'look';
+  }
+
+  // --- Pending transition ---
+
+  getPendingTransition(): string | null {
+    return this._pendingSceneTransition;
+  }
+
+  clearPendingTransition(): void {
+    this._pendingSceneTransition = null;
   }
 
   // --- Utility ---
@@ -424,19 +504,82 @@ export class HotspotManager {
 
   removeHotspot(id: string): void {
     this.zones.get(id)?.destroy();
-    this.highlights.get(id)?.destroy();
     this.zones.delete(id);
-    this.highlights.delete(id);
     this.hotspots.delete(id);
+  }
+
+  toggleDebug(): void {
+    this.debugMode = !this.debugMode;
+    if (this.debugMode) {
+      this.drawDebugOverlays();
+    } else {
+      this.debugGraphics?.destroy();
+      this.debugGraphics = null;
+    }
+  }
+
+  private drawDebugOverlays(): void {
+    this.debugGraphics?.destroy();
+    this.debugGraphics = this.scene.add.graphics().setDepth(5000);
+    const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x88ff00];
+    let colorIdx = 0;
+
+    for (const [id, data] of this.hotspots) {
+      const poly = data.polygon;
+      const color = colors[colorIdx % colors.length];
+      colorIdx++;
+
+      // Draw filled polygon
+      this.debugGraphics.fillStyle(color, 0.25);
+      this.debugGraphics.lineStyle(1, color, 0.8);
+
+      if (poly.length >= 6) {
+        this.debugGraphics.beginPath();
+        this.debugGraphics.moveTo(poly[0], poly[1]);
+        for (let i = 2; i < poly.length; i += 2) {
+          this.debugGraphics.lineTo(poly[i], poly[i + 1]);
+        }
+        this.debugGraphics.closePath();
+        this.debugGraphics.fillPath();
+        this.debugGraphics.strokePath();
+      } else {
+        // Fallback: draw bounding box from zone
+        const zone = this.zones.get(id);
+        if (zone) {
+          const b = zone.getBounds();
+          this.debugGraphics.fillRect(b.x, b.y, b.width, b.height);
+          this.debugGraphics.strokeRect(b.x, b.y, b.width, b.height);
+        }
+      }
+
+      // Label
+      const cx = poly.length >= 2 ? (poly[0] + poly[2]) / 2 : data.position.x;
+      const cy = poly.length >= 4 ? poly[1] - 4 : data.position.y - 10;
+      const label = this.scene.add.text(cx, cy, id, {
+        fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12px', color: '#ffffff',
+        backgroundColor: '#000000cc', padding: { x: 3, y: 2 },
+      }).setOrigin(0.5, 1).setDepth(5001);
+      // Store for cleanup
+      if (!this.debugGraphics) return;
+      (this.debugGraphics as any)._debugLabels = (this.debugGraphics as any)._debugLabels || [];
+      (this.debugGraphics as any)._debugLabels.push(label);
+    }
+
+    // Override destroy to also clean up labels
+    const origDestroy = this.debugGraphics.destroy.bind(this.debugGraphics);
+    this.debugGraphics.destroy = () => {
+      const labels = (this.debugGraphics as any)?._debugLabels;
+      if (labels) for (const l of labels) l.destroy();
+      origDestroy();
+    };
   }
 
   destroy(): void {
     this.closeVerbMenu();
-    this.cursorLabel?.destroy();
+    this.debugGraphics?.destroy();
+    this.debugGraphics = null;
     for (const zone of this.zones.values()) zone.destroy();
-    for (const hl of this.highlights.values()) hl.destroy();
     this.zones.clear();
-    this.highlights.clear();
     this.hotspots.clear();
   }
 }

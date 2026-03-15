@@ -15,6 +15,10 @@ export class GameState {
   private relationships: Record<string, number> = {};
   private sceneData: Record<string, Record<string, unknown>> = {};
 
+  // Auto-save debounce
+  private autoSaveTimer: number | null = null;
+  private autoSaveEnabled = false;
+
   private constructor() {}
 
   static getInstance(): GameState {
@@ -28,6 +32,7 @@ export class GameState {
 
   setFlag(key: string, value: boolean | string = true): void {
     this.flags[key] = value;
+    this.scheduleAutoSave();
   }
 
   getFlag(key: string): boolean | string | undefined {
@@ -47,11 +52,13 @@ export class GameState {
   addItem(itemId: string): void {
     if (!this.inventory.includes(itemId)) {
       this.inventory.push(itemId);
+      this.scheduleAutoSave();
     }
   }
 
   removeItem(itemId: string): void {
     this.inventory = this.inventory.filter((id) => id !== itemId);
+    this.scheduleAutoSave();
   }
 
   hasItem(itemId: string): boolean {
@@ -66,6 +73,7 @@ export class GameState {
 
   setRelationship(npcId: string, value: number): void {
     this.relationships[npcId] = Math.max(0, Math.min(3, value));
+    this.scheduleAutoSave();
   }
 
   getRelationship(npcId: string): number {
@@ -88,6 +96,29 @@ export class GameState {
 
   getSceneData<T = unknown>(sceneKey: string, key: string): T | undefined {
     return this.sceneData[sceneKey]?.[key] as T | undefined;
+  }
+
+  // --- Auto-save ---
+
+  enableAutoSave(): void {
+    this.autoSaveEnabled = true;
+  }
+
+  disableAutoSave(): void {
+    this.autoSaveEnabled = false;
+    if (this.autoSaveTimer !== null) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = null;
+    }
+  }
+
+  private scheduleAutoSave(): void {
+    if (!this.autoSaveEnabled) return;
+    if (this.autoSaveTimer !== null) return;
+    this.autoSaveTimer = window.setTimeout(() => {
+      this.save();
+      this.autoSaveTimer = null;
+    }, 100);
   }
 
   // --- Persistence ---
@@ -123,6 +154,7 @@ export class GameState {
   }
 
   reset(): void {
+    this.disableAutoSave();
     this.flags = {};
     this.inventory = [];
     this.relationships = {};

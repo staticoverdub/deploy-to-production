@@ -32,6 +32,51 @@
       "icon": "icon_flyer",
       "usableOn": [],
       "carriesForward": true
+    },
+    "faded_password_note": {
+      "id": "faded_password_note",
+      "name": "Faded Password Note",
+      "description": "A crumpled sticky note from the coat rack jacket. Partially legible: 'Srv rm pw: adm_n1___'. The rest is smudged beyond recognition.",
+      "icon": "icon_note_faded",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "umbrella": {
+      "id": "umbrella",
+      "name": "Umbrella",
+      "description": "A forgotten umbrella from the coat rack. It's one of those cheap collapsible ones that breaks the second it actually rains.",
+      "icon": "icon_umbrella",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "supply_closet_code": {
+      "id": "supply_closet_code",
+      "name": "Supply Closet Code",
+      "description": "A sticky note from Priya. '1-9-9-7.' The year the system was deployed. Of course it is.",
+      "icon": "icon_note_code",
+      "usableOn": ["supply_closet"]
+    },
+    "laptop": {
+      "id": "laptop",
+      "name": "Laptop",
+      "description": "A brand new government-issue laptop, still in its plastic wrap. It's not a MacBook, but it'll compile code.",
+      "icon": "icon_laptop",
+      "usableOn": ["casey_desk"]
+    },
+    "lobby_coffee": {
+      "id": "lobby_coffee",
+      "name": "Abandoned Coffee",
+      "description": "A full cup of still-warm coffee that someone left behind the water cooler. It's government-grade, which means it could strip paint or fuel a rocket. Either way, it'll keep me going.",
+      "icon": "icon_cup_water",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "nt_admin_guide": {
+      "id": "nt_admin_guide",
+      "name": "NT Admin Guide",
+      "description": "Windows NT Server Administration Guide, copyright 1998. Chapter 7: 'Configuring Your Network for the Information Superhighway.' Completely useless but I can't bring myself to throw it away.",
+      "icon": "icon_note_faded",
+      "usableOn": []
     }
   },
 

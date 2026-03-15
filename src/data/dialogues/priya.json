@@ -1,0 +1,477 @@
+{
+  "_README": "IMPORTANT FOR CLAUDE CODE: All terminal nodes (autoAdvance: null, empty options) MUST dismiss on click. Nodes with itemGiven MUST also dismiss on click after the item is added. These are the same patterns that caused freezes in the Lobby.",
+
+  "priya_first_meeting": {
+    "id": "priya_first_meeting",
+    "startNode": "pf_open",
+    "nodes": {
+      "pf_open": {
+        "id": "pf_open",
+        "speaker": "priya",
+        "portrait": "priya_sizing_up",
+        "text": "You must be the CfA fellow. Voss mentioned you. I'm Priya Kapoor, UX Research.",
+        "animation": "priya_glances_up",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_casey_intro"
+      },
+      "pf_casey_intro": {
+        "id": "pf_casey_intro",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "Casey Park. Director Voss told me to find you.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_everyone"
+      },
+      "pf_priya_everyone": {
+        "id": "pf_priya_everyone",
+        "speaker": "priya",
+        "portrait": "priya_wry",
+        "text": "She tells everyone to find me. I'm starting to think she just doesn't want to deal with the new people herself.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "I saw your whiteboard. You've mapped the entire application process. That's impressive.",
+            "nextNodeId": "pf_whiteboard_path",
+            "condition": { "flags": { "examined_priya_whiteboard": true } },
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "I'm a Solutions Engineer. I'm here to build, not just study. What's broken?",
+            "nextNodeId": "pf_direct_path",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "The dashboard in the hall says 47-day processing time and a 12,000 application backlog. That's not a backlog, that's a crisis.",
+            "nextNodeId": "pf_dashboard_path_mrs_g",
+            "condition": { "flags": { "casey_seen_dashboard": true, "talked_to_mrs_g": true } },
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "The dashboard in the hall says 47-day processing time and a 12,000 application backlog. That's not a backlog, that's a crisis.",
+            "nextNodeId": "pf_dashboard_path_no_mrs_g",
+            "condition": { "flags": { "casey_seen_dashboard": true }, "notFlags": { "talked_to_mrs_g": true } },
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "pf_whiteboard_path": {
+        "id": "pf_whiteboard_path",
+        "speaker": "priya",
+        "portrait": "priya_surprised_pleased",
+        "text": "You actually looked at it. Most people walk right past. That board represents six months of user research that nobody asked for and nobody funded.",
+        "animation": "priya_genuinely_pleased",
+        "flagsSet": {},
+        "relationshipChanges": { "priya": 2 },
+        "options": [],
+        "autoAdvance": "pf_casey_47_steps"
+      },
+      "pf_casey_47_steps": {
+        "id": "pf_casey_47_steps",
+        "speaker": "casey",
+        "portrait": "casey_curious",
+        "text": "47 steps to process one application. Who designed this?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_coral_reef"
+      },
+      "pf_coral_reef": {
+        "id": "pf_coral_reef",
+        "speaker": "priya",
+        "portrait": "priya_wry",
+        "text": "Nobody 'designed' it. It evolved. Like a coral reef, except ugly and it hurts people.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_converge_level"
+      },
+
+      "pf_direct_path": {
+        "id": "pf_direct_path",
+        "speaker": "priya",
+        "portrait": "priya_arms_crossed",
+        "text": "'Here to build.' I've heard that before. The last engineer spent three months writing a requirements document and then their fellowship ended.",
+        "animation": "priya_leans_back_arms_crossed",
+        "flagsSet": {},
+        "relationshipChanges": { "priya": 1 },
+        "options": [],
+        "autoAdvance": "pf_casey_code"
+      },
+      "pf_casey_code": {
+        "id": "pf_casey_code",
+        "speaker": "casey",
+        "portrait": "casey_determined",
+        "text": "I don't write requirements documents. I write code.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_well_see"
+      },
+      "pf_well_see": {
+        "id": "pf_well_see",
+        "speaker": "priya",
+        "portrait": "priya_guarded",
+        "text": "We'll see.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_converge_level"
+      },
+
+      "pf_dashboard_path_mrs_g": {
+        "id": "pf_dashboard_path_mrs_g",
+        "speaker": "priya",
+        "portrait": "priya_really_looking",
+        "text": "You said crisis. Not 'opportunity.' Not 'challenge.' Crisis. That's the right word.",
+        "animation": "priya_pauses_looks_at_casey",
+        "flagsSet": {},
+        "relationshipChanges": { "priya": 2 },
+        "options": [],
+        "autoAdvance": "pf_casey_12000_mrs_g"
+      },
+      "pf_casey_12000_mrs_g": {
+        "id": "pf_casey_12000_mrs_g",
+        "speaker": "casey",
+        "portrait": "casey_sincere",
+        "text": "12,000 people waiting. That's not abstract. Those are real people like the woman I met in the lobby.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_lobby"
+      },
+      "pf_priya_lobby": {
+        "id": "pf_priya_lobby",
+        "speaker": "priya",
+        "portrait": "priya_curious",
+        "text": "You met someone in the lobby?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_casey_mrs_g"
+      },
+      "pf_casey_mrs_g": {
+        "id": "pf_casey_mrs_g",
+        "speaker": "casey",
+        "portrait": "casey_sincere",
+        "text": "Mrs. Gutierrez. She's submitted the same documents every month for her benefits review. The system keeps losing them.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_dolores"
+      },
+      "pf_priya_dolores": {
+        "id": "pf_priya_dolores",
+        "speaker": "priya",
+        "portrait": "priya_softening",
+        "text": "I know Dolores. She's one of my research participants. She showed you her folder, didn't she?",
+        "animation": "priya_visibly_softens",
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_converge_level"
+      },
+
+      "pf_dashboard_path_no_mrs_g": {
+        "id": "pf_dashboard_path_no_mrs_g",
+        "speaker": "priya",
+        "portrait": "priya_really_looking",
+        "text": "You said crisis. Not 'opportunity.' Not 'challenge.' Crisis. That's the right word.",
+        "animation": "priya_pauses_looks_at_casey",
+        "flagsSet": {},
+        "relationshipChanges": { "priya": 2 },
+        "options": [],
+        "autoAdvance": "pf_casey_12000_no_mrs_g"
+      },
+      "pf_casey_12000_no_mrs_g": {
+        "id": "pf_casey_12000_no_mrs_g",
+        "speaker": "casey",
+        "portrait": "casey_sincere",
+        "text": "12,000 people waiting for help they were promised. That's not a number. That's a crisis.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_converge_level"
+      },
+
+      "pf_converge_level": {
+        "id": "pf_converge_level",
+        "speaker": "priya",
+        "portrait": "priya_serious",
+        "text": "Look, I'll level with you. I've been here two years. I know what's wrong. I've documented it. I've presented it. What I haven't had is an engineer who stays long enough to actually fix it.",
+        "animation": null,
+        "flagsSet": { "met_priya": true },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_casey_computer"
+      },
+      "pf_casey_computer": {
+        "id": "pf_casey_computer",
+        "speaker": "casey",
+        "portrait": "casey_sheepish",
+        "text": "I'm not going anywhere. But first things first \u2014 I need a computer. My desk is completely empty.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_supply"
+      },
+      "pf_priya_supply": {
+        "id": "pf_priya_supply",
+        "speaker": "priya",
+        "portrait": "priya_half_laugh",
+        "text": "Of course it is. Welcome to D.A.S.H. There are laptops in the supply closet, but it's keypad locked and the only person who knew the code retired last year.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [
+          {
+            "text": "Do you know the code?",
+            "nextNodeId": "pf_code_path",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          },
+          {
+            "text": "Can we just break into it?",
+            "nextNodeId": "pf_break_in",
+            "condition": {},
+            "flagsSet": {},
+            "relationshipChanges": {}
+          }
+        ]
+      },
+
+      "pf_break_in": {
+        "id": "pf_break_in",
+        "speaker": "priya",
+        "portrait": "priya_wry",
+        "text": "A federal employee breaking into government property on day one. That's a bold strategy. I respect it, but no.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_code_path"
+      },
+
+      "pf_code_path": {
+        "id": "pf_code_path",
+        "speaker": "priya",
+        "portrait": "priya_leaning_back",
+        "text": "I figured it out about a year ago. Tried every four-digit combination that a GS-12 IT specialist would use as a password. Got it on the third try.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_casey_1234"
+      },
+      "pf_casey_1234": {
+        "id": "pf_casey_1234",
+        "speaker": "casey",
+        "portrait": "casey_amused",
+        "text": "Let me guess. 1234?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_1997"
+      },
+      "pf_priya_1997": {
+        "id": "pf_priya_1997",
+        "speaker": "priya",
+        "portrait": "priya_wry",
+        "text": "Close. 1997. The year the system was deployed. But I'm not just giving it to you.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_casey_why"
+      },
+      "pf_casey_why": {
+        "id": "pf_casey_why",
+        "speaker": "casey",
+        "portrait": "casey_curious",
+        "text": "Why not?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pf_priya_prove"
+      },
+      "pf_priya_prove": {
+        "id": "pf_priya_prove",
+        "speaker": "priya",
+        "portrait": "priya_serious",
+        "text": "Because the last person I helped got a laptop, spent a week on it, and then used it exclusively for writing status update emails. Show me you're going to actually do something and the code is yours.",
+        "animation": null,
+        "flagsSet": { "priya_test_active": true },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "priya_after_proof_whiteboard": {
+    "id": "priya_after_proof_whiteboard",
+    "startNode": "paw_open",
+    "triggerCondition": {
+      "flags": { "priya_test_active": true, "whiteboard_insight": true },
+      "notFlags": { "prove_yourself_complete": true }
+    },
+    "nodes": {
+      "paw_open": {
+        "id": "paw_open",
+        "speaker": "casey",
+        "portrait": "casey_confident",
+        "text": "Steps 12 through 17 are redundant. The system asks for documents it already has because the stages don't share a database.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "paw_priya_react"
+      },
+      "paw_priya_react": {
+        "id": "paw_priya_react",
+        "speaker": "priya",
+        "portrait": "priya_impressed",
+        "text": "...you saw that in five minutes? I spent three weeks getting leadership to understand that.",
+        "animation": "priya_genuinely_impressed",
+        "flagsSet": { "prove_yourself_complete": true },
+        "relationshipChanges": { "priya": 1 },
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "priya_after_proof_printer": {
+    "id": "priya_after_proof_printer",
+    "startNode": "pap_open",
+    "triggerCondition": {
+      "flags": { "priya_test_active": true, "printer_fixed": true },
+      "notFlags": { "prove_yourself_complete": true }
+    },
+    "nodes": {
+      "pap_open": {
+        "id": "pap_open",
+        "speaker": "priya",
+        "portrait": "priya_impressed",
+        "text": "You fixed the printer. That thing has been jammed for two weeks and nobody bothered. You've been here an hour and you already solved a problem nobody else would touch.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pap_casey_react"
+      },
+      "pap_casey_react": {
+        "id": "pap_casey_react",
+        "speaker": "casey",
+        "portrait": "casey_sheepish",
+        "text": "It wasn't exactly brain surgery.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pap_priya_rare"
+      },
+      "pap_priya_rare": {
+        "id": "pap_priya_rare",
+        "speaker": "priya",
+        "portrait": "priya_warm",
+        "text": "No. But it showed you're the kind of person who sees a broken thing and fixes it instead of filing a ticket. That's rare here.",
+        "animation": null,
+        "flagsSet": { "prove_yourself_complete": true },
+        "relationshipChanges": { "priya": 1 },
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "priya_gives_code": {
+    "id": "priya_gives_code",
+    "startNode": "pgc_open",
+    "triggerCondition": {
+      "flags": { "prove_yourself_complete": true },
+      "notFlags": { "has_supply_code": true }
+    },
+    "nodes": {
+      "pgc_open": {
+        "id": "pgc_open",
+        "speaker": "priya",
+        "portrait": "priya_warm",
+        "text": "Okay. You actually did the thing. That's more than anyone else has managed on day one.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pgc_casey_closet"
+      },
+      "pgc_casey_closet": {
+        "id": "pgc_casey_closet",
+        "speaker": "casey",
+        "portrait": "casey_hopeful",
+        "text": "So... the supply closet?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "pgc_priya_code"
+      },
+      "pgc_priya_code": {
+        "id": "pgc_priya_code",
+        "speaker": "priya",
+        "portrait": "priya_genuine_smile",
+        "text": "1-9-9-7. Go get yourself a laptop. And when you're set up, come find me. We've got 89 days left and a lot of work to do.",
+        "animation": "priya_writes_sticky_note_hands_it",
+        "flagsSet": { "has_supply_code": true, "priya_ally": true },
+        "relationshipChanges": { "priya": 1 },
+        "itemGiven": "supply_closet_code",
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "priya_default": {
+    "id": "priya_default",
+    "startNode": "pd_open",
+    "triggerCondition": {
+      "flags": { "has_supply_code": true }
+    },
+    "nodes": {
+      "pd_open": {
+        "id": "pd_open",
+        "speaker": "priya",
+        "portrait": "priya_warm",
+        "text": "Go set up your laptop. We've got work to do.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  }
+}

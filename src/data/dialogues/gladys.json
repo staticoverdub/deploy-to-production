@@ -2,6 +2,9 @@
   "gladys_first_contact": {
     "id": "gladys_first_contact",
     "startNode": "gc_open",
+    "triggerCondition": {
+      "notFlags": { "badge_quest_active": true }
+    },
     "nodes": {
       "gc_open": {
         "id": "gc_open",
@@ -395,6 +398,27 @@
         "flagsSet": {},
         "relationshipChanges": {},
         "itemGiven": "paper_cup",
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "gladys_post_badge": {
+    "id": "gladys_post_badge",
+    "startNode": "gpb_open",
+    "triggerCondition": {
+      "flags": { "has_temp_badge": true }
+    },
+    "nodes": {
+      "gpb_open": {
+        "id": "gpb_open",
+        "speaker": "gladys",
+        "portrait": "gladys_neutral",
+        "text": "You've got your badge. Third floor. Go before I change my mind about the crossword answer.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
         "options": [],
         "autoAdvance": null
       }

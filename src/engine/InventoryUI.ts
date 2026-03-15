@@ -105,12 +105,17 @@ export class InventoryUI {
         slotContainer.add(label);
       }
 
-      slotBg.setInteractive({ useHandCursor: true });
+      slotBg.setInteractive();
+      slotBg.setScrollFactor(0);
 
       slotBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         if (pointer.rightButtonDown()) {
           if (this.onExamineItem) this.onExamineItem(def.description);
           return;
+        }
+
+        if (this.scene.cache.audio.exists('sfx_ui_click')) {
+          this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
         }
 
         if (this.selectedItem === itemId) {
@@ -144,7 +149,7 @@ export class InventoryUI {
 
     const color = getItemColor(itemId);
     this.ghostIcon = this.scene.add.container(0, 0);
-    this.ghostIcon.setDepth(1100);
+    this.ghostIcon.setDepth(1100).setScrollFactor(0);
 
     if (this.scene.textures.exists(ITEM_DEFS[itemId]?.icon ?? '')) {
       const ghost = this.scene.add.image(0, 0, ITEM_DEFS[itemId].icon);

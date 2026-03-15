@@ -1,0 +1,98 @@
+{
+  "kevin_talk_1": {
+    "id": "kevin_talk_1",
+    "startNode": "k1_open",
+    "triggerCondition": {
+      "notFlags": { "kevin_talked_1": true }
+    },
+    "nodes": {
+      "k1_open": {
+        "id": "k1_open",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "Hi, I'm Casey Park, new Solutions Engin\u2014",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "k1_ticket"
+      },
+      "k1_ticket": {
+        "id": "k1_ticket",
+        "speaker": "kevin",
+        "portrait": "kevin_not_looking",
+        "text": "Ticket number?",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "k1_casey_react"
+      },
+      "k1_casey_react": {
+        "id": "k1_casey_react",
+        "speaker": "casey",
+        "portrait": "casey_sheepish",
+        "text": "I'm not a... never mind.",
+        "animation": null,
+        "flagsSet": { "kevin_talked_1": true },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "kevin_talk_2": {
+    "id": "kevin_talk_2",
+    "startNode": "k2_open",
+    "triggerCondition": {
+      "flags": { "kevin_talked_1": true },
+      "notFlags": { "kevin_talked_2": true }
+    },
+    "nodes": {
+      "k2_open": {
+        "id": "k2_open",
+        "speaker": "casey",
+        "portrait": "casey_friendly",
+        "text": "Hey, I just wanted to intro\u2014",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": "k2_doesnt_exist"
+      },
+      "k2_doesnt_exist": {
+        "id": "k2_doesnt_exist",
+        "speaker": "kevin",
+        "portrait": "kevin_not_looking",
+        "text": "If it's not in the ticketing system, it doesn't exist.",
+        "animation": null,
+        "flagsSet": { "kevin_talked_2": true },
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  },
+
+  "kevin_talk_3": {
+    "id": "kevin_talk_3",
+    "startNode": "k3_open",
+    "triggerCondition": {
+      "flags": { "kevin_talked_2": true }
+    },
+    "nodes": {
+      "k3_open": {
+        "id": "k3_open",
+        "speaker": "casey",
+        "portrait": "casey_amused",
+        "text": "Kevin seems to have achieved a state of perfect office zen. He cannot be disturbed. I almost admire it.",
+        "animation": null,
+        "flagsSet": {},
+        "relationshipChanges": {},
+        "options": [],
+        "autoAdvance": null
+      }
+    }
+  }
+}
