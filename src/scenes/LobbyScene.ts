@@ -28,6 +28,11 @@ import coolerUrl from '../assets/tilesets/custom/water_cooler.png';
 import chairsUrl from '../assets/tilesets/custom/waiting_chairs.png';
 import flagUrl from '../assets/tilesets/custom/american_flag.png';
 import securityDeskUrl from '../assets/tilesets/custom/security_desk.png';
+// Lore object sprites
+import suggestionBoxUrl from '../assets/tilesets/custom/suggestion_box.png';
+import lobbyWallClockUrl from '../assets/tilesets/custom/lobby_wall_clock.png';
+import floorPlaqueUrl from '../assets/tilesets/custom/floor_plaque.png';
+import pamphletRackUrl from '../assets/tilesets/custom/pamphlet_rack.png';
 // Dialogue portraits
 import caseyPortraitUrl from '../assets/sprites/portraits/casey_default.png';
 import gladysPortraitUrl from '../assets/sprites/portraits/gladys_default.png';
@@ -144,6 +149,11 @@ export class LobbyScene extends Phaser.Scene {
     this.load.image('obj_flag', flagUrl);
     this.load.image('obj_security_desk', securityDeskUrl);
     this.load.image('obj_lobby_coffee', lobbyCoffeeUrl);
+    // Lore objects
+    this.load.image('obj_suggestion_box', suggestionBoxUrl);
+    this.load.image('obj_lobby_clock', lobbyWallClockUrl);
+    this.load.image('obj_floor_plaque', floorPlaqueUrl);
+    this.load.image('obj_pamphlet_rack', pamphletRackUrl);
 
     // Audio
     this.load.audio('lobby_music', lobbyMusicUrl);
@@ -890,43 +900,11 @@ export class LobbyScene extends Phaser.Scene {
     // Badge reader LED (on desk surface)
     this.turnstileLed = this.add.circle(355, 200, 2, 0xcc3333).setDepth(34);
 
-    // ── Lore objects ──
-
-    // Suggestion Box — on right wall
-    const sbG = this.add.graphics().setDepth(10);
-    sbG.fillStyle(0x8b6914); sbG.fillRect(563, 108, 24, 20); // box body
-    sbG.fillStyle(0xa07818); sbG.fillRect(563, 106, 24, 4);  // lid
-    sbG.fillStyle(0x6b5010); sbG.fillRect(571, 107, 8, 2);   // slot
-    sbG.fillStyle(0xc8a832); sbG.fillRect(568, 118, 16, 4);  // brass plaque
-    sbG.fillStyle(0x888888); sbG.fillRect(563, 128, 2, 8);   // cobweb strand
-    sbG.fillStyle(0x999999); sbG.fillRect(585, 108, 2, 6);   // cobweb strand
-
-    // Wall Clock — upper left wall, frozen at 4:47
-    const clkG = this.add.graphics().setDepth(10);
-    clkG.fillStyle(0xeeeeee); clkG.fillCircle(150, 50, 12);  // face
-    clkG.lineStyle(2, 0x444444); clkG.strokeCircle(150, 50, 13); // rim
-    clkG.fillStyle(0x222222);
-    clkG.fillRect(150, 50, 1, -8);  // minute hand (pointing up ~47)
-    clkG.fillRect(150, 50, 5, 3);   // hour hand (pointing right ~4)
-    clkG.fillCircle(150, 50, 1.5);  // center pin
-
-    // Floor Plaque — near entrance, on floor
-    const fpG = this.add.graphics().setDepth(2);
-    fpG.fillStyle(0xb8960c, 0.6); fpG.fillRect(120, 268, 30, 14); // brass plate
-    fpG.lineStyle(1, 0x8a7008); fpG.strokeRect(120, 268, 30, 14); // border
-    fpG.fillStyle(0xc8a832, 0.3); fpG.fillRect(124, 271, 22, 2);  // text line
-    fpG.fillStyle(0xc8a832, 0.3); fpG.fillRect(126, 275, 18, 2);  // text line
-
-    // Pamphlet Rack — right wall
-    const prG = this.add.graphics().setDepth(10);
-    prG.fillStyle(0x888888); prG.fillRect(576, 176, 28, 3);  // wire shelf top
-    prG.fillStyle(0x888888); prG.fillRect(576, 196, 28, 3);  // wire shelf bottom
-    prG.fillStyle(0x777777); prG.fillRect(576, 176, 2, 23);  // left wire
-    prG.fillStyle(0x777777); prG.fillRect(602, 176, 2, 23);  // right wire
-    // Brochures
-    prG.fillStyle(0x4488cc); prG.fillRect(579, 180, 8, 14);  // blue brochure
-    prG.fillStyle(0xcc4444); prG.fillRect(588, 181, 7, 13);  // red brochure
-    prG.fillStyle(0x44aa44); prG.fillRect(596, 180, 7, 14);  // green brochure
+    // ── Lore objects (PixelLab sprites) ──
+    this.add.image(575, 124, 'obj_suggestion_box').setOrigin(0.5, 0.5).setDepth(10);
+    this.add.image(150, 50, 'obj_lobby_clock').setOrigin(0.5, 0.5).setDepth(10);
+    this.add.image(135, 275, 'obj_floor_plaque').setOrigin(0.5, 0.5).setDepth(2);
+    this.add.image(590, 200, 'obj_pamphlet_rack').setOrigin(0.5, 0.5).setDepth(10);
 
     // ── Security barrier/railing ──
     // Runs from turnstile right edge (x=424) to the right wall (x=640)
