@@ -530,21 +530,21 @@ export class BullpenScene extends Phaser.Scene {
     // Coat rack: base at y=168 (same as Lobby ficus)
     this.add.image(50, 168, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(20);
 
-    // Casey's desk: center y=210 (same as Lobby security desk)
-    this.add.image(140, 210, 'bp_casey_desk').setOrigin(0.5, 0.5).setDepth(30);
+    // Casey's desk: center y=210 (same as Lobby security desk), 30% bigger
+    this.add.image(140, 210, 'bp_casey_desk').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
 
     // Cubicles: drawn with graphics, desk surfaces at y~195 (waist height)
     const cubX = [250, 330, 410, 490];
     const cubOccupied = [true, true, true, false];
     for (let i = 0; i < 4; i++) {
       const cx = cubX[i];
-      // Back wall at y=170 (just below wall/floor line)
-      this.add.rectangle(cx, 170, 56, 4, 0x9a9a9a).setDepth(15);
-      // Side walls
-      this.add.rectangle(cx - 27, 185, 4, 34, 0x9a9a9a).setDepth(15);
-      this.add.rectangle(cx + 27, 185, 4, 34, 0x9a9a9a).setDepth(15);
-      // Desk at y=195 (same as chairs in Lobby at y=180)
-      this.add.rectangle(cx, 195, 48, 12, 0x8a7e60).setDepth(28);
+      // Back wall at y=170 — 30% wider
+      this.add.rectangle(cx, 170, 73, 4, 0x9a9a9a).setDepth(15);
+      // Side walls — spaced wider to match
+      this.add.rectangle(cx - 35, 185, 4, 34, 0x9a9a9a).setDepth(15);
+      this.add.rectangle(cx + 35, 185, 4, 34, 0x9a9a9a).setDepth(15);
+      // Desk at y=195 — 30% bigger
+      this.add.rectangle(cx, 195, 62, 16, 0x8a7e60).setDepth(28);
       // Monitor on desk
       this.add.rectangle(cx, 186, 12, 8, 0x222222).setDepth(29);
 
@@ -560,12 +560,12 @@ export class BullpenScene extends Phaser.Scene {
       }
     }
 
-    // Printer: center y=210 (same as desk/turnstile)
-    this.add.image(570, 210, 'bp_dead_printer').setOrigin(0.5, 0.5).setDepth(30);
+    // Printer: center y=210, 30% bigger
+    this.add.image(570, 210, 'bp_dead_printer').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
 
-    // Break area counter: center y=195 (waist height, same as cubicle desks)
-    this.add.rectangle(760, 195, 100, 16, 0x8a7e60).setDepth(28);
-    this.add.rectangle(760, 201, 100, 4, 0x7a6e50).setDepth(29);
+    // Break area counter — 30% bigger
+    this.add.rectangle(760, 195, 130, 21, 0x8a7e60).setDepth(28);
+    this.add.rectangle(760, 203, 130, 5, 0x7a6e50).setDepth(29);
     // Coffee maker on counter (native size, no scale)
     this.add.image(730, 190, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30);
     // Microwave
@@ -578,9 +578,9 @@ export class BullpenScene extends Phaser.Scene {
     mugG.fillRect(789, 184, 3, 5);
     mugG.fillStyle(0xbbaa99); mugG.fillRect(794, 183, 4, 6);
 
-    // Priya's desk: center y=200 (like Gladys behind security desk at y=200)
-    this.add.rectangle(880, 200, 80, 16, 0x8a7e60).setDepth(28);
-    this.add.rectangle(880, 206, 80, 4, 0x7a6e50).setDepth(29);
+    // Priya's desk — 30% bigger
+    this.add.rectangle(880, 200, 104, 21, 0x8a7e60).setDepth(28);
+    this.add.rectangle(880, 208, 104, 5, 0x7a6e50).setDepth(29);
     this.add.rectangle(868, 188, 12, 10, 0x222222).setDepth(30);
     this.add.rectangle(884, 188, 12, 10, 0x222222).setDepth(30);
     const nc = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44, 0xcc88ff];
@@ -609,8 +609,8 @@ export class BullpenScene extends Phaser.Scene {
     this.add.image(410, 200, 'bp_npc_phone').setOrigin(0.5, 1).setDepth(20);
     // Cubicle #4: VACANT
 
-    // Priya at desk — depth 20 (behind desk at depth 28, like Gladys behind security desk)
-    this.add.image(878, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(20);
+    // Priya at desk — scaled down (64px sprite includes desk, scale 0.75 to match 48px NPCs)
+    this.add.image(878, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(20).setScale(0.75);
 
     this.bgNpcGraphics = [];
   }
@@ -1152,7 +1152,7 @@ export class BullpenScene extends Phaser.Scene {
     const scheduleJamBlink = () => {
       this.time.delayedCall(800, () => {
         if (GameState.getInstance().hasFlag('printer_fixed')) {
-          printerLed.setFillStyle(0x44ff44); // green after fixed
+          printerLed.setFillStyle(0x44ff44);
           return;
         }
         printerLed.setAlpha(printerLed.alpha > 0.5 ? 0.2 : 1);
@@ -1160,6 +1160,83 @@ export class BullpenScene extends Phaser.Scene {
       });
     };
     scheduleJamBlink();
+
+    // ── 8. LIVING ROOM TWEENS — subtle motions that make the space feel alive ──
+
+    // Phone NPC occasionally nods (tiny Y bob)
+    this.time.addEvent({
+      delay: 4000 + Math.random() * 3000, loop: true,
+      callback: () => {
+        if (this.cutsceneActive) return;
+        this.tweens.add({ targets: phoneNpc, y: phoneNpc.y + 1, duration: 200, yoyo: true, ease: 'Sine.inOut' });
+      },
+    });
+
+    // Typing NPC shifts in chair every 8-12 seconds
+    this.time.addEvent({
+      delay: 8000 + Math.random() * 4000, loop: true,
+      callback: () => {
+        if (this.cutsceneActive) return;
+        this.tweens.add({ targets: typingNpc, x: typingNpc.x + Phaser.Math.Between(-1, 1), duration: 400, yoyo: true, ease: 'Sine.inOut' });
+      },
+    });
+
+    // Priya's desk plant — gentle leaf sway
+    const plantLeaf = this.add.circle(918, 178, 2, 0x55cc55).setDepth(32);
+    this.tweens.add({
+      targets: plantLeaf, y: 177, duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.inOut',
+      delay: rOff(),
+    });
+
+    // Cubicle 1 cactus — very subtle bob (it's alive!)
+    const cactusY = 189;
+    const cactusBob = this.add.circle(241, cactusY - 2, 1, 0x44aa44).setDepth(33);
+    this.tweens.add({
+      targets: cactusBob, y: cactusY - 3, duration: 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut',
+    });
+
+    // Mini fridge hum — subtle vibration
+    const fridgeImg = this.children.list.find(
+      (c: any) => c.texture?.key === 'bp_mini_fridge'
+    ) as Phaser.GameObjects.Image | undefined;
+    if (fridgeImg) {
+      this.tweens.add({
+        targets: fridgeImg, x: fridgeImg.x + 0.3, duration: 100, yoyo: true, repeat: -1,
+      });
+    }
+
+    // Hallway shadow — someone walks past far right exit every 30-50s
+    const hallShadow = this.add.rectangle(940, 120, 10, 40, 0x000000, 0).setDepth(3);
+    const scheduleHallShadow = () => {
+      this.time.delayedCall(Phaser.Math.Between(30000, 50000), () => {
+        if (this.cutsceneActive) return;
+        hallShadow.setAlpha(0);
+        this.tweens.add({
+          targets: hallShadow, alpha: 0.15, duration: 400,
+          onComplete: () => {
+            this.time.delayedCall(800, () => {
+              this.tweens.add({
+                targets: hallShadow, alpha: 0, duration: 400,
+                onComplete: () => scheduleHallShadow(),
+              });
+            });
+          },
+        });
+      });
+    };
+    this.time.delayedCall(rOff() + 10000, scheduleHallShadow);
+
+    // Distant printer sound — random mechanical whir every 20-40s
+    const schedulePrinterWhir = () => {
+      this.time.delayedCall(Phaser.Math.Between(20000, 40000), () => {
+        if (this.cutsceneActive) return;
+        if (this.cache.audio.exists('sfx_text_blip')) {
+          this.sound.play('sfx_text_blip', { volume: 0.03, rate: 0.5 });
+        }
+        schedulePrinterWhir();
+      });
+    };
+    this.time.delayedCall(rOff() + 8000, schedulePrinterWhir);
   }
 
   private generateAmbientTextures(): void {
