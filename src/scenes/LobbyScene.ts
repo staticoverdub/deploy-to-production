@@ -890,6 +890,44 @@ export class LobbyScene extends Phaser.Scene {
     // Badge reader LED (on desk surface)
     this.turnstileLed = this.add.circle(355, 200, 2, 0xcc3333).setDepth(34);
 
+    // ── Lore objects ──
+
+    // Suggestion Box — on right wall
+    const sbG = this.add.graphics().setDepth(10);
+    sbG.fillStyle(0x8b6914); sbG.fillRect(563, 108, 24, 20); // box body
+    sbG.fillStyle(0xa07818); sbG.fillRect(563, 106, 24, 4);  // lid
+    sbG.fillStyle(0x6b5010); sbG.fillRect(571, 107, 8, 2);   // slot
+    sbG.fillStyle(0xc8a832); sbG.fillRect(568, 118, 16, 4);  // brass plaque
+    sbG.fillStyle(0x888888); sbG.fillRect(563, 128, 2, 8);   // cobweb strand
+    sbG.fillStyle(0x999999); sbG.fillRect(585, 108, 2, 6);   // cobweb strand
+
+    // Wall Clock — upper left wall, frozen at 4:47
+    const clkG = this.add.graphics().setDepth(10);
+    clkG.fillStyle(0xeeeeee); clkG.fillCircle(150, 50, 12);  // face
+    clkG.lineStyle(2, 0x444444); clkG.strokeCircle(150, 50, 13); // rim
+    clkG.fillStyle(0x222222);
+    clkG.fillRect(150, 50, 1, -8);  // minute hand (pointing up ~47)
+    clkG.fillRect(150, 50, 5, 3);   // hour hand (pointing right ~4)
+    clkG.fillCircle(150, 50, 1.5);  // center pin
+
+    // Floor Plaque — near entrance, on floor
+    const fpG = this.add.graphics().setDepth(2);
+    fpG.fillStyle(0xb8960c, 0.6); fpG.fillRect(120, 268, 30, 14); // brass plate
+    fpG.lineStyle(1, 0x8a7008); fpG.strokeRect(120, 268, 30, 14); // border
+    fpG.fillStyle(0xc8a832, 0.3); fpG.fillRect(124, 271, 22, 2);  // text line
+    fpG.fillStyle(0xc8a832, 0.3); fpG.fillRect(126, 275, 18, 2);  // text line
+
+    // Pamphlet Rack — right wall
+    const prG = this.add.graphics().setDepth(10);
+    prG.fillStyle(0x888888); prG.fillRect(576, 176, 28, 3);  // wire shelf top
+    prG.fillStyle(0x888888); prG.fillRect(576, 196, 28, 3);  // wire shelf bottom
+    prG.fillStyle(0x777777); prG.fillRect(576, 176, 2, 23);  // left wire
+    prG.fillStyle(0x777777); prG.fillRect(602, 176, 2, 23);  // right wire
+    // Brochures
+    prG.fillStyle(0x4488cc); prG.fillRect(579, 180, 8, 14);  // blue brochure
+    prG.fillStyle(0xcc4444); prG.fillRect(588, 181, 7, 13);  // red brochure
+    prG.fillStyle(0x44aa44); prG.fillRect(596, 180, 7, 14);  // green brochure
+
     // ── Security barrier/railing ──
     // Runs from turnstile right edge (x=424) to the right wall (x=640)
     // Creates a visible barrier that blocks passage to the "other side"

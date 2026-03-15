@@ -677,6 +677,81 @@ export class BullpenScene extends Phaser.Scene {
 
     // Whiteboard: base at y=182 (taller than Casey, on floor behind desk)
     this.add.image(935, 182, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10);
+
+    // ── Lore objects ──
+
+    // Filing Cabinet — against wall, between lockers and typing woman
+    const fcG = this.add.graphics().setDepth(12);
+    fcG.fillStyle(0xc8b888); fcG.fillRect(178, 112, 24, 52); // cabinet body
+    fcG.fillStyle(0xb8a878); // drawer lines
+    fcG.fillRect(178, 124, 24, 1); fcG.fillRect(178, 137, 24, 1);
+    fcG.fillRect(178, 150, 24, 1);
+    fcG.fillStyle(0x999977); // handles
+    fcG.fillRect(187, 115, 6, 2); fcG.fillRect(187, 128, 6, 2);
+    fcG.fillRect(187, 141, 6, 2); fcG.fillRect(187, 154, 6, 2);
+    // Top drawer jammed open with papers spilling out
+    fcG.fillStyle(0xd8c898); fcG.fillRect(178, 108, 24, 6); // open drawer
+    fcG.fillStyle(0xeeeedd); fcG.fillRect(180, 104, 8, 6);  // paper 1
+    fcG.fillStyle(0xffffee); fcG.fillRect(190, 102, 7, 8);  // paper 2
+    fcG.fillStyle(0xeeddcc); fcG.fillRect(196, 105, 5, 5);  // paper 3
+
+    // Fax Machine — near printer area, on small stand
+    const fxG = this.add.graphics().setDepth(30);
+    fxG.fillStyle(0xd8d0c0); fxG.fillRect(564, 138, 28, 18); // body
+    fxG.fillStyle(0xc8c0b0); fxG.fillRect(564, 136, 28, 4);  // paper tray top
+    fxG.fillStyle(0xeeeedd); fxG.fillRect(570, 132, 12, 6);  // paper in tray
+    fxG.fillStyle(0x444444); fxG.fillRect(568, 144, 10, 4);  // keypad area
+    fxG.fillStyle(0x333333); fxG.fillRect(580, 142, 8, 3);   // display
+    fxG.fillStyle(0x44cc44); fxG.fillCircle(588, 148, 1.5);  // green LED
+
+    // Ancient Desktop — abandoned CRT workstation near war room
+    const adG = this.add.graphics().setDepth(29);
+    // Desk surface
+    adG.fillStyle(0x8a7e60); adG.fillRect(440, 210, 40, 12);
+    // CRT monitor
+    adG.fillStyle(0xc8c0a8); adG.fillRect(448, 190, 24, 20); // monitor body
+    adG.fillStyle(0x222244); adG.fillRect(451, 193, 18, 12); // screen (dark blue)
+    adG.fillStyle(0x4444aa, 0.6); adG.fillRect(453, 196, 14, 3); // login prompt glow
+    adG.fillStyle(0x55cc55); // blinking cursor
+    adG.fillRect(460, 200, 3, 2);
+    // Keyboard
+    adG.fillStyle(0xd0c8b0); adG.fillRect(448, 212, 20, 6);
+
+    // Break Room Whiteboard — above kitchen area
+    const bwG = this.add.graphics().setDepth(10);
+    bwG.fillStyle(0xf0f0f0); bwG.fillRect(748, 50, 44, 30); // board
+    bwG.lineStyle(1, 0x888888); bwG.strokeRect(748, 50, 44, 30); // frame
+    bwG.fillStyle(0xaaaaaa); bwG.fillRect(748, 80, 44, 3);  // marker tray
+    // Messy handwriting (colored lines)
+    bwG.fillStyle(0x2222cc); bwG.fillRect(752, 54, 28, 2);  // blue text
+    bwG.fillStyle(0xcc2222); bwG.fillRect(752, 60, 32, 2);  // red text
+    bwG.fillStyle(0x22aa22); bwG.fillRect(752, 66, 24, 2);  // green text
+    bwG.fillStyle(0xcc2222); bwG.fillRect(752, 72, 36, 2);  // red text (DAVE)
+
+    // Break Room Table — below kitchen counter
+    const btG = this.add.graphics().setDepth(25);
+    btG.fillStyle(0x9a8e6a); btG.fillRect(744, 210, 46, 16); // table top
+    btG.fillStyle(0x8a7e5a); // legs
+    btG.fillRect(746, 226, 3, 10); btG.fillRect(785, 226, 3, 10);
+    // Coffee ring stains
+    btG.lineStyle(1, 0x8a7a5a, 0.4); btG.strokeCircle(755, 216, 4);
+    btG.strokeCircle(775, 218, 3);
+    // Laminated sign
+    btG.fillStyle(0xeeeeee); btG.fillRect(762, 212, 14, 8);
+    btG.fillStyle(0xcc2222); btG.fillRect(764, 214, 10, 1); // text line
+
+    // Wall Calendar — on wall near supply closet
+    const wcG = this.add.graphics().setDepth(10);
+    wcG.fillStyle(0xffffff); wcG.fillRect(586, 44, 24, 30); // calendar body
+    wcG.fillStyle(0xcc3333); wcG.fillRect(586, 44, 24, 8);  // red header bar
+    wcG.fillStyle(0xeeeeee); // grid lines (days)
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 5; c++) {
+        wcG.fillRect(588 + c * 4, 54 + r * 4, 3, 3);
+      }
+    }
+    // Sticky note on calendar
+    wcG.fillStyle(0xffffaa); wcG.fillRect(596, 66, 10, 8);
   }
 
   private drawNPCs(): void {
