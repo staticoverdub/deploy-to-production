@@ -453,7 +453,7 @@ export class TitleScene extends Phaser.Scene {
     const titleBox = [
       '',
       '  DEPLOY TO PRODUCTION',
-      '  A Code for America Adventure',
+      '  A Civic Tech Adventure',
       '',
       sep,
     ].join('\n');

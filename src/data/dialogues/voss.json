@@ -28,7 +28,7 @@
         "relationshipChanges": {},
         "options": [
           {
-            "text": "I'm Casey Park, your new CfA Solutions Engineer. My badge is stuck behind your badge office, which is stuck behind your turnstile. Classic dependency loop.",
+            "text": "I'm Casey Park, your new civic tech Solutions Engineer. My badge is stuck behind your badge office, which is stuck behind your turnstile. Classic dependency loop.",
             "nextNodeId": "va_pitch_best",
             "condition": {},
             "flagsSet": {
@@ -96,7 +96,7 @@
         "id": "va_best_voss_auth",
         "speaker": "voss",
         "portrait": "voss_commanding",
-        "text": "Authorized. Casey Park, Solutions Engineer, CfA fellowship. I requested this position personally.",
+        "text": "Authorized. Casey Park, Solutions Engineer, civic tech fellowship. I requested this position personally.",
         "animation": null,
         "flagsSet": {},
         "relationshipChanges": {},
@@ -156,7 +156,7 @@
         "id": "va_good_to_gladys",
         "speaker": "voss",
         "portrait": "voss_commanding",
-        "text": "Temp badge for the new CfA hire.",
+        "text": "Temp badge for the new civic tech hire.",
         "animation": "voss_turns_to_gladys",
         "flagsSet": {},
         "relationshipChanges": {},
