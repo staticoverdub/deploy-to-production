@@ -530,6 +530,36 @@ export class BullpenScene extends Phaser.Scene {
     // Coat rack: base at y=168 (same as Lobby ficus)
     this.add.image(50, 168, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(20);
 
+    // Employee lockers (against wall, right of coat rack)
+    const lockerG = this.add.graphics().setDepth(12);
+    const lockerX = 80;
+    for (let i = 0; i < 3; i++) {
+      const lx = lockerX + i * 14;
+      // Locker body (gray metal)
+      lockerG.fillStyle(0x888899);
+      lockerG.fillRect(lx, 110, 12, 55);
+      // Door frame lines
+      lockerG.fillStyle(0x777788);
+      lockerG.fillRect(lx, 110, 1, 55);
+      lockerG.fillRect(lx + 11, 110, 1, 55);
+      // Vent slots at top
+      lockerG.fillStyle(0x666677);
+      lockerG.fillRect(lx + 3, 114, 6, 1);
+      lockerG.fillRect(lx + 3, 117, 6, 1);
+      // Handle
+      lockerG.fillStyle(0xaaaaaa);
+      lockerG.fillRect(lx + 8, 135, 2, 5);
+      // Subtle color variation (each locker slightly different shade)
+      if (i === 1) {
+        lockerG.fillStyle(0x8888aa, 0.15);
+        lockerG.fillRect(lx, 110, 12, 55);
+      }
+    }
+    // Name label on one locker
+    this.add.text(lockerX + 7, 150, 'HAL', {
+      fontFamily: 'monospace', fontSize: '2px', color: '#444455',
+    }).setOrigin(0.5).setDepth(13);
+
     // Casey's desk: center y=210 (same as Lobby security desk), 30% bigger
     this.add.image(140, 210, 'bp_casey_desk').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
 
@@ -563,20 +593,67 @@ export class BullpenScene extends Phaser.Scene {
     // Printer: center y=210, 30% bigger
     this.add.image(570, 210, 'bp_dead_printer').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
 
-    // Break area counter — 30% bigger
-    this.add.rectangle(760, 195, 130, 21, 0x8a7e60).setDepth(28);
-    this.add.rectangle(760, 203, 130, 5, 0x7a6e50).setDepth(29);
-    // Coffee maker on counter (native size, no scale)
-    this.add.image(730, 190, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30);
+    // Break area counter — pushed against the wall (base at y=170)
+    this.add.rectangle(760, 175, 130, 21, 0x8a7e60).setDepth(28);
+    this.add.rectangle(760, 183, 130, 5, 0x7a6e50).setDepth(29);
+    // Coffee maker on counter
+    this.add.image(730, 170, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30);
     // Microwave
-    this.add.image(765, 190, 'bp_microwave').setOrigin(0.5, 1).setDepth(30);
-    // Mini fridge: base at y=210 (floor-standing)
-    this.add.image(810, 210, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(30);
-    // Dirty mugs
+    this.add.image(765, 170, 'bp_microwave').setOrigin(0.5, 1).setDepth(30);
+    // Mini fridge: floor-standing beside counter
+    this.add.image(810, 186, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(30);
+    // Dirty mugs on counter
     const mugG = this.add.graphics().setDepth(31);
-    mugG.fillStyle(0xddddcc); mugG.fillRect(783, 183, 4, 6);
-    mugG.fillRect(789, 184, 3, 5);
-    mugG.fillStyle(0xbbaa99); mugG.fillRect(794, 183, 4, 6);
+    mugG.fillStyle(0xddddcc); mugG.fillRect(783, 163, 4, 6);
+    mugG.fillRect(789, 164, 3, 5);
+    mugG.fillStyle(0xbbaa99); mugG.fillRect(794, 163, 4, 6);
+
+    // ── FOREGROUND FLOOR FURNITURE (in the walkable area) ──
+    // Small waiting area / coffee table near break area
+    // Coffee table (dark wood, low, between break area and cubicles)
+    this.add.rectangle(650, 250, 40, 20, 0x664422).setDepth(25);
+    this.add.rectangle(650, 248, 38, 2, 0x886644).setDepth(26); // surface highlight
+    // Old magazines on coffee table
+    const magG = this.add.graphics().setDepth(27);
+    magG.fillStyle(0xcc4444); magG.fillRect(638, 244, 8, 5);
+    magG.fillStyle(0x4466cc); magG.fillRect(644, 245, 7, 5);
+    magG.fillStyle(0x44aa44); magG.fillRect(651, 244, 8, 5);
+
+    // Two worn visitor chairs near coffee table
+    // Chair 1 (left of table)
+    const ch1 = this.add.graphics().setDepth(24);
+    ch1.fillStyle(0x667788); ch1.fillRect(625, 245, 14, 12);
+    ch1.fillStyle(0x778899); ch1.fillRect(625, 240, 14, 6);
+    ch1.fillStyle(0x556677); ch1.fillRect(627, 257, 4, 4);
+    ch1.fillRect(635, 257, 4, 4);
+    // Chair 2 (right of table)
+    const ch2 = this.add.graphics().setDepth(24);
+    ch2.fillStyle(0x667788); ch2.fillRect(668, 245, 14, 12);
+    ch2.fillStyle(0x778899); ch2.fillRect(668, 240, 14, 6);
+    ch2.fillStyle(0x556677); ch2.fillRect(670, 257, 4, 4);
+    ch2.fillRect(678, 257, 4, 4);
+
+    // Water cooler near break area (floor-standing)
+    const wc = this.add.graphics().setDepth(25);
+    wc.fillStyle(0xcccccc); wc.fillRect(820, 210, 12, 24);
+    wc.fillStyle(0xdddddd); wc.fillRect(820, 210, 12, 4);
+    wc.fillStyle(0x88bbdd); wc.fillRect(822, 214, 8, 8); // water jug
+    wc.fillStyle(0xaaaaaa); wc.fillRect(824, 230, 4, 4); // drip tray
+
+    // Trash can near cubicles (small, floor level)
+    const trash = this.add.graphics().setDepth(24);
+    trash.fillStyle(0x555555); trash.fillRect(520, 230, 10, 14);
+    trash.fillStyle(0x666666); trash.fillRect(520, 230, 10, 3);
+    // Crumpled paper sticking out
+    trash.fillStyle(0xeeeeee); trash.fillRect(522, 228, 5, 3);
+
+    // Potted plant on floor near entrance (like Lobby's sad ficus)
+    const floorPlant = this.add.graphics().setDepth(24);
+    floorPlant.fillStyle(0x664422); floorPlant.fillRect(80, 225, 10, 10);
+    floorPlant.fillStyle(0x553311); floorPlant.fillRect(80, 225, 10, 3);
+    floorPlant.fillStyle(0x338833); floorPlant.fillCircle(85, 218, 8);
+    floorPlant.fillStyle(0x44aa44); floorPlant.fillCircle(83, 215, 5);
+    floorPlant.fillStyle(0x3b7a2a); floorPlant.fillCircle(88, 216, 4);
 
     // Priya's desk — 30% bigger
     this.add.rectangle(880, 200, 104, 21, 0x8a7e60).setDepth(28);
@@ -674,26 +751,26 @@ export class BullpenScene extends Phaser.Scene {
     d.fillStyle(0x336699); d.fillRect(160, 208, 2, 12);
     d.fillStyle(0x336699); d.fillRect(159, 218, 4, 2);
 
-    // ════ BREAK AREA SIGNS ════
-    // Coffee maker sign (tiny)
-    this.add.text(730, 178, 'IF EMPTY\nMAKE MORE\n-DAVE', {
+    // ════ BREAK AREA SIGNS (pushed up against wall) ════
+    // Coffee maker sign
+    this.add.text(730, 158, 'IF EMPTY\nMAKE MORE\n-DAVE', {
       fontFamily: 'monospace', fontSize: '2px', color: '#884422',
     }).setOrigin(0.5).setDepth(33);
     // Microwave sign
-    this.add.text(765, 178, 'CLEAN YOUR\nOWN DISHES', {
+    this.add.text(765, 158, 'CLEAN YOUR\nOWN DISHES', {
       fontFamily: 'monospace', fontSize: '2px', color: '#cc0000',
     }).setOrigin(0.5).setDepth(33);
     // Mini fridge labels
-    d.fillStyle(0xffffff); d.fillRect(805, 195, 10, 3);
-    d.fillStyle(0xffffff); d.fillRect(805, 200, 10, 3);
-    this.add.text(810, 196, "DAVE'S", { fontFamily: 'monospace', fontSize: '1px', color: '#333333' }).setOrigin(0.5).setDepth(33);
-    this.add.text(810, 201, 'BIOHAZARD', { fontFamily: 'monospace', fontSize: '1px', color: '#cc0000' }).setOrigin(0.5).setDepth(33);
-    // More dirty mugs near counter
-    d.fillStyle(0xddccbb); d.fillRect(798, 184, 3, 5);
-    d.fillStyle(0xccbbaa); d.fillRect(802, 185, 3, 4);
+    d.fillStyle(0xffffff); d.fillRect(805, 172, 10, 3);
+    d.fillStyle(0xffffff); d.fillRect(805, 177, 10, 3);
+    this.add.text(810, 173, "DAVE'S", { fontFamily: 'monospace', fontSize: '1px', color: '#333333' }).setOrigin(0.5).setDepth(33);
+    this.add.text(810, 178, 'BIOHAZARD', { fontFamily: 'monospace', fontSize: '1px', color: '#cc0000' }).setOrigin(0.5).setDepth(33);
+    // More dirty mugs
+    d.fillStyle(0xddccbb); d.fillRect(798, 164, 3, 5);
+    d.fillStyle(0xccbbaa); d.fillRect(802, 165, 3, 4);
     // Sad brown banana
-    d.fillStyle(0x887744); d.fillRect(774, 184, 5, 2);
-    d.fillStyle(0x776633); d.fillRect(775, 183, 3, 1);
+    d.fillStyle(0x887744); d.fillRect(774, 164, 5, 2);
+    d.fillStyle(0x776633); d.fillRect(775, 163, 3, 1);
 
     // ════ PRIYA'S DESK — organized chaos ════
     // "I BELIEVE IN UX" sticker on monitor bezel
@@ -1036,7 +1113,8 @@ export class BullpenScene extends Phaser.Scene {
     this.navGrid.addObstacle(108, 190, 64, 30);    // Casey's desk
     this.navGrid.addObstacle(223, 168, 300, 36);    // Cubicle row
     this.navGrid.addObstacle(545, 190, 50, 30);     // Printer
-    this.navGrid.addObstacle(710, 190, 100, 16);    // Break counter
+    this.navGrid.addObstacle(695, 170, 130, 20);     // Break counter (pushed to wall)
+    this.navGrid.addObstacle(630, 240, 60, 24);      // Coffee table + chairs
     this.navGrid.addObstacle(800, 190, 20, 24);     // Mini fridge
     this.navGrid.addObstacle(840, 190, 80, 24);     // Priya's desk
     this.navGrid.addObstacle(915, 168, 40, 36);     // Whiteboard area
@@ -1077,7 +1155,7 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_brew_on' }, { key: 'bp_brew_off' }],
       frameRate: 1, repeat: -1,
     });
-    const brewLight = this.add.sprite(730, 175, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(31);
+    const brewLight = this.add.sprite(730, 158, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(31);
     brewLight.play('bp_brew_blink');
 
     // 3. Dashboard TV screen flicker
