@@ -164,6 +164,7 @@ export class BullpenScene extends Phaser.Scene {
     this.drawBackground();
     this.drawFurniture();
     this.drawNPCs();
+    this.drawDetails();
     this.setupNavGrid();
     this.setupAmbientLife();
 
@@ -612,6 +613,145 @@ export class BullpenScene extends Phaser.Scene {
     this.add.image(878, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(20);
 
     this.bgNpcGraphics = [];
+  }
+
+  // ── Environmental Storytelling Details ──
+
+  private drawDetails(): void {
+    const d = this.add.graphics().setDepth(32);
+
+    // ════ CUBICLE 1 (x=250): neat, holding it together ════
+    // "BREATHE" sticky note on monitor
+    d.fillStyle(0xf0e868); d.fillRect(256, 183, 8, 5);
+    this.add.text(260, 185, 'BREATHE', { fontFamily: 'monospace', fontSize: '2px', color: '#666600' }).setOrigin(0.5).setDepth(33);
+    // Desk cactus (tiny, thriving — the one survivor)
+    d.fillStyle(0x338833); d.fillRect(240, 189, 3, 5);
+    d.fillStyle(0x44aa44); d.fillRect(239, 187, 2, 3);
+    d.fillStyle(0x44aa44); d.fillRect(243, 188, 2, 3);
+    d.fillStyle(0x664422); d.fillRect(239, 193, 5, 2);
+    // Family photo frame
+    d.fillStyle(0x554433); d.fillRect(260, 189, 6, 5);
+    d.fillStyle(0xaabbcc); d.fillRect(261, 190, 4, 3);
+
+    // ════ CUBICLE 2 (x=330): KEVIN — nothing personal ════
+    // "NO" post-it on cubicle back wall
+    d.fillStyle(0xf0e868); d.fillRect(340, 168, 7, 5);
+    this.add.text(343, 170, 'NO', { fontFamily: 'monospace', fontSize: '2px', color: '#cc0000', fontStyle: 'bold' }).setOrigin(0.5).setDepth(33);
+    // 3 identical browser tabs on monitor (tiny lines)
+    d.fillStyle(0x4488cc); d.fillRect(326, 184, 3, 1);
+    d.fillStyle(0x4488cc); d.fillRect(330, 184, 3, 1);
+    d.fillStyle(0x4488cc); d.fillRect(334, 184, 3, 1);
+    // Unwashed coffee mug (the only personal item)
+    d.fillStyle(0xccbbaa); d.fillRect(342, 191, 4, 4);
+    d.fillStyle(0x998877); d.fillRect(342, 191, 4, 1);
+
+    // ════ CUBICLE 3 (x=410): sticky note explosion ════
+    // Sticky notes EVERYWHERE — on monitor, walls, desk
+    const stickyColors = [0xf0e868, 0xff88aa, 0x88ccff, 0x88ff88, 0xffaa44];
+    for (let s = 0; s < 12; s++) {
+      const sx = 398 + Math.floor(Math.random() * 24);
+      const sy = 168 + Math.floor(Math.random() * 24);
+      d.fillStyle(stickyColors[s % stickyColors.length]);
+      d.fillRect(sx, sy, 4, 3);
+    }
+    // Stress ball (squeezed into weird shape)
+    d.fillStyle(0xff6633); d.fillCircle(422, 192, 2);
+    d.fillStyle(0xff7744); d.fillRect(421, 191, 4, 2);
+    // Desk calendar showing wrong month
+    d.fillStyle(0xffffff); d.fillRect(398, 190, 6, 5);
+    d.fillStyle(0xcc3333); d.fillRect(398, 190, 6, 1);
+
+    // ════ CUBICLE 4 (x=490): empty — RESERVED, already has dead plant ════
+    // "I SURVIVED THE 2019 MIGRATION" mug (left behind)
+    d.fillStyle(0xeeeeee); d.fillRect(482, 191, 5, 5);
+    d.fillStyle(0xdddddd); d.fillRect(482, 191, 5, 1);
+    d.fillStyle(0xeeeeee); d.fillRect(487, 193, 2, 2); // handle
+    // Dust on keyboard (lighter pixels on desk)
+    d.fillStyle(0xc0b890, 0.3); d.fillRect(492, 192, 12, 3);
+
+    // ════ CASEY'S DESK (x=140) — the saddest desk ════
+    // Lonely ethernet cable dangling off back (not connected)
+    d.fillStyle(0x336699); d.fillRect(160, 208, 2, 12);
+    d.fillStyle(0x336699); d.fillRect(159, 218, 4, 2);
+
+    // ════ BREAK AREA SIGNS ════
+    // Coffee maker sign (tiny)
+    this.add.text(730, 178, 'IF EMPTY\nMAKE MORE\n-DAVE', {
+      fontFamily: 'monospace', fontSize: '2px', color: '#884422',
+    }).setOrigin(0.5).setDepth(33);
+    // Microwave sign
+    this.add.text(765, 178, 'CLEAN YOUR\nOWN DISHES', {
+      fontFamily: 'monospace', fontSize: '2px', color: '#cc0000',
+    }).setOrigin(0.5).setDepth(33);
+    // Mini fridge labels
+    d.fillStyle(0xffffff); d.fillRect(805, 195, 10, 3);
+    d.fillStyle(0xffffff); d.fillRect(805, 200, 10, 3);
+    this.add.text(810, 196, "DAVE'S", { fontFamily: 'monospace', fontSize: '1px', color: '#333333' }).setOrigin(0.5).setDepth(33);
+    this.add.text(810, 201, 'BIOHAZARD', { fontFamily: 'monospace', fontSize: '1px', color: '#cc0000' }).setOrigin(0.5).setDepth(33);
+    // More dirty mugs near counter
+    d.fillStyle(0xddccbb); d.fillRect(798, 184, 3, 5);
+    d.fillStyle(0xccbbaa); d.fillRect(802, 185, 3, 4);
+    // Sad brown banana
+    d.fillStyle(0x887744); d.fillRect(774, 184, 5, 2);
+    d.fillStyle(0x776633); d.fillRect(775, 183, 3, 1);
+
+    // ════ PRIYA'S DESK — organized chaos ════
+    // "I BELIEVE IN UX" sticker on monitor bezel
+    d.fillStyle(0x4488cc); d.fillRect(866, 196, 8, 2);
+    // Book as monitor stand
+    d.fillStyle(0x884422); d.fillRect(862, 196, 14, 3);
+    // Color-coded sticky clusters (yellow=todo, pink=urgent, blue=ideas, green=done)
+    // Already placed in drawFurniture, but add the "WHY???" on whiteboard
+    this.add.text(938, 170, 'WHY???', {
+      fontFamily: 'monospace', fontSize: '2px', color: '#cc0000',
+    }).setOrigin(0.5).setDepth(12);
+    // Red circle around a section on whiteboard
+    const whiteG = this.add.graphics().setDepth(12);
+    whiteG.lineStyle(1, 0xcc0000, 0.7);
+    whiteG.strokeCircle(935, 168, 6);
+
+    // ════ WALL DECOR ════
+    // Employee of the Month frame (empty — "YOUR NAME HERE")
+    d.fillStyle(0x554433); d.fillRect(340, 80, 18, 14);
+    d.fillStyle(0xddddcc); d.fillRect(342, 82, 14, 10);
+    this.add.text(349, 84, 'EMPLOYEE\nOF THE\nMONTH', {
+      fontFamily: 'monospace', fontSize: '1.5px', color: '#888866',
+    }).setOrigin(0.5).setDepth(2);
+    this.add.text(349, 90, 'YOUR NAME\nHERE', {
+      fontFamily: 'monospace', fontSize: '1px', color: '#aaaaaa',
+    }).setOrigin(0.5).setDepth(2);
+
+    // Fire safety map (outdated)
+    d.fillStyle(0xffffff); d.fillRect(580, 90, 12, 9);
+    d.fillStyle(0xcc3333); d.fillRect(580, 90, 12, 2);
+    this.add.text(586, 96, 'EXIT', { fontFamily: 'monospace', fontSize: '1.5px', color: '#cc3333' }).setOrigin(0.5).setDepth(2);
+
+    // Ergonomics poster (taped at wrong height — ironic)
+    d.fillStyle(0xffffff); d.fillRect(700, 120, 10, 14);
+    d.fillStyle(0x4488cc); d.fillRect(700, 120, 10, 3);
+    // Tape at angles
+    d.fillStyle(0xeeddaa, 0.6); d.fillRect(699, 118, 5, 2);
+    d.fillStyle(0xeeddaa, 0.6); d.fillRect(708, 133, 4, 2);
+
+    // ════ FLOOR DETAILS ════
+    // Scuff marks on linoleum
+    d.fillStyle(0xb0a484, 0.3); d.fillRect(300, 240, 8, 2);
+    d.fillStyle(0xb0a484, 0.2); d.fillRect(600, 260, 6, 1);
+    d.fillStyle(0xb0a484, 0.25); d.fillRect(450, 280, 10, 2);
+
+    // Mismatched floor tile near printer
+    d.fillStyle(0xd8cc9e, 0.4); d.fillRect(552, 216, 24, 24);
+
+    // Paper airplane on floor near cubicles
+    d.fillStyle(0xeeeeee); d.fillRect(380, 250, 6, 2);
+    d.fillStyle(0xdddddd); d.fillRect(381, 249, 4, 1);
+    d.fillStyle(0xdddddd); d.fillRect(381, 252, 4, 1);
+
+    // Cables along baseboard
+    d.fillStyle(0x333333, 0.4);
+    d.fillRect(200, 165, 80, 1);
+    d.fillRect(500, 165, 60, 1);
+    d.fillRect(830, 165, 50, 1);
   }
 
   // ── End of Chapter Cutscene ──
