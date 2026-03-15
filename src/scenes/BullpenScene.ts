@@ -1220,8 +1220,8 @@ export class BullpenScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
         allElements.push(sepText2);
 
-        // "A Code for America Adventure"
-        const cfaText = this.add.text(W / 2, statsStartY + 126, 'A Code for America Adventure', {
+        // "A Civic Tech Adventure"
+        const cfaText = this.add.text(W / 2, statsStartY + 126, 'A Civic Tech Adventure', {
           fontFamily: FONT, fontSize: '7px', color: '#aa88dd',
         }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
         allElements.push(cfaText);
