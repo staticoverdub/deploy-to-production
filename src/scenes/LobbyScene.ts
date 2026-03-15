@@ -180,6 +180,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sound.stopAll();
     this.game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
     const state = GameState.getInstance();
@@ -582,11 +583,6 @@ export class LobbyScene extends Phaser.Scene {
       this.sound.play('sfx_turnstile', { volume: 0.35 });
     }
 
-    // Fade out lobby music during transition
-    this.sound.getAll('lobby_music').forEach((s) => {
-      this.tweens.add({ targets: s, volume: 0, duration: 1000 });
-    });
-
     const { width, height } = this.cameras.main;
     const wipe = this.add.rectangle(0, 0, width, height, 0x000000)
       .setOrigin(0, 0)
@@ -600,7 +596,6 @@ export class LobbyScene extends Phaser.Scene {
       duration: 600,
       ease: 'Power2',
       onComplete: () => {
-        this.sound.stopAll();
         GameState.getInstance().save();
         this.scene.start('BullpenScene');
       },

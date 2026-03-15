@@ -47,6 +47,12 @@ import bpMiniFridgeUrl from '../assets/sprites/bullpen/mini_fridge.png';
 import bpCaseyDeskUrl from '../assets/sprites/bullpen/casey_desk.png';
 import bpDay90BannerUrl from '../assets/sprites/bullpen/day90_banner.png';
 import bpWarRoomUrl from '../assets/sprites/bullpen/war_room.png';
+import bpPriyaUrl from '../assets/sprites/bullpen/priya_at_desk.png';
+import bpKevinUrl from '../assets/sprites/bullpen/kevin_seated.png';
+import bpWhiteboardUrl from '../assets/sprites/bullpen/whiteboard.png';
+import bpNpcTypingUrl from '../assets/sprites/bullpen/bg_npc_typing.png';
+import bpNpcPhoneUrl from '../assets/sprites/bullpen/bg_npc_phone.png';
+import bpNpcStaringUrl from '../assets/sprites/bullpen/bg_npc_staring.png';
 
 const bullpenHotspots = bullpenHotspotsRaw as unknown as SceneHotspotFile;
 
@@ -122,9 +128,16 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('bp_casey_desk', bpCaseyDeskUrl);
     this.load.image('bp_day90_banner', bpDay90BannerUrl);
     this.load.image('bp_war_room', bpWarRoomUrl);
+    this.load.image('bp_priya', bpPriyaUrl);
+    this.load.image('bp_kevin', bpKevinUrl);
+    this.load.image('bp_whiteboard', bpWhiteboardUrl);
+    this.load.image('bp_npc_typing', bpNpcTypingUrl);
+    this.load.image('bp_npc_phone', bpNpcPhoneUrl);
+    this.load.image('bp_npc_staring', bpNpcStaringUrl);
   }
 
   create(): void {
+    this.sound.stopAll();
     this.game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
     const state = GameState.getInstance();
@@ -434,10 +447,14 @@ export class BullpenScene extends Phaser.Scene {
 
   // ── Drawing ──
 
+  // Layout left to right: coat rack (30) -> Casey desk (120) -> cubicles+Kevin (220-380)
+  //   -> printer (420) -> supply closet (460 wall) -> break area (520-600) -> Priya+whiteboard (660-720)
+  //   -> War Room (790) -> hallway exit (920)
+
   private drawBackground(): void {
     const g = this.add.graphics().setDepth(0);
 
-    // Floor
+    // Floor — beige linoleum with checkerboard pattern
     g.fillStyle(0xd4c8a0);
     g.fillRect(0, 0, SCENE_W, SCENE_H);
     g.fillStyle(0xc8bc94);
@@ -447,104 +464,125 @@ export class BullpenScene extends Phaser.Scene {
       }
     }
 
-    // Walls
+    // Walls — off-white institutional
     g.fillStyle(0xe8e0cc);
     g.fillRect(0, 0, SCENE_W, 140);
+    // Baseboard strip
     g.fillStyle(0x8a7e60);
     g.fillRect(0, 138, SCENE_W, 4);
 
-    // Fluorescent lights
+    // Fluorescent light panels on ceiling
     g.fillStyle(0xffffff, 0.04);
-    for (let x = 80; x < SCENE_W; x += 200) g.fillRect(x, 10, 120, 8);
+    for (let x = 60; x < SCENE_W; x += 160) g.fillRect(x, 8, 100, 8);
 
-    // DAY 1 OF 90 banner — PixelLab sprite
-    this.add.image(500, 60, 'bp_day90_banner').setOrigin(0.5, 0.5).setDepth(1).setScale(0.8);
+    // DAY 1 OF 90 banner — on wall between cubicles and break area
+    this.add.image(480, 55, 'bp_day90_banner').setOrigin(0.5, 0.5).setDepth(1).setScale(0.6);
 
-    // Dashboard TV — PixelLab sprite
-    this.add.image(700, 70, 'bp_dashboard_tv').setOrigin(0.5, 0.5).setDepth(1);
+    // Dashboard TV — on wall near War Room
+    this.add.image(730, 65, 'bp_dashboard_tv').setOrigin(0.5, 0.5).setDepth(1);
 
-    // Hallway exit (far right)
-    g.fillStyle(0x333333);
-    g.fillRect(920, 142, 40, 80);
-    this.add.text(940, 170, 'B2 LEVEL', { fontFamily: 'monospace', fontSize: '4px', color: '#888888' }).setOrigin(0.5).setDepth(2);
+    // Hallway exit door (far right)
+    g.fillStyle(0x444444);
+    g.fillRect(910, 142, 50, 80);
+    g.fillStyle(0x555555);
+    g.fillRect(912, 144, 46, 76);
+    // Door handle
+    g.fillStyle(0xaaaaaa);
+    g.fillRect(950, 178, 4, 8);
+    this.add.text(935, 150, 'B2 LEVEL', {
+      fontFamily: 'monospace', fontSize: '4px', color: '#999999',
+    }).setOrigin(0.5).setDepth(2);
+    this.add.text(935, 158, 'AUTHORIZED', {
+      fontFamily: 'monospace', fontSize: '3px', color: '#999999',
+    }).setOrigin(0.5).setDepth(2);
   }
 
   private drawFurniture(): void {
-    // Coat rack (far left) — PixelLab sprite
-    this.add.image(30, 170, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(10);
+    // ── FAR LEFT: Coat rack ──
+    this.add.image(30, 190, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(10);
 
-    // Casey's desk — PixelLab sprite
-    this.add.image(145, 220, 'bp_casey_desk').setOrigin(0.5, 1).setDepth(20);
+    // ── LEFT: Casey's desk (moved right to feel part of the office) ──
+    this.add.image(120, 220, 'bp_casey_desk').setOrigin(0.5, 1).setDepth(20);
 
-    // Cubicle cluster (left-center) — graphics, keep as-is for the grid structure
-    for (let i = 0; i < 3; i++) {
-      const cx = 250 + i * 60;
-      this.add.rectangle(cx, 175, 50, 4, 0x999999).setDepth(15);
-      this.add.rectangle(cx - 24, 190, 4, 30, 0x999999).setDepth(15);
-      this.add.rectangle(cx + 24, 190, 4, 30, 0x999999).setDepth(15);
-      this.add.rectangle(cx, 198, 44, 20, 0x8a7e60).setDepth(16);
+    // ── LEFT-CENTER: Cubicle cluster (4 cubicles, Kevin in #2) ──
+    // Cubicle partition walls
+    const cubStartX = 210;
+    for (let i = 0; i < 4; i++) {
+      const cx = cubStartX + i * 55;
+      // Back wall
+      this.add.rectangle(cx, 172, 48, 4, 0x999999).setDepth(15);
+      // Side walls
+      this.add.rectangle(cx - 23, 188, 4, 28, 0x999999).setDepth(15);
+      this.add.rectangle(cx + 23, 188, 4, 28, 0x999999).setDepth(15);
+      // Desk surface inside cubicle
+      this.add.rectangle(cx, 196, 40, 16, 0x8a7e60).setDepth(16);
+      // Monitor on desk
+      this.add.rectangle(cx, 190, 10, 8, 0x222222).setDepth(17);
     }
 
-    // Dead printer — PixelLab sprite
-    this.add.image(260, 260, 'bp_dead_printer').setOrigin(0.5, 1).setDepth(20);
+    // ── CENTER-LEFT: Dead printer ──
+    this.add.image(420, 255, 'bp_dead_printer').setOrigin(0.5, 1).setDepth(20);
 
-    // Break area counter (keep as graphics — long counter surface)
-    this.add.rectangle(450, 195, 100, 30, 0x8a7e60).setDepth(18);
-    this.add.rectangle(450, 208, 100, 6, 0x7a6e50).setDepth(19);
+    // ── CENTER-LEFT WALL: Supply closet ──
+    this.add.image(460, 165, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(5);
 
-    // Coffee maker — PixelLab sprite (on counter)
-    this.add.image(420, 192, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(22);
+    // ── CENTER: Break area ──
+    // Counter surface
+    this.add.rectangle(550, 195, 120, 28, 0x8a7e60).setDepth(18);
+    this.add.rectangle(550, 207, 120, 5, 0x7a6e50).setDepth(19);
+    // Coffee maker on counter
+    this.add.image(510, 192, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(22);
+    // Microwave on counter
+    this.add.image(545, 192, 'bp_microwave').setOrigin(0.5, 1).setDepth(22);
+    // Mini fridge beside counter
+    this.add.image(590, 212, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(22);
+    // Dirty mugs on counter
+    const mugG = this.add.graphics().setDepth(23);
+    mugG.fillStyle(0xddddcc);
+    mugG.fillRect(558, 185, 6, 6);
+    mugG.fillRect(566, 186, 5, 5);
+    mugG.fillStyle(0xccbbaa);
+    mugG.fillRect(572, 185, 6, 6);
 
-    // Microwave — PixelLab sprite (on counter)
-    this.add.image(450, 192, 'bp_microwave').setOrigin(0.5, 1).setDepth(22);
-
-    // Mini fridge — PixelLab sprite (beside counter)
-    this.add.image(490, 210, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(22);
-
-    // Supply closet — PixelLab sprite (on wall)
-    this.add.image(300, 158, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(5);
-
-    // Priya's desk — keep as graphics (detailed with sticky notes, monitors, whiteboard)
-    this.add.rectangle(650, 200, 70, 40, 0x8a7e60).setDepth(20);
-    this.add.rectangle(650, 218, 70, 6, 0x7a6e50).setDepth(21);
-    this.add.rectangle(640, 190, 12, 10, 0x222222).setDepth(22);
-    this.add.rectangle(655, 190, 12, 10, 0x222222).setDepth(22);
-    for (let i = 0; i < 5; i++) {
-      const colors = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44];
-      this.add.rectangle(668 + (i % 3) * 6, 190 + Math.floor(i / 3) * 6, 5, 5, colors[i]).setDepth(22);
+    // ── RIGHT-CENTER: Priya's desk area ──
+    // Priya's desk (wider, more detailed)
+    this.add.rectangle(670, 200, 80, 36, 0x8a7e60).setDepth(20);
+    this.add.rectangle(670, 216, 80, 5, 0x7a6e50).setDepth(21);
+    // Dual monitors
+    this.add.rectangle(656, 190, 14, 10, 0x222222).setDepth(22);
+    this.add.rectangle(672, 190, 14, 10, 0x222222).setDepth(22);
+    // Colorful sticky note clusters on desk
+    const noteColors = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44, 0xcc88ff];
+    for (let i = 0; i < 6; i++) {
+      this.add.rectangle(688 + (i % 3) * 5, 188 + Math.floor(i / 3) * 5, 4, 4, noteColors[i]).setDepth(22);
     }
-    // Whiteboard on wheels (near Priya's desk)
-    this.add.rectangle(690, 170, 40, 50, 0xffffff).setDepth(10).setStrokeStyle(1, 0xcccccc);
+    // Whiteboard on wheels — PixelLab sprite
+    this.add.image(720, 195, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10);
 
-    // War Room — PixelLab sprite
-    this.add.image(790, 190, 'bp_war_room').setOrigin(0.5, 1).setDepth(5);
+    // ── RIGHT: War Room — PixelLab sprite ──
+    this.add.image(810, 200, 'bp_war_room').setOrigin(0.5, 1).setDepth(5);
+    this.add.text(810, 130, 'WAR ROOM', {
+      fontFamily: 'monospace', fontSize: '5px', color: '#666688',
+    }).setOrigin(0.5).setDepth(6);
   }
 
   private drawNPCs(): void {
-    // Priya (placeholder)
-    const pg = this.add.graphics().setDepth(200);
-    pg.fillStyle(0xcc6699); pg.fillRect(645, 165, 12, 30);
-    pg.fillStyle(0xddaa77); pg.fillCircle(651, 160, 7);
-    pg.fillStyle(0xff6633); pg.fillRect(645, 170, 12, 4);
+    // Priya at her desk — PixelLab sprite
+    this.add.image(660, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(200);
 
-    // Kevin (placeholder with headphones)
-    const kg = this.add.graphics().setDepth(200);
-    kg.fillStyle(0x666688); kg.fillRect(245, 172, 12, 26);
-    kg.fillStyle(0xccbb99); kg.fillCircle(251, 167, 7);
-    kg.fillStyle(0x333333); kg.fillRect(244, 162, 2, 8);
-    kg.fillRect(256, 162, 2, 8); kg.fillRect(244, 160, 14, 2);
+    // Kevin in cubicle #2 (x=265) — PixelLab sprite
+    this.add.image(265, 202, 'bp_kevin').setOrigin(0.5, 1).setDepth(200);
 
-    // Background NPCs (store refs for printer reaction)
+    // Background NPCs in cubicles — PixelLab sprites
+    // Cubicle #1 (x=210): typing woman
+    this.add.image(210, 202, 'bp_npc_typing').setOrigin(0.5, 1).setDepth(190);
+    // Cubicle #3 (x=320): man on phone
+    this.add.image(320, 202, 'bp_npc_phone').setOrigin(0.5, 1).setDepth(190);
+    // Cubicle #4 (x=375): woman staring at screen
+    this.add.image(375, 202, 'bp_npc_staring').setOrigin(0.5, 1).setDepth(190);
+
+    // Store NPC image refs for printer reaction
     this.bgNpcGraphics = [];
-    for (const npc of [
-      { x: 310, y: 172, c: 0x558855 },
-      { x: 370, y: 172, c: 0x885555 },
-    ]) {
-      const bg = this.add.graphics().setDepth(190);
-      bg.fillStyle(npc.c); bg.fillRect(npc.x - 5, npc.y, 10, 24);
-      bg.fillStyle(0xccbb99); bg.fillCircle(npc.x, npc.y - 5, 6);
-      this.bgNpcGraphics.push(bg);
-    }
   }
 
   // ── End of Chapter Cutscene ──
@@ -760,17 +798,8 @@ export class BullpenScene extends Phaser.Scene {
       this.sound.play('sfx_printer_burst', { volume: 0.4 });
     }
 
-    // All background NPCs briefly look toward printer (x=260)
-    // Simulate head turn by shifting graphics briefly
-    for (const npcG of this.bgNpcGraphics) {
-      this.tweens.add({
-        targets: npcG, x: -3, duration: 200, yoyo: true, hold: 1300,
-        ease: 'Sine.inOut',
-      });
-    }
-
-    // One NPC shouts — floating text
-    const shoutX = 310;
+    // One NPC shouts — floating text above cubicle area
+    const shoutX = 320;
     const shoutY = 155;
     const shout = this.add.text(shoutX, shoutY, '"Hey, new person\nfixed the printer!"', {
       fontFamily: 'monospace', fontSize: '7px', color: '#ffffff',
@@ -834,14 +863,14 @@ export class BullpenScene extends Phaser.Scene {
 
   private setupNavGrid(): void {
     this.navGrid = new NavGrid(WALK_MIN_X, WALK_MIN_Y, WALK_MAX_X, WALK_MAX_Y);
-    this.navGrid.addObstacle(115, 200, 60, 24);     // Casey's desk
-    this.navGrid.addObstacle(226, 175, 180, 35);     // Cubicle cluster
-    this.navGrid.addObstacle(240, 235, 40, 30);      // Dead printer
-    this.navGrid.addObstacle(400, 195, 100, 20);     // Break counter
-    this.navGrid.addObstacle(615, 200, 70, 24);      // Priya's desk
-    this.navGrid.addObstacle(670, 145, 40, 50);      // Whiteboard
-    this.navGrid.addObstacle(740, 120, 100, 100);    // War Room
-    this.navGrid.addObstacle(920, 142, 40, 80);      // Hallway exit
+    this.navGrid.addObstacle(90, 200, 64, 24);       // Casey's desk
+    this.navGrid.addObstacle(187, 172, 230, 36);     // Cubicle cluster (4 cubicles)
+    this.navGrid.addObstacle(400, 230, 48, 30);      // Dead printer
+    this.navGrid.addObstacle(490, 195, 120, 22);     // Break counter
+    this.navGrid.addObstacle(630, 200, 80, 22);      // Priya's desk
+    this.navGrid.addObstacle(696, 145, 48, 55);      // Whiteboard
+    this.navGrid.addObstacle(746, 120, 128, 82);     // War Room
+    this.navGrid.addObstacle(910, 142, 50, 80);      // Hallway exit
   }
 
   // ── Ambient Life ──

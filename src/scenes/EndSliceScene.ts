@@ -7,6 +7,7 @@ export class EndSliceScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sound.stopAll();
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a1a2e');
 

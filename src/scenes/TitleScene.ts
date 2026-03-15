@@ -88,6 +88,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sound.stopAll();
     this.cameras.main.setBackgroundColor('#1a1a1a');
     this.skipped = false;
     this.menuReady = false;
