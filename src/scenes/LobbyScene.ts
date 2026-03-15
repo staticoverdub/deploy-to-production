@@ -55,6 +55,7 @@ import sfxFluorescentHumUrl from '../assets/audio/sfx/sfx_fluorescent_hum.mp3';
 import sfxBadgePrintUrl from '../assets/audio/sfx/sfx_badge_print.mp3';
 import sfxTextBlipUrl from '../assets/audio/sfx/sfx_text_blip.mp3';
 import sfxSelectUrl from '../assets/audio/sfx/sfx_select.mp3';
+import lobbyCoffeeUrl from '../assets/sprites/mailcart/coffee_cup.png';
 // Voice babble
 import voiceCaseyUrl from '../assets/audio/sfx/voices/voice_casey.mp3';
 import voiceGladysUrl from '../assets/audio/sfx/voices/voice_gladys.mp3';
@@ -142,6 +143,7 @@ export class LobbyScene extends Phaser.Scene {
     this.load.image('obj_chairs', chairsUrl);
     this.load.image('obj_flag', flagUrl);
     this.load.image('obj_security_desk', securityDeskUrl);
+    this.load.image('obj_lobby_coffee', lobbyCoffeeUrl);
 
     // Audio
     this.load.audio('lobby_music', lobbyMusicUrl);
@@ -597,7 +599,7 @@ export class LobbyScene extends Phaser.Scene {
       ease: 'Power2',
       onComplete: () => {
         GameState.getInstance().save();
-        this.scene.start('BullpenScene');
+        this.scene.start('MailCartScene');
       },
     });
   }
@@ -861,6 +863,12 @@ export class LobbyScene extends Phaser.Scene {
 
     // Water Cooler — at water_cooler hotspot area
     this.add.image(201, 182, 'obj_cooler').setOrigin(0.5, 1).setDepth(20);
+
+    // Hidden coffee cup — tucked on the floor behind the water cooler
+    // Only visible if not already picked up
+    if (!GameState.getInstance().hasItem('lobby_coffee') && !GameState.getInstance().hasFlag('lobby_coffee_taken')) {
+      this.add.image(218, 178, 'obj_lobby_coffee').setOrigin(0.5, 1).setDepth(19).setScale(0.4);
+    }
 
     // Now Serving Display — on wall
     this.add.image(297, 42, 'obj_now_serving').setOrigin(0.5, 0.5).setDepth(10);

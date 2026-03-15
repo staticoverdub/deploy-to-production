@@ -12,6 +12,8 @@ import sfxCrtStaticUrl from '../assets/audio/sfx/sfx_crt_static.mp3';
 import voiceCaseyUrl from '../assets/audio/sfx/voices/voice_casey.mp3';
 import voiceKevinUrl from '../assets/audio/sfx/voices/voice_kevin.mp3';
 import bootLinesData from '../data/boot_lines.json';
+import filesystemData from '../data/terminal_filesystem.json';
+import cfaLogoUrl from '../assets/ui/cfa-logo.png';
 
 // ── Colors (IBM 3278 amber — BRIGHT) ──
 
@@ -38,9 +40,23 @@ const LINE_H = 16;
 const CHAR_W = 8;
 const TEXT_PAD = 16;
 
+// Terminal dimensions
+const TERM_COLS = Math.floor((SCREEN_W - TEXT_PAD * 2) / CHAR_W); // ~69
+const TERM_ROWS = Math.floor((SCREEN_H - TEXT_PAD * 2) / LINE_H); // ~16
+
+// Filesystem types
+interface FSNode {
+  type: 'dir' | 'file' | 'executable';
+  children?: Record<string, FSNode>;
+  content?: string[];
+  hidden?: boolean;
+  saveOnly?: boolean;
+  runResponse?: string[];
+  triggerAction?: string;
+}
+
 export class TitleScene extends Phaser.Scene {
   private skipped = false;
-  private menuReady = false;
   private transitioning = false;
 
   private bezelContainer!: Phaser.GameObjects.Container;
@@ -58,11 +74,15 @@ export class TitleScene extends Phaser.Scene {
   private powerLed: Phaser.GameObjects.Arc | null = null;
   private screenFlash: Phaser.GameObjects.Rectangle | null = null;
 
-  // Menu — simple text objects with bounds-based click detection
-  private newGameText: Phaser.GameObjects.Text | null = null;
-  private continueText: Phaser.GameObjects.Text | null = null;
-  private newGameBlink: Phaser.GameObjects.Text | null = null;
-  private continueBlink: Phaser.GameObjects.Text | null = null;
+  // Terminal state
+  private terminalMode = false;
+  private inputBuffer = '';
+  private commandHistory: string[] = [];
+  private historyIndex = -1;
+  private outputLines: string[] = [];
+  private filesystem!: Record<string, FSNode>;
+  private currentPath: string[] = ['home', 'cpark']; // start at ~
+  private keyboardHandler: ((event: KeyboardEvent) => void) | null = null;
 
   // Easter egg state
   private eggLedUsed = false;
@@ -85,19 +105,22 @@ export class TitleScene extends Phaser.Scene {
     this.load.audio('sfx_crt_static', sfxCrtStaticUrl);
     this.load.audio('voice_casey', voiceCaseyUrl);
     this.load.audio('voice_kevin', voiceKevinUrl);
+    this.load.image('cfa_logo', cfaLogoUrl);
   }
 
   create(): void {
     this.sound.stopAll();
     this.cameras.main.setBackgroundColor('#1a1a1a');
     this.skipped = false;
-    this.menuReady = false;
     this.transitioning = false;
     this.currentString = '';
-    this.newGameText = null;
-    this.continueText = null;
-    this.newGameBlink = null;
-    this.continueBlink = null;
+    this.terminalMode = false;
+    this.inputBuffer = '';
+    this.commandHistory = [];
+    this.historyIndex = -1;
+    this.outputLines = [];
+    this.currentPath = ['home', 'cpark'];
+    this.filesystem = filesystemData.filesystem as unknown as Record<string, FSNode>;
     this.eggLedUsed = false;
     this.eggLedActive = false;
     this.eggModelClicks = 0;
@@ -116,7 +139,6 @@ export class TitleScene extends Phaser.Scene {
     this.debugMenu = new DebugMenu(this);
 
     // ── SINGLE GLOBAL CLICK HANDLER ──
-    // All click logic goes through here: skip, menu, easter eggs, boot confirm
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.rightButtonDown()) return;
       this.handleClick(pointer);
@@ -127,15 +149,10 @@ export class TitleScene extends Phaser.Scene {
     if (this.cursorManager) {
       const pointer = this.input.activePointer;
       this.cursorManager.update(pointer);
-
       this.debugMenu?.update();
-      // Update cursor state based on hover
-      if (this.menuReady && !this.transitioning) {
-        if (this.isOverMenu(pointer.x, pointer.y)) {
-          this.cursorManager.setState('inventory');
-        } else {
-          this.cursorManager.setState('default');
-        }
+      // No special cursor states in terminal mode
+      if (!this.terminalMode) {
+        this.cursorManager.setState('default');
       }
     }
   }
@@ -150,26 +167,8 @@ export class TitleScene extends Phaser.Scene {
     // During transitioning, ignore all clicks
     if (this.transitioning) return;
 
-    // If menu is showing, check menu clicks first
-    if (this.menuReady) {
-      if (this.newGameText) {
-        const b = this.newGameText.getBounds();
-        if (px >= b.left - 8 && px <= b.right + 8 && py >= b.top - 4 && py <= b.bottom + 4) {
-          if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
-          this.startBootSequence(false);
-          return;
-        }
-      }
-      if (this.continueText) {
-        const b = this.continueText.getBounds();
-        if (px >= b.left - 8 && px <= b.right + 8 && py >= b.top - 4 && py <= b.bottom + 4) {
-          if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
-          this.startBootSequence(true);
-          return;
-        }
-      }
-
-      // Check easter eggs even while menu is showing
+    // If terminal is showing, only check easter eggs
+    if (this.terminalMode) {
       this.checkEasterEggClick(px, py);
       return;
     }
@@ -177,20 +176,8 @@ export class TitleScene extends Phaser.Scene {
     // During intro sequence: check easter eggs, then skip
     if (!this.skipped) {
       if (this.checkEasterEggClick(px, py)) return;
-      this.skipToMenu();
+      this.skipToTerminal();
     }
-  }
-
-  private isOverMenu(px: number, py: number): boolean {
-    if (this.newGameText) {
-      const b = this.newGameText.getBounds();
-      if (px >= b.left - 8 && px <= b.right + 8 && py >= b.top - 4 && py <= b.bottom + 4) return true;
-    }
-    if (this.continueText) {
-      const b = this.continueText.getBounds();
-      if (px >= b.left - 8 && px <= b.right + 8 && py >= b.top - 4 && py <= b.bottom + 4) return true;
-    }
-    return false;
   }
 
   // ═══════════════════════════════════════════
@@ -300,7 +287,7 @@ export class TitleScene extends Phaser.Scene {
     const vigGfx = this.add.graphics().setDepth(52);
     const steps = 12;
     for (let i = steps; i >= 0; i--) {
-      const alpha = (1 - i / steps) * 0.2;
+      const alpha = (1 - i / steps) * 0.08;
       const inset = i * 6;
       vigGfx.fillStyle(0x000000, alpha);
       vigGfx.fillRect(SCREEN_X + inset, SCREEN_Y + inset,
@@ -476,41 +463,688 @@ export class TitleScene extends Phaser.Scene {
       this.currentString += '\n' + titleBox;
       this.terminalText?.setText(this.currentString);
       this.glowText?.setText(this.currentString);
-      this.time.delayedCall(600, () => { if (!this.skipped) this.showMenu(); });
+      this.time.delayedCall(600, () => { if (!this.skipped) this.showTerminal(); });
     });
   }
 
   // ═══════════════════════════════════════════
-  // MENU — simple text objects, no setInteractive
+  // TERMINAL — interactive shell (replaces menu)
   // ═══════════════════════════════════════════
 
-  private showMenu(): void {
-    this.menuReady = true;
+  private showTerminal(): void {
+    this.terminalMode = true;
+    this.hideCursor();
+
+    // Clear screen and show condensed header + MOTD + prompt
+    this.outputLines = [];
     const hasSave = GameState.getInstance().hasSave();
-    const lines = this.currentString.split('\n');
-    const textBottom = SCREEN_Y + TEXT_PAD + lines.length * LINE_H;
-    const menuY = Math.min(textBottom + 24, SCREEN_Y + SCREEN_H - 50);
 
-    // NEW GAME text — depth 60, above overlays
-    this.newGameText = this.add.text(SCREEN_X + TEXT_PAD, menuY, '> NEW GAME', {
+    // Condensed header
+    this.appendOutput(['D.A.S.H. SYSTEMS v3.1 — AUTHORIZED USE ONLY', '']);
+
+    // MOTD
+    const motdLines = hasSave
+      ? filesystemData.motdWithSave as string[]
+      : filesystemData.motd as string[];
+    this.appendOutput(motdLines);
+    this.appendOutput(['']);
+
+    this.inputBuffer = '';
+    this.historyIndex = -1;
+
+    this.redrawScreen();
+    this.installKeyboardHandler();
+  }
+
+  private skipToTerminal(): void {
+    this.skipped = true;
+    this.sound.stopAll();
+    this.tweens.killAll();
+    this.screenContainer.removeAll(true);
+
+    this.screenContainer.add(
+      this.add.rectangle(SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2, SCREEN_W, SCREEN_H, SCREEN_BG)
+    );
+    this.screenContainer.add(
+      this.add.rectangle(SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2, SCREEN_W, SCREEN_H, AMBER_HEX, 0.03).setDepth(9)
+    );
+
+    this.glowText = this.add.text(SCREEN_X + TEXT_PAD - 1, SCREEN_Y + TEXT_PAD - 1, '', {
+      fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: GLOW_COLOR,
+      wordWrap: { width: SCREEN_W - TEXT_PAD * 2 }, lineSpacing: LINE_H - FONT_SIZE,
+    }).setAlpha(GLOW_ALPHA).setDepth(11);
+    this.screenContainer.add(this.glowText);
+
+    this.terminalText = this.add.text(SCREEN_X + TEXT_PAD, SCREEN_Y + TEXT_PAD, '', {
       fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: AMBER,
-    }).setDepth(60);
+      wordWrap: { width: SCREEN_W - TEXT_PAD * 2 }, lineSpacing: LINE_H - FONT_SIZE,
+    }).setDepth(12);
+    this.screenContainer.add(this.terminalText);
 
-    this.newGameBlink = this.add.text(
-      SCREEN_X + TEXT_PAD + this.newGameText.width + 4, menuY, '_', {
-      fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: AMBER,
-    }).setDepth(60).setAlpha(0);
+    this.cursorBlock = this.add.rectangle(0, 0, CHAR_W - 1, FONT_SIZE + 2, AMBER_HEX)
+      .setOrigin(0, 0).setVisible(false).setDepth(13);
+    this.screenContainer.add(this.cursorBlock);
 
-    if (hasSave) {
-      this.continueText = this.add.text(SCREEN_X + TEXT_PAD, menuY + LINE_H + 4, '> CONTINUE', {
-        fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: AMBER,
-      }).setDepth(60);
+    if (this.powerLed) this.powerLed.setFillStyle(0x33cc33);
 
-      this.continueBlink = this.add.text(
-        SCREEN_X + TEXT_PAD + this.continueText.width + 4, menuY + LINE_H + 4, '_', {
-        fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: AMBER,
-      }).setDepth(60).setAlpha(0);
+    this.overlayContainer.removeAll(true);
+    if (!this.textures.exists('scanline_tile')) {
+      const sg = this.add.graphics();
+      sg.fillStyle(0x000000, SCANLINE_ALPHA);
+      for (let y = 0; y < 4; y += 2) sg.fillRect(0, y, SCREEN_W, 1);
+      sg.generateTexture('scanline_tile', SCREEN_W, 4);
+      sg.destroy();
     }
+    this.overlayContainer.add(
+      this.add.tileSprite(SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, 'scanline_tile')
+        .setOrigin(0, 0).setDepth(51)
+    );
+    this.screenFlash = this.add.rectangle(
+      SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2,
+      SCREEN_W, SCREEN_H, 0x000000, 0
+    ).setDepth(53);
+    this.overlayContainer.add(this.screenFlash);
+    this.startScreenFlicker();
+
+    this.showTerminal();
+  }
+
+  // ═══════════════════════════════════════════
+  // KEYBOARD HANDLER — terminal input
+  // ═══════════════════════════════════════════
+
+  private installKeyboardHandler(): void {
+    this.removeKeyboardHandler();
+
+    this.keyboardHandler = (event: KeyboardEvent) => {
+      if (!this.terminalMode || this.transitioning || this.eggLedActive || this.eggModelActive) return;
+
+      event.preventDefault();
+
+      if (event.key === 'Escape') {
+        // ESC skips straight to game
+        if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
+        this.terminalMode = false;
+        this.removeKeyboardHandler();
+        this.startBootSequence(false);
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        const cmd = this.inputBuffer.trim();
+        if (cmd.length > 0) {
+          this.commandHistory.unshift(cmd);
+          if (this.commandHistory.length > 50) this.commandHistory.pop();
+        }
+        this.historyIndex = -1;
+        // Show the command as submitted
+        this.appendOutput([this.getPromptString() + this.inputBuffer]);
+        const input = this.inputBuffer;
+        this.inputBuffer = '';
+        if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+        this.executeCommand(input);
+        return;
+      }
+
+      if (event.key === 'Backspace') {
+        if (this.inputBuffer.length > 0) {
+          this.inputBuffer = this.inputBuffer.slice(0, -1);
+          this.redrawScreen();
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        if (this.commandHistory.length > 0) {
+          this.historyIndex = Math.min(this.historyIndex + 1, this.commandHistory.length - 1);
+          this.inputBuffer = this.commandHistory[this.historyIndex];
+          this.redrawScreen();
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        if (this.historyIndex > 0) {
+          this.historyIndex--;
+          this.inputBuffer = this.commandHistory[this.historyIndex];
+        } else {
+          this.historyIndex = -1;
+          this.inputBuffer = '';
+        }
+        this.redrawScreen();
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        this.handleTabComplete();
+        return;
+      }
+
+      // Printable characters
+      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+        this.inputBuffer += event.key;
+        this.playBlip(0.06);
+        this.redrawScreen();
+      }
+    };
+
+    window.addEventListener('keydown', this.keyboardHandler);
+  }
+
+  private removeKeyboardHandler(): void {
+    if (this.keyboardHandler) {
+      window.removeEventListener('keydown', this.keyboardHandler);
+      this.keyboardHandler = null;
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // COMMAND EXECUTION
+  // ═══════════════════════════════════════════
+
+  private executeCommand(input: string): void {
+    const trimmed = input.trim();
+    if (trimmed.length === 0) {
+      this.redrawScreen();
+      return;
+    }
+
+    // Check for ./ execution
+    if (trimmed.startsWith('./')) {
+      this.handleRun(trimmed.slice(2));
+      return;
+    }
+
+    const parts = trimmed.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    switch (cmd) {
+      case 'ls': this.handleLs(args); break;
+      case 'cd': this.handleCd(args); break;
+      case 'cat': this.handleCat(args); break;
+      case 'pwd': this.appendOutput(['/' + this.currentPath.join('/')]); break;
+      case 'help': this.handleHelp(); break;
+      case 'clear': this.handleClear(); break;
+      case 'resume': this.handleResume(); break;
+      case 'whoami':
+      case 'date':
+      case 'sudo':
+      case 'rm':
+      case 'vim':
+      case 'vi':
+      case 'nano':
+      case 'exit':
+      case 'logout':
+      case 'ping':
+      case 'man':
+      case 'ssh':
+      case 'iddqd':
+      case 'idkfa':
+      case 'grep':
+      case 'find':
+      case 'echo':
+      case 'mkdir':
+      case 'touch':
+      case 'chmod':
+      case 'wget':
+      case 'curl':
+        this.handleSpecial(cmd, args, trimmed);
+        break;
+      default:
+        this.handleUnknown(cmd);
+        break;
+    }
+
+    this.redrawScreen();
+  }
+
+  // ═══════════════════════════════════════════
+  // COMMAND HANDLERS
+  // ═══════════════════════════════════════════
+
+  private handleLs(args: string[]): void {
+    const showHidden = args.some(a => a.includes('a'));
+    const node = this.getNodeAtPath(this.currentPath);
+    if (!node || node.type !== 'dir' || !node.children) {
+      this.appendOutput(['ls: cannot access: Not a directory']);
+      return;
+    }
+
+    const hasSave = GameState.getInstance().hasSave();
+    const entries: string[] = [];
+    for (const [name, child] of Object.entries(node.children)) {
+      if (child.saveOnly && !hasSave) continue;
+      if (child.hidden && !showHidden) continue;
+      if (child.type === 'dir') {
+        entries.push(name + '/');
+      } else if (child.type === 'executable') {
+        entries.push(name + '*');
+      } else {
+        entries.push(name);
+      }
+    }
+
+    if (entries.length === 0) {
+      this.appendOutput(['(empty directory)']);
+      return;
+    }
+
+    // Multi-column output
+    const maxLen = Math.max(...entries.map(e => e.length));
+    const colWidth = maxLen + 2;
+    const cols = Math.max(1, Math.floor(TERM_COLS / colWidth));
+    const lines: string[] = [];
+    for (let i = 0; i < entries.length; i += cols) {
+      const row = entries.slice(i, i + cols);
+      lines.push(row.map(e => e.padEnd(colWidth)).join('').trimEnd());
+    }
+    this.appendOutput(lines);
+  }
+
+  private handleCd(args: string[]): void {
+    if (args.length === 0 || args[0] === '~') {
+      this.currentPath = ['home', 'cpark'];
+      return;
+    }
+
+    const target = args[0];
+    const newPath = this.resolvePathSegments(target);
+
+    if (!newPath) {
+      this.appendOutput([`cd: ${target}: No such directory`]);
+      return;
+    }
+
+    const node = this.getNodeAtPath(newPath);
+    if (!node || node.type !== 'dir') {
+      this.appendOutput([`cd: ${target}: Not a directory`]);
+      return;
+    }
+
+    this.currentPath = newPath;
+  }
+
+  private handleCat(args: string[]): void {
+    if (args.length === 0) {
+      this.appendOutput(['cat: missing file operand']);
+      return;
+    }
+
+    const filename = args[0];
+    const resolved = this.resolvePathSegments(filename);
+    if (!resolved) {
+      this.appendOutput([`cat: ${filename}: No such file`]);
+      return;
+    }
+
+    const node = this.getNodeAtPath(resolved);
+    if (!node) {
+      this.appendOutput([`cat: ${filename}: No such file`]);
+      return;
+    }
+    if (node.type === 'dir') {
+      this.appendOutput([`cat: ${filename}: Is a directory`]);
+      return;
+    }
+
+    const hasSave = GameState.getInstance().hasSave();
+    if (node.saveOnly && !hasSave) {
+      this.appendOutput([`cat: ${filename}: No such file`]);
+      return;
+    }
+
+    if (node.content) {
+      this.appendOutput(node.content);
+    } else {
+      this.appendOutput(['(empty file)']);
+    }
+  }
+
+  private handleRun(filename: string): void {
+    if (!filename) {
+      this.appendOutput(['bash: ./: Is a directory']);
+      return;
+    }
+
+    const resolved = this.resolvePathSegments(filename);
+    if (!resolved) {
+      this.appendOutput([`bash: ./${filename}: No such file`]);
+      return;
+    }
+
+    const node = this.getNodeAtPath(resolved);
+    if (!node) {
+      this.appendOutput([`bash: ./${filename}: No such file`]);
+      return;
+    }
+
+    if (node.type !== 'executable') {
+      this.appendOutput([`bash: ./${filename}: Permission denied`]);
+      return;
+    }
+
+    // Show run response
+    if (node.runResponse) {
+      this.appendOutput(node.runResponse);
+    }
+
+    // Handle trigger actions
+    if (node.triggerAction === 'start_game') {
+      this.redrawScreen();
+      this.terminalMode = false;
+      this.removeKeyboardHandler();
+      // Small delay to show the output, then boot
+      this.time.delayedCall(800, () => {
+        this.startBootSequence(false);
+      });
+      return;
+    }
+
+    if (node.triggerAction === 'denied_sfx') {
+      if (this.cache.audio.exists('sfx_crt_static')) {
+        this.sound.play('sfx_crt_static', { volume: 0.5 });
+      }
+    }
+  }
+
+  private handleHelp(): void {
+    this.appendOutput(filesystemData.helpText as string[]);
+  }
+
+  private handleClear(): void {
+    this.outputLines = [];
+  }
+
+  private handleResume(): void {
+    const hasSave = GameState.getInstance().hasSave();
+    if (!hasSave) {
+      this.appendOutput(['No saved session found.']);
+      return;
+    }
+    if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
+    this.appendOutput(['Restoring session...']);
+    this.redrawScreen();
+    this.terminalMode = false;
+    this.removeKeyboardHandler();
+    this.time.delayedCall(500, () => {
+      this.startBootSequence(true);
+    });
+  }
+
+  private handleSpecial(cmd: string, args: string[], fullInput: string): void {
+    switch (cmd) {
+      case 'whoami':
+        this.appendOutput(['cpark']);
+        break;
+      case 'date':
+        this.appendOutput(['Mon Mar 15 08:47:23 EST 1997',
+          'NOTE: Daylight savings disputed by HR.']);
+        break;
+      case 'sudo':
+        if (fullInput.toLowerCase() === 'sudo make me a sandwich') {
+          this.appendOutput(['Okay.']);
+        } else {
+          this.appendOutput(['Nice try. Clearance level: INTERN.']);
+        }
+        break;
+      case 'rm':
+        this.appendOutput(['Deleting government property is a',
+          'federal offense. Incident logged.']);
+        if (this.cache.audio.exists('sfx_crt_static')) {
+          this.sound.play('sfx_crt_static', { volume: 0.15 });
+        }
+        break;
+      case 'vim':
+      case 'vi':
+        this.appendOutput(['Not installed. This machine has ed.',
+          'Nobody knows how to use ed.']);
+        break;
+      case 'nano':
+        this.appendOutput(['nano: command not found.',
+          'Try ed. Just kidding. Don\'t.']);
+        break;
+      case 'exit':
+      case 'logout':
+        this.appendOutput(['You can\'t exit. It\'s your first day.',
+          'Badge has been electronically locked.']);
+        break;
+      case 'ping':
+        this.appendOutput(['NETWORK UNREACHABLE.',
+          'Router behind firewall behind firewall.',
+          'Submit Form 14-B for network access.']);
+        break;
+      case 'man':
+        this.appendOutput(['Documentation budget was cut in 1994.',
+          'Ask Kevin. He remembers everything.']);
+        break;
+      case 'ssh':
+        this.appendOutput(['Connection refused.',
+          'Submit Form 22-C to request remote access.',
+          'Current wait time: 6-8 fiscal quarters.']);
+        break;
+      case 'iddqd':
+      case 'idkfa':
+        this.appendOutput(['Cheat codes disabled on government',
+          'terminals per Executive Order 1337.']);
+        break;
+      case 'grep':
+        this.appendOutput(['grep: permission denied.',
+          'Searching is a security risk.']);
+        break;
+      case 'find':
+        this.appendOutput(['find: permission denied.',
+          'If you lost it, fill out Form 8-L.']);
+        break;
+      case 'echo':
+        if (args.length > 0) {
+          this.appendOutput([args.join(' ')]);
+        } else {
+          this.appendOutput(['']);
+        }
+        break;
+      case 'mkdir':
+        this.appendOutput(['mkdir: cannot create directory:',
+          'Disk quota exceeded. See IT.']);
+        break;
+      case 'touch':
+        this.appendOutput(['touch: cannot create file:',
+          'Read-only filesystem. (Always has been.)']);
+        break;
+      case 'chmod':
+        this.appendOutput(['chmod: changing permissions of',
+          'government files is above your paygrade.']);
+        break;
+      case 'wget':
+      case 'curl':
+        this.appendOutput(['Network access restricted.',
+          'Approved sites: weather.gov, that\'s it.']);
+        break;
+    }
+  }
+
+  private handleUnknown(_cmd: string): void {
+    const pool = filesystemData.unknownCommands as string[];
+    const msg = pool[Math.floor(Math.random() * pool.length)];
+    this.appendOutput([msg]);
+    if (this.cache.audio.exists('sfx_crt_static')) {
+      this.sound.play('sfx_crt_static', { volume: 0.08 });
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB COMPLETION
+  // ═══════════════════════════════════════════
+
+  private handleTabComplete(): void {
+    const input = this.inputBuffer;
+    const parts = input.split(/\s+/);
+
+    // If we're completing a command (first word)
+    if (parts.length <= 1) {
+      const prefix = parts[0]?.toLowerCase() || '';
+      const commands = ['ls', 'cd', 'cat', 'pwd', 'help', 'clear', 'resume', 'whoami', 'date'];
+      const matches = commands.filter(c => c.startsWith(prefix));
+      if (matches.length === 1) {
+        this.inputBuffer = matches[0] + ' ';
+        this.redrawScreen();
+      }
+      return;
+    }
+
+    // Completing a path argument
+    const pathPart = parts[parts.length - 1];
+    const lastSlash = pathPart.lastIndexOf('/');
+    let dirPart: string;
+    let namePrefix: string;
+
+    if (lastSlash >= 0) {
+      dirPart = pathPart.slice(0, lastSlash) || '/';
+      namePrefix = pathPart.slice(lastSlash + 1);
+    } else {
+      dirPart = '.';
+      namePrefix = pathPart;
+    }
+
+    // Resolve the directory
+    const dirPath = dirPart === '.'
+      ? [...this.currentPath]
+      : this.resolvePathSegments(dirPart);
+
+    if (!dirPath) return;
+    const dirNode = this.getNodeAtPath(dirPath);
+    if (!dirNode || dirNode.type !== 'dir' || !dirNode.children) return;
+
+    const hasSave = GameState.getInstance().hasSave();
+    const matches = Object.entries(dirNode.children)
+      .filter(([name, child]) => {
+        if (child.saveOnly && !hasSave) return false;
+        return name.toLowerCase().startsWith(namePrefix.toLowerCase());
+      })
+      .map(([name, child]) => child.type === 'dir' ? name + '/' : name);
+
+    if (matches.length === 1) {
+      const completed = matches[0];
+      if (lastSlash >= 0) {
+        parts[parts.length - 1] = pathPart.slice(0, lastSlash + 1) + completed;
+      } else {
+        parts[parts.length - 1] = completed;
+      }
+      this.inputBuffer = parts.join(' ');
+      // Don't add trailing space if it's a directory (ends with /)
+      if (!this.inputBuffer.endsWith('/')) {
+        this.inputBuffer += ' ';
+      }
+      this.redrawScreen();
+    } else if (matches.length > 1) {
+      // Show all matches
+      this.appendOutput([this.getPromptString() + this.inputBuffer]);
+      this.appendOutput(matches);
+      this.redrawScreen();
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // FILESYSTEM NAVIGATION
+  // ═══════════════════════════════════════════
+
+  private resolvePathSegments(pathStr: string): string[] | null {
+    let segments: string[];
+
+    if (pathStr === '/') {
+      return [];
+    }
+
+    if (pathStr.startsWith('~/')) {
+      segments = ['home', 'cpark', ...pathStr.slice(2).split('/').filter(Boolean)];
+    } else if (pathStr === '~') {
+      return ['home', 'cpark'];
+    } else if (pathStr.startsWith('/')) {
+      segments = pathStr.slice(1).split('/').filter(Boolean);
+    } else {
+      segments = [...this.currentPath, ...pathStr.split('/').filter(Boolean)];
+    }
+
+    // Resolve .. and .
+    const resolved: string[] = [];
+    for (const seg of segments) {
+      if (seg === '..') {
+        if (resolved.length > 0) resolved.pop();
+      } else if (seg !== '.') {
+        resolved.push(seg);
+      }
+    }
+
+    // Verify path exists
+    const node = this.getNodeAtPath(resolved);
+    if (!node) return null;
+
+    return resolved;
+  }
+
+  private getNodeAtPath(pathSegments: string[]): FSNode | null {
+    let current: FSNode = { type: 'dir', children: this.filesystem };
+
+    for (const seg of pathSegments) {
+      if (!current.children || !current.children[seg]) return null;
+      current = current.children[seg];
+    }
+
+    return current;
+  }
+
+  // ═══════════════════════════════════════════
+  // TERMINAL OUTPUT
+  // ═══════════════════════════════════════════
+
+  private getPromptString(): string {
+    // Show ~ for home directory
+    const homePath = ['home', 'cpark'];
+    const pathStr = this.currentPath.join('/');
+    const homeStr = homePath.join('/');
+
+    let displayPath: string;
+    if (pathStr === homeStr) {
+      displayPath = '~';
+    } else if (pathStr.startsWith(homeStr + '/')) {
+      displayPath = '~/' + pathStr.slice(homeStr.length + 1);
+    } else if (this.currentPath.length === 0) {
+      displayPath = '/';
+    } else {
+      displayPath = '/' + pathStr;
+    }
+
+    return `cpark@dash:${displayPath}$ `;
+  }
+
+  private appendOutput(lines: string[]): void {
+    for (const line of lines) {
+      this.outputLines.push(line);
+    }
+  }
+
+  private redrawScreen(): void {
+    const prompt = this.getPromptString();
+    const promptLine = prompt + this.inputBuffer;
+
+    // Calculate how many output lines we can show
+    // Reserve 1 line for prompt
+    const maxOutputLines = TERM_ROWS - 1;
+
+    // Get visible output lines (scroll from bottom)
+    const visibleOutput = this.outputLines.length > maxOutputLines
+      ? this.outputLines.slice(this.outputLines.length - maxOutputLines)
+      : this.outputLines;
+
+    const allLines = [...visibleOutput, promptLine];
+    this.currentString = allLines.join('\n');
+    this.terminalText?.setText(this.currentString);
+    this.glowText?.setText(this.currentString);
+
+    // Position cursor at end of prompt line
+    const cursorX = SCREEN_X + TEXT_PAD + (prompt.length + this.inputBuffer.length) * CHAR_W;
+    const cursorY = SCREEN_Y + TEXT_PAD + (allLines.length - 1) * LINE_H;
+    this.showCursor(cursorX, cursorY);
   }
 
   // ═══════════════════════════════════════════
@@ -518,13 +1152,8 @@ export class TitleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════
 
   private startBootSequence(loadSave: boolean): void {
-    this.menuReady = false;
-
-    // Remove menu text
-    this.newGameText?.destroy(); this.newGameText = null;
-    this.newGameBlink?.destroy(); this.newGameBlink = null;
-    this.continueText?.destroy(); this.continueText = null;
-    this.continueBlink?.destroy(); this.continueBlink = null;
+    this.terminalMode = false;
+    this.removeKeyboardHandler();
 
     this.currentString = '';
     this.terminalText?.setText('');
@@ -546,11 +1175,46 @@ export class TitleScene extends Phaser.Scene {
         typingSound?.stop();
         const endMsg = loadSave ? bootLinesData.continueEnd : bootLinesData.newGameEnd;
         this.time.delayedCall(300, () => {
-          this.currentString += '\n\n' + endMsg;
-          this.terminalText?.setText(this.currentString);
-          this.glowText?.setText(this.currentString);
-          // Wait for any click to power off
-          this.input.once('pointerdown', () => this.crtPowerOff(loadSave));
+          // Clear boot lines and show end message centered with logo
+          this.currentString = '';
+          this.terminalText?.setText('');
+          this.glowText?.setText('');
+
+          // Show CfA logo centered
+          const cx = SCREEN_X + SCREEN_W / 2;
+          const logoY = SCREEN_Y + 50;
+          const logo = this.add.image(cx, logoY, 'cfa_logo')
+            .setOrigin(0.5, 0).setDepth(14).setAlpha(0);
+          this.screenContainer.add(logo);
+          this.tweens.add({ targets: logo, alpha: 1, duration: 400 });
+
+          // End message below logo, larger font
+          const msgY = logoY + logo.height + 20;
+          const endText = this.add.text(cx, msgY, endMsg, {
+            fontFamily: FONT, fontSize: '10px', color: AMBER,
+            align: 'center', lineSpacing: 10,
+          }).setOrigin(0.5, 0).setDepth(14);
+          this.screenContainer.add(endText);
+
+          // Glow duplicate for end text
+          const endGlow = this.add.text(cx - 1, msgY - 1, endMsg, {
+            fontFamily: FONT, fontSize: '10px', color: GLOW_COLOR,
+            align: 'center', lineSpacing: 10,
+          }).setOrigin(0.5, 0).setDepth(13).setAlpha(GLOW_ALPHA);
+          this.screenContainer.add(endGlow);
+
+          // Wait for Enter or click to power off
+          const proceed = () => {
+            this.input.off('pointerdown', clickHandler);
+            window.removeEventListener('keydown', bootKeyHandler);
+            this.crtPowerOff(loadSave);
+          };
+          const clickHandler = () => proceed();
+          this.input.once('pointerdown', clickHandler);
+          const bootKeyHandler = (event: KeyboardEvent) => {
+            if (event.key === 'Enter') proceed();
+          };
+          window.addEventListener('keydown', bootKeyHandler);
         });
         return;
       }
@@ -571,6 +1235,7 @@ export class TitleScene extends Phaser.Scene {
   private crtPowerOff(loadSave: boolean): void {
     if (this.transitioning) return;
     this.transitioning = true;
+    this.removeKeyboardHandler();
     if (this.cache.audio.exists('sfx_crt_off')) this.sound.play('sfx_crt_off', { volume: 0.4 });
     if (this.powerLed) this.powerLed.setFillStyle(0x222222);
 
@@ -606,6 +1271,8 @@ export class TitleScene extends Phaser.Scene {
                     st.load();
                     if (st.hasFlag('scene_bullpen_entered')) {
                       this.scene.start('BullpenScene');
+                    } else if (st.hasFlag('mailcart_complete')) {
+                      this.scene.start('BullpenScene');
                     } else {
                       this.scene.start('LobbyScene', { loadSave: true });
                     }
@@ -619,75 +1286,6 @@ export class TitleScene extends Phaser.Scene {
         });
       },
     });
-  }
-
-  // ═══════════════════════════════════════════
-  // SKIP TO MENU
-  // ═══════════════════════════════════════════
-
-  private skipToMenu(): void {
-    this.skipped = true;
-    this.sound.stopAll();
-    this.tweens.killAll();
-    this.screenContainer.removeAll(true);
-
-    this.screenContainer.add(
-      this.add.rectangle(SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2, SCREEN_W, SCREEN_H, SCREEN_BG)
-    );
-    this.screenContainer.add(
-      this.add.rectangle(SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2, SCREEN_W, SCREEN_H, AMBER_HEX, 0.03).setDepth(9)
-    );
-
-    const sep = '==========================================';
-    this.currentString =
-      'D.A.S.H. SYSTEMS TERMINAL v3.1\n' +
-      '(C) 1997 DEPT. OF ADMINISTRATIVE SERVICES\n' +
-      'AUTHORIZED USE ONLY\n\n' +
-      '> INITIATING MODERNIZATION PROTOCOL...\n' +
-      '> SECURE TERMINAL v0.1\n\n' +
-      sep + '\n\n' +
-      '  DEPLOY TO PRODUCTION\n' +
-      '  A Code for America Adventure\n\n' +
-      sep;
-
-    this.glowText = this.add.text(SCREEN_X + TEXT_PAD - 1, SCREEN_Y + TEXT_PAD - 1, this.currentString, {
-      fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: GLOW_COLOR,
-      wordWrap: { width: SCREEN_W - TEXT_PAD * 2 }, lineSpacing: LINE_H - FONT_SIZE,
-    }).setAlpha(GLOW_ALPHA).setDepth(11);
-    this.screenContainer.add(this.glowText);
-
-    this.terminalText = this.add.text(SCREEN_X + TEXT_PAD, SCREEN_Y + TEXT_PAD, this.currentString, {
-      fontFamily: FONT, fontSize: `${FONT_SIZE}px`, color: AMBER,
-      wordWrap: { width: SCREEN_W - TEXT_PAD * 2 }, lineSpacing: LINE_H - FONT_SIZE,
-    }).setDepth(12);
-    this.screenContainer.add(this.terminalText);
-
-    this.cursorBlock = this.add.rectangle(0, 0, CHAR_W - 1, FONT_SIZE + 2, AMBER_HEX)
-      .setOrigin(0, 0).setVisible(false).setDepth(13);
-    this.screenContainer.add(this.cursorBlock);
-
-    if (this.powerLed) this.powerLed.setFillStyle(0x33cc33);
-
-    this.overlayContainer.removeAll(true);
-    if (!this.textures.exists('scanline_tile')) {
-      const sg = this.add.graphics();
-      sg.fillStyle(0x000000, SCANLINE_ALPHA);
-      for (let y = 0; y < 4; y += 2) sg.fillRect(0, y, SCREEN_W, 1);
-      sg.generateTexture('scanline_tile', SCREEN_W, 4);
-      sg.destroy();
-    }
-    this.overlayContainer.add(
-      this.add.tileSprite(SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, 'scanline_tile')
-        .setOrigin(0, 0).setDepth(51)
-    );
-    this.screenFlash = this.add.rectangle(
-      SCREEN_X + SCREEN_W / 2, SCREEN_Y + SCREEN_H / 2,
-      SCREEN_W, SCREEN_H, 0x000000, 0
-    ).setDepth(53);
-    this.overlayContainer.add(this.screenFlash);
-    this.startScreenFlicker();
-
-    this.showMenu();
   }
 
   // ═══════════════════════════════════════════

@@ -249,6 +249,36 @@
       }
     },
 
+    "lobby_coffee_cup": {
+      "id": "lobby_coffee_cup",
+      "name": "Abandoned Coffee",
+      "position": { "x": 218, "y": 170 },
+      "polygon": [210, 164, 228, 164, 228, 180, 210, 180],
+      "verbs": ["look", "pickup"],
+      "interactions": {
+        "look": {
+          "text": "Someone left a full cup of coffee sitting behind the water cooler. It's still warm. Whoever abandoned this had their priorities all wrong.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated",
+          "condition": { "notFlags": { "lobby_coffee_taken": true } }
+        },
+        "look__taken": {
+          "text": "The empty ring where the coffee sat. A monument to caffeine consumed.",
+          "speaker": "casey",
+          "portrait": "casey_amused",
+          "condition": { "flags": { "lobby_coffee_taken": true } }
+        },
+        "pickup": {
+          "text": "Finders keepers. I have a feeling I'm going to need this.",
+          "speaker": "casey",
+          "portrait": "casey_satisfied",
+          "condition": { "notFlags": { "lobby_coffee_taken": true } },
+          "itemGiven": "lobby_coffee",
+          "flagsSet": { "lobby_coffee_taken": true }
+        }
+      }
+    },
+
     "american_flag": {
       "id": "american_flag",
       "name": "American Flag",

@@ -1,0 +1,134 @@
+{
+  "phases": [
+    {
+      "id": "tutorial",
+      "name": "Tutorial",
+      "duration": 30000,
+      "scrollSpeed": 80,
+      "hints": ["W/S or Arrow keys to dodge!", "Click to shoot!"],
+      "waves": [
+        { "time": 3000, "obstacles": [{ "type": "red_tape", "lane": 1 }] },
+        { "time": 6000, "obstacles": [{ "type": "red_tape", "lane": 0 }] },
+        { "time": 9000, "obstacles": [{ "type": "punch_cards", "lane": 2 }] },
+        { "time": 12000, "obstacles": [{ "type": "rolling_chair", "lane": 2 }] },
+        { "time": 16000, "obstacles": [{ "type": "red_tape", "lane": 1 }, { "type": "red_tape", "lane": 0 }] },
+        { "time": 20000, "obstacles": [{ "type": "paper_stack", "lane": 2 }] },
+        { "time": 24000, "obstacles": [{ "type": "punch_cards", "lane": 1 }] },
+        { "time": 27000, "obstacles": [{ "type": "rolling_chair", "lane": 0 }] }
+      ]
+    },
+    {
+      "id": "red_tape_zone",
+      "name": "Red Tape Zone",
+      "duration": 30000,
+      "scrollSpeed": 120,
+      "hints": [],
+      "waves": [
+        { "time": 1500, "obstacles": [{ "type": "red_tape", "lane": 0 }] },
+        { "time": 3000, "obstacles": [{ "type": "red_tape", "lane": 1 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 5000, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "rolling_chair", "lane": 2 }] },
+        { "time": 7000, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 1 }] },
+        { "time": 9000, "obstacles": [{ "type": "paper_stack", "lane": 1 }] },
+        { "time": 11000, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 1 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 13500, "obstacles": [{ "type": "tps_reports", "lane": 1 }] },
+        { "time": 15000, "obstacles": [{ "type": "rolling_chair", "lane": 0 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 17000, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 19000, "obstacles": [{ "type": "punch_cards", "lane": 1 }, { "type": "paper_stack", "lane": 0 }] },
+        { "time": 21000, "obstacles": [{ "type": "red_tape", "lane": 1 }, { "type": "rolling_chair", "lane": 2 }] },
+        { "time": 23500, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 1 }] },
+        { "time": 25500, "obstacles": [{ "type": "tps_reports", "lane": 2 }, { "type": "red_tape", "lane": 0 }] },
+        { "time": 28000, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 1 }, { "type": "rolling_chair", "lane": 2 }] }
+      ]
+    },
+    {
+      "id": "cable_jungle",
+      "name": "Cable Jungle",
+      "duration": 30000,
+      "scrollSpeed": 140,
+      "hints": [],
+      "waves": [
+        { "time": 1000, "obstacles": [{ "type": "cables", "lane": 0 }] },
+        { "time": 3000, "obstacles": [{ "type": "cables", "lane": 1 }, { "type": "cables", "lane": 2 }] },
+        { "time": 5000, "obstacles": [{ "type": "rolling_chair", "lane": 2 }] },
+        { "time": 6500, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "cables", "lane": 1 }] },
+        { "time": 8500, "obstacles": [{ "type": "red_tape", "lane": 2 }, { "type": "cables", "lane": 0 }] },
+        { "time": 10500, "obstacles": [{ "type": "door_npc", "lane": 1 }] },
+        { "time": 12500, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "cables", "lane": 1 }, { "type": "cables", "lane": 2 }] },
+        { "time": 14500, "obstacles": [{ "type": "paper_stack", "lane": 2 }, { "type": "cables", "lane": 0 }] },
+        { "time": 16500, "obstacles": [{ "type": "cables", "lane": 1 }, { "type": "rolling_chair", "lane": 0 }] },
+        { "time": 18500, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "cables", "lane": 2 }] },
+        { "time": 20500, "obstacles": [{ "type": "door_npc", "lane": 2 }] },
+        { "time": 22500, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "red_tape", "lane": 1 }] },
+        { "time": 24500, "obstacles": [{ "type": "cables", "lane": 1 }, { "type": "cables", "lane": 2 }, { "type": "rolling_chair", "lane": 0 }] },
+        { "time": 27000, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "cables", "lane": 1 }, { "type": "cables", "lane": 2 }] }
+      ]
+    },
+    {
+      "id": "cobol_storm",
+      "name": "COBOL Storm",
+      "duration": 30000,
+      "scrollSpeed": 180,
+      "hints": [],
+      "waves": [
+        { "time": 1000, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 2500, "obstacles": [{ "type": "rolling_chair", "lane": 1 }, { "type": "red_tape", "lane": 0 }] },
+        { "time": 4000, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "punch_cards", "lane": 1 }, { "type": "paper_stack", "lane": 2 }] },
+        { "time": 5500, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 7000, "obstacles": [{ "type": "door_npc", "lane": 0 }, { "type": "rolling_chair", "lane": 2 }] },
+        { "time": 8500, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 1 }, { "type": "cables", "lane": 2 }] },
+        { "time": 10000, "obstacles": [{ "type": "punch_cards", "lane": 1 }, { "type": "rolling_chair", "lane": 0 }] },
+        { "time": 11500, "obstacles": [{ "type": "paper_stack", "lane": 1 }, { "type": "tps_reports", "lane": 0 }, { "type": "cables", "lane": 2 }] },
+        { "time": 13000, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 14500, "obstacles": [{ "type": "rolling_chair", "lane": 1 }, { "type": "punch_cards", "lane": 0 }, { "type": "punch_cards", "lane": 2 }] },
+        { "time": 16500, "obstacles": [{ "type": "door_npc", "lane": 1 }, { "type": "cables", "lane": 0 }] },
+        { "time": 18000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "rolling_chair", "lane": 2 }] },
+        { "time": 19500, "obstacles": [{ "type": "red_tape", "lane": 0 }, { "type": "cables", "lane": 1 }, { "type": "paper_stack", "lane": 2 }] },
+        { "time": 21000, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "punch_cards", "lane": 1 }, { "type": "punch_cards", "lane": 2 }] },
+        { "time": 22500, "obstacles": [{ "type": "rolling_chair", "lane": 0 }, { "type": "red_tape", "lane": 1 }, { "type": "red_tape", "lane": 2 }] },
+        { "time": 24000, "obstacles": [{ "type": "cables", "lane": 0 }, { "type": "cables", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 26000, "obstacles": [{ "type": "door_npc", "lane": 2 }, { "type": "red_tape", "lane": 0 }, { "type": "punch_cards", "lane": 1 }] },
+        { "time": 28000, "obstacles": [{ "type": "rolling_chair", "lane": 0 }, { "type": "rolling_chair", "lane": 1 }, { "type": "rolling_chair", "lane": 2 }] }
+      ]
+    },
+    {
+      "id": "boss",
+      "name": "MEGA PRINTER",
+      "duration": 60000,
+      "scrollSpeed": 60,
+      "hints": ["Shoot the paper tray!"],
+      "waves": [
+        { "time": 2000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 4000, "obstacles": [{ "type": "tps_reports", "lane": 1 }] },
+        { "time": 5500, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 7500, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "punch_cards", "lane": 2 }] },
+        { "time": 9000, "obstacles": [{ "type": "tps_reports", "lane": 1 }, { "type": "rolling_chair", "lane": 0 }] },
+        { "time": 10500, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 12500, "obstacles": [{ "type": "punch_cards", "lane": 1 }, { "type": "rolling_chair", "lane": 2 }] },
+        { "time": 14000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 15500, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 17000, "obstacles": [{ "type": "rolling_chair", "lane": 1 }, { "type": "tps_reports", "lane": 0 }] },
+        { "time": 18500, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "punch_cards", "lane": 1 }, { "type": "punch_cards", "lane": 2 }] },
+        { "time": 20000, "obstacles": [{ "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 21500, "obstacles": [{ "type": "rolling_chair", "lane": 0 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 23000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 25000, "obstacles": [{ "type": "punch_cards", "lane": 0 }, { "type": "rolling_chair", "lane": 1 }] },
+        { "time": 26500, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }] },
+        { "time": 28000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 30000, "obstacles": [{ "type": "rolling_chair", "lane": 2 }, { "type": "punch_cards", "lane": 0 }] },
+        { "time": 32000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 34000, "obstacles": [{ "type": "punch_cards", "lane": 1 }, { "type": "punch_cards", "lane": 2 }] },
+        { "time": 36000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "rolling_chair", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] },
+        { "time": 38000, "obstacles": [{ "type": "tps_reports", "lane": 0 }, { "type": "tps_reports", "lane": 1 }, { "type": "tps_reports", "lane": 2 }] }
+      ]
+    }
+  ],
+  "obstacleTypes": {
+    "red_tape":      { "shootable": true,  "width": 8,  "height": 48, "color": "0xcc0000" },
+    "cables":        { "shootable": true,  "width": 24, "height": 64, "color": "0x33aa33" },
+    "punch_cards":   { "shootable": true,  "width": 20, "height": 12, "color": "0xddcc88" },
+    "tps_reports":   { "shootable": true,  "width": 20, "height": 14, "color": "0xeeeeee" },
+    "rolling_chair": { "shootable": false, "width": 28, "height": 32, "color": "0x888888" },
+    "paper_stack":   { "shootable": false, "width": 24, "height": 20, "color": "0xccbb99" },
+    "door_npc":      { "shootable": false, "width": 32, "height": 48, "color": "0x996633" }
+  }
+}

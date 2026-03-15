@@ -38,6 +38,8 @@ import bullpenMusicUrl from '../assets/audio/music/bullpen_theme.mp3';
 import bullpenChillUrl from '../assets/audio/music/bullpen_chill.mp3';
 import puzzleThinkingUrl from '../assets/audio/music/puzzle_thinking.mp3';
 import endChapterMusicUrl from '../assets/audio/music/end_chapter.mp3';
+import softSavePointUrl from '../assets/audio/music/Soft Save Point Swing.mp3';
+import sfxTriumphUrl from '../assets/audio/sfx/sfx_triumph.mp3';
 import sfxPrinterBurstUrl from '../assets/audio/sfx/sfx_printer_burst.mp3';
 import sfxKeypadPressUrl from '../assets/audio/sfx/sfx_keypad_press.mp3';
 import sfxClosetOpenUrl from '../assets/audio/sfx/sfx_closet_open.mp3';
@@ -60,11 +62,24 @@ import bpWhiteboardUrl from '../assets/sprites/bullpen/whiteboard.png';
 import bpNpcTypingUrl from '../assets/sprites/bullpen/bg_npc_typing.png';
 import bpNpcPhoneUrl from '../assets/sprites/bullpen/bg_npc_phone.png';
 import bpNpcStaringUrl from '../assets/sprites/bullpen/bg_npc_staring.png';
+// PixelLab character spritesheets (64x64 frames)
+import bpTypingSheetUrl from '../assets/sprites/bullpen/typing_woman_sheet.png';
+import bpKevinSheetUrl from '../assets/sprites/bullpen/kevin_sheet.png';
+import bpPhoneGuySheetUrl from '../assets/sprites/bullpen/phone_guy_sheet.png';
+import bpPriyaSheetUrl from '../assets/sprites/bullpen/priya_sheet.png';
+import bpPriyaWalkSheetUrl from '../assets/sprites/bullpen/priya_walk_sheet.png';
 import bpCoffeeTableUrl from '../assets/sprites/bullpen/coffee_table.png';
 import bpVisitorChairsUrl from '../assets/sprites/bullpen/visitor_chairs.png';
 import bpWaterCoolerUrl from '../assets/sprites/bullpen/water_cooler.png';
 import bpTrashCanUrl from '../assets/sprites/bullpen/trash_can.png';
 import bpFloorPlantUrl from '../assets/sprites/bullpen/floor_plant.png';
+import bpWallClockUrl from '../assets/sprites/bullpen/wall_clock.png';
+import bpPosterSynergyUrl from '../assets/sprites/bullpen/poster_synergy.png';
+import bpPosterExcellenceUrl from '../assets/sprites/bullpen/poster_excellence.png';
+import bpEmployeeOfMonthUrl from '../assets/sprites/bullpen/employee_of_month.png';
+import bpFireExtinguisherUrl from '../assets/sprites/bullpen/fire_extinguisher.png';
+import bpLockersUrl from '../assets/sprites/bullpen/lockers.png';
+import bpWetFloorSignUrl from '../assets/sprites/bullpen/wet_floor_sign.png';
 
 const bullpenHotspots = bullpenHotspotsRaw as unknown as SceneHotspotFile;
 
@@ -95,7 +110,10 @@ export class BullpenScene extends Phaser.Scene {
   // Background NPC graphics (for printer reaction)
   private bgNpcGraphics: Phaser.GameObjects.Graphics[] = [];
   private cutsceneActive = false;
+  private introActive = false;
+  private introBubble: Phaser.GameObjects.Text | null = null;
   private debugMenu: DebugMenu | null = null;
+  private printerSprite: Phaser.GameObjects.Image | null = null;
   private currentMusic: Phaser.Sound.BaseSound | null = null;
   private currentMusicKey = '';
 
@@ -124,6 +142,8 @@ export class BullpenScene extends Phaser.Scene {
     this.load.audio('bullpen_chill', bullpenChillUrl);
     this.load.audio('puzzle_thinking', puzzleThinkingUrl);
     this.load.audio('end_chapter_music', endChapterMusicUrl);
+    this.load.audio('soft_save_point', softSavePointUrl);
+    this.load.audio('sfx_triumph', sfxTriumphUrl);
     this.load.audio('sfx_printer_burst', sfxPrinterBurstUrl);
     this.load.audio('sfx_keypad_press', sfxKeypadPressUrl);
     this.load.audio('sfx_closet_open', sfxClosetOpenUrl);
@@ -160,6 +180,21 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('bp_water_cooler', bpWaterCoolerUrl);
     this.load.image('bp_trash_can', bpTrashCanUrl);
     this.load.image('bp_floor_plant', bpFloorPlantUrl);
+    this.load.image('bp_wall_clock', bpWallClockUrl);
+    this.load.image('bp_poster_synergy', bpPosterSynergyUrl);
+    this.load.image('bp_poster_excellence', bpPosterExcellenceUrl);
+    this.load.image('bp_employee_of_month', bpEmployeeOfMonthUrl);
+    this.load.image('bp_fire_extinguisher', bpFireExtinguisherUrl);
+    this.load.image('bp_lockers', bpLockersUrl);
+    this.load.image('bp_wet_floor_sign', bpWetFloorSignUrl);
+
+    // PixelLab character spritesheets: frame 0 = idle south, frames 1-4 = breathing-idle
+    const ssConfig64 = { frameWidth: 64, frameHeight: 64 };
+    this.load.spritesheet('char_typing_woman', bpTypingSheetUrl, ssConfig64);
+    this.load.spritesheet('char_kevin', bpKevinSheetUrl, ssConfig64);
+    this.load.spritesheet('char_phone_guy', bpPhoneGuySheetUrl, ssConfig64);
+    this.load.spritesheet('char_priya', bpPriyaSheetUrl, ssConfig64);
+    this.load.spritesheet('char_priya_walk', bpPriyaWalkSheetUrl, ssConfig64);
   }
 
   create(): void {
@@ -317,6 +352,7 @@ export class BullpenScene extends Phaser.Scene {
       if (pointer.rightButtonDown()) return;
       if (this.dialogueManager.isActive) return;
       if (this.cutsceneActive) return;
+      if (this.introActive) return;
 
       const cam = this.cameras.main;
       if (pointer.y > cam.height - 38) return;
@@ -360,7 +396,13 @@ export class BullpenScene extends Phaser.Scene {
       .setOrigin(0, 0).setDepth(2000).setScrollFactor(0);
     this.tweens.add({
       targets: wipe, x: 640, duration: 600, ease: 'Power2', delay: 200,
-      onComplete: () => wipe.destroy(),
+      onComplete: () => {
+        wipe.destroy();
+        // Start intro cutscene on first visit
+        if (!state.hasFlag('bullpen_intro_complete')) {
+          this.startBullpenIntro();
+        }
+      },
     });
 
     // Hint timer
@@ -524,8 +566,8 @@ export class BullpenScene extends Phaser.Scene {
     // Dashboard TV: y=80 (same height as Lobby poster/bulletin)
     this.add.image(720, 80, 'bp_dashboard_tv').setOrigin(0.5, 0.5).setDepth(1);
 
-    // Supply closet door: base at y=167 (floor line), extends up into wall
-    this.add.image(660, 167, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(3);
+    // Supply closet door: base at y=168 (floor line), extends up into wall
+    this.add.image(660, 168, 'bp_supply_closet').setOrigin(0.5, 1).setDepth(3);
 
     // B2 exit door
     g.fillStyle(0x3a3a3a); g.fillRect(925, 70, 35, 97);
@@ -537,38 +579,14 @@ export class BullpenScene extends Phaser.Scene {
   private drawFurniture(): void {
     // ALL furniture uses SAME Y values as Lobby (168-210), NO setScale
 
-    // Coat rack: base at y=168 (same as Lobby ficus)
-    this.add.image(50, 168, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(20);
+    // Coat rack: base at y=175
+    this.add.image(50, 175, 'bp_coat_rack').setOrigin(0.5, 1).setDepth(20);
 
     // Employee lockers (against wall, right of coat rack)
-    const lockerG = this.add.graphics().setDepth(12);
-    const lockerX = 80;
-    for (let i = 0; i < 3; i++) {
-      const lx = lockerX + i * 14;
-      // Locker body (gray metal)
-      lockerG.fillStyle(0x888899);
-      lockerG.fillRect(lx, 110, 12, 55);
-      // Door frame lines
-      lockerG.fillStyle(0x777788);
-      lockerG.fillRect(lx, 110, 1, 55);
-      lockerG.fillRect(lx + 11, 110, 1, 55);
-      // Vent slots at top
-      lockerG.fillStyle(0x666677);
-      lockerG.fillRect(lx + 3, 114, 6, 1);
-      lockerG.fillRect(lx + 3, 117, 6, 1);
-      // Handle
-      lockerG.fillStyle(0xaaaaaa);
-      lockerG.fillRect(lx + 8, 135, 2, 5);
-      // Subtle color variation (each locker slightly different shade)
-      if (i === 1) {
-        lockerG.fillStyle(0x8888aa, 0.15);
-        lockerG.fillRect(lx, 110, 12, 55);
-      }
-    }
-    // Name label on one locker
-    this.add.text(lockerX + 7, 150, 'HAL', {
-      fontFamily: 'monospace', fontSize: '2px', color: '#444455',
-    }).setOrigin(0.5).setDepth(13);
+    this.add.image(95, 175, 'bp_lockers').setOrigin(0.5, 1).setDepth(12);
+
+    // War Room door (against wall, under Day 1 of 90 banner)
+    this.add.image(480, 171, 'bp_war_room').setOrigin(0.5, 1).setDepth(12);
 
     // Casey's desk: center y=210 (same as Lobby security desk), 30% bigger
     this.add.image(140, 210, 'bp_casey_desk').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
@@ -600,23 +618,27 @@ export class BullpenScene extends Phaser.Scene {
       }
     }
 
-    // Printer: center y=210, 30% bigger
-    this.add.image(570, 210, 'bp_dead_printer').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
+    // Printer: center y=210, 30% bigger — store ref for animation
+    this.printerSprite = this.add.image(570, 210, 'bp_dead_printer').setOrigin(0.5, 0.5).setDepth(30).setScale(1.3);
 
-    // Break area counter — bottom edge at baseboard (y=167), counter extends down
-    this.add.rectangle(760, 180, 130, 26, 0x8a7e60).setDepth(28);
-    this.add.rectangle(760, 191, 130, 5, 0x7a6e50).setDepth(29);
+    // Break area counter — surface at y=160, bottom at baseboard y=175
+    this.add.rectangle(760, 167, 130, 16, 0x8a7e60).setDepth(28);
+    this.add.rectangle(760, 174, 130, 3, 0x7a6e50).setDepth(29);
+    // Counter legs
+    const legG = this.add.graphics().setDepth(27);
+    legG.fillStyle(0x6a5e40);
+    legG.fillRect(698, 175, 3, 22); legG.fillRect(820, 175, 3, 22);
     // Coffee maker on counter surface
-    this.add.image(730, 172, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30);
+    this.add.image(730, 170, 'bp_coffee_maker').setOrigin(0.5, 1).setDepth(30);
     // Microwave
-    this.add.image(765, 172, 'bp_microwave').setOrigin(0.5, 1).setDepth(30);
+    this.add.image(765, 170, 'bp_microwave').setOrigin(0.5, 1).setDepth(30);
     // Mini fridge: floor-standing beside counter
     this.add.image(810, 194, 'bp_mini_fridge').setOrigin(0.5, 1).setDepth(30);
     // Dirty mugs on counter surface
     const mugG = this.add.graphics().setDepth(31);
-    mugG.fillStyle(0xddddcc); mugG.fillRect(783, 165, 4, 6);
-    mugG.fillRect(789, 166, 3, 5);
-    mugG.fillStyle(0xbbaa99); mugG.fillRect(794, 165, 4, 6);
+    mugG.fillStyle(0xddddcc); mugG.fillRect(783, 153, 4, 6);
+    mugG.fillRect(789, 154, 3, 5);
+    mugG.fillStyle(0xbbaa99); mugG.fillRect(794, 153, 4, 6);
 
     // ── FOREGROUND FLOOR FURNITURE (PixelLab sprites) ──
 
@@ -626,29 +648,32 @@ export class BullpenScene extends Phaser.Scene {
     // Visitor chairs flanking the table
     this.add.image(620, 258, 'bp_visitor_chairs').setOrigin(0.5, 1).setDepth(24);
 
-    // Water cooler (floor-standing, near break area)
-    this.add.image(830, 240, 'bp_water_cooler').setOrigin(0.5, 1).setDepth(25);
+    // Water cooler (floor-standing, against wall near break area)
+    this.add.image(840, 197, 'bp_water_cooler').setOrigin(0.5, 1).setDepth(20);
 
     // Trash can near cubicles
     this.add.image(520, 240, 'bp_trash_can').setOrigin(0.5, 1).setDepth(24);
+
+    // Wet floor sign — permanent fixture since the 90s
+    this.add.image(380, 290, 'bp_wet_floor_sign').setOrigin(0.5, 1).setDepth(24);
 
     // Potted floor plant near entrance
     this.add.image(85, 230, 'bp_floor_plant').setOrigin(0.5, 1).setDepth(24);
 
     // Priya's desk — 30% bigger
-    this.add.rectangle(880, 200, 104, 21, 0x8a7e60).setDepth(28);
-    this.add.rectangle(880, 208, 104, 5, 0x7a6e50).setDepth(29);
-    this.add.rectangle(868, 188, 12, 10, 0x222222).setDepth(30);
-    this.add.rectangle(884, 188, 12, 10, 0x222222).setDepth(30);
+    this.add.rectangle(880, 197, 104, 21, 0x8a7e60).setDepth(28);
+    this.add.rectangle(880, 205, 104, 5, 0x7a6e50).setDepth(29);
+    this.add.rectangle(868, 185, 12, 10, 0x222222).setDepth(30);
+    this.add.rectangle(884, 185, 12, 10, 0x222222).setDepth(30);
     const nc = [0xf0e868, 0x88ccff, 0xff88aa, 0x88ff88, 0xffaa44, 0xcc88ff];
     for (let i = 0; i < 6; i++) {
-      this.add.rectangle(900 + (i % 3) * 5, 186 + Math.floor(i / 3) * 5, 4, 4, nc[i]).setDepth(30);
+      this.add.rectangle(900 + (i % 3) * 5, 183 + Math.floor(i / 3) * 5, 4, 4, nc[i]).setDepth(30);
     }
     // Thriving plant
     const pl = this.add.graphics().setDepth(31);
-    pl.fillStyle(0x44aa44); pl.fillCircle(918, 182, 6);
-    pl.fillStyle(0x55cc55); pl.fillCircle(916, 178, 4);
-    pl.fillStyle(0x664422); pl.fillRect(916, 187, 5, 6);
+    pl.fillStyle(0x44aa44); pl.fillCircle(918, 179, 6);
+    pl.fillStyle(0x55cc55); pl.fillCircle(916, 175, 4);
+    pl.fillStyle(0x664422); pl.fillRect(916, 184, 5, 6);
 
     // Whiteboard: base at y=182 (taller than Casey, on floor behind desk)
     this.add.image(935, 182, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10);
@@ -656,18 +681,55 @@ export class BullpenScene extends Phaser.Scene {
 
   private drawNPCs(): void {
     // Characters at y=200, origin(0.5,1) — SAME as Lobby's Gladys at (325,200)
-    // NO setScale — sprites are 48x48 or 64x64, same as Lobby characters
+    // Using PixelLab character spritesheets with breathing-idle animations
 
     // Cubicle #1: typing woman — depth 20 (behind desk at depth 28)
-    this.add.image(250, 200, 'bp_npc_typing').setOrigin(0.5, 1).setDepth(20);
-    // Cubicle #2: KEVIN
-    this.add.image(330, 200, 'bp_kevin').setOrigin(0.5, 1).setDepth(20);
+    const typingWoman = this.add.sprite(250, 200, 'char_typing_woman', 0).setOrigin(0.5, 1).setDepth(20);
+    if (!this.anims.exists('typing_woman_idle')) {
+      this.anims.create({
+        key: 'typing_woman_idle',
+        frames: this.anims.generateFrameNumbers('char_typing_woman', { start: 1, end: 4 }),
+        frameRate: 3, repeat: -1, yoyo: true,
+      });
+    }
+    typingWoman.play('typing_woman_idle');
+
+    // Kevin's desk — proper desk sprite in his cubicle
+    this.add.image(330, 210, 'bp_casey_desk').setOrigin(0.5, 0.5).setDepth(28);
+    // Cubicle #2: KEVIN — slightly smaller, barely moves
+    const kevin = this.add.sprite(330, 200, 'char_kevin', 0).setOrigin(0.5, 1).setDepth(20).setScale(0.85);
+    if (!this.anims.exists('kevin_idle')) {
+      this.anims.create({
+        key: 'kevin_idle',
+        frames: this.anims.generateFrameNumbers('char_kevin', { start: 1, end: 4 }),
+        frameRate: 2, repeat: -1, yoyo: true,
+      });
+    }
+    kevin.play('kevin_idle');
+
     // Cubicle #3: man on phone
-    this.add.image(410, 200, 'bp_npc_phone').setOrigin(0.5, 1).setDepth(20);
+    const phoneGuy = this.add.sprite(410, 200, 'char_phone_guy', 0).setOrigin(0.5, 1).setDepth(20);
+    if (!this.anims.exists('phone_guy_idle')) {
+      this.anims.create({
+        key: 'phone_guy_idle',
+        frames: this.anims.generateFrameNumbers('char_phone_guy', { start: 1, end: 4 }),
+        frameRate: 3, repeat: -1, yoyo: true,
+      });
+    }
+    phoneGuy.play('phone_guy_idle');
+
     // Cubicle #4: VACANT
 
-    // Priya at desk — scaled down (64px sprite includes desk, scale 0.75 to match 48px NPCs)
-    this.add.image(878, 200, 'bp_priya').setOrigin(0.5, 1).setDepth(20).setScale(0.75);
+    // Priya at desk — custom 16-frame desk-research animation
+    const priya = this.add.sprite(878, 200, 'char_priya', 0).setOrigin(0.5, 1).setDepth(20);
+    if (!this.anims.exists('priya_research')) {
+      this.anims.create({
+        key: 'priya_research',
+        frames: this.anims.generateFrameNumbers('char_priya', { start: 1, end: 16 }),
+        frameRate: 4, repeat: -1,
+      });
+    }
+    priya.play('priya_research');
 
     this.bgNpcGraphics = [];
   }
@@ -731,13 +793,13 @@ export class BullpenScene extends Phaser.Scene {
     d.fillStyle(0x336699); d.fillRect(160, 208, 2, 12);
     d.fillStyle(0x336699); d.fillRect(159, 218, 4, 2);
 
-    // ════ BREAK AREA SIGNS (counter top at ~y=167) ════
+    // ════ BREAK AREA SIGNS (counter surface at ~y=160) ════
     // Coffee maker sign on wall above
-    this.add.text(730, 152, 'IF EMPTY\nMAKE MORE\n-DAVE', {
+    this.add.text(730, 142, 'IF EMPTY\nMAKE MORE\n-DAVE', {
       fontFamily: 'monospace', fontSize: '2px', color: '#884422',
     }).setOrigin(0.5).setDepth(33);
     // Microwave sign on wall above
-    this.add.text(765, 152, 'CLEAN YOUR\nOWN DISHES', {
+    this.add.text(765, 142, 'CLEAN YOUR\nOWN DISHES', {
       fontFamily: 'monospace', fontSize: '2px', color: '#cc0000',
     }).setOrigin(0.5).setDepth(33);
     // Mini fridge labels
@@ -746,17 +808,17 @@ export class BullpenScene extends Phaser.Scene {
     this.add.text(810, 179, "DAVE'S", { fontFamily: 'monospace', fontSize: '1px', color: '#333333' }).setOrigin(0.5).setDepth(33);
     this.add.text(810, 184, 'BIOHAZARD', { fontFamily: 'monospace', fontSize: '1px', color: '#cc0000' }).setOrigin(0.5).setDepth(33);
     // More dirty mugs on counter
-    d.fillStyle(0xddccbb); d.fillRect(798, 166, 3, 5);
-    d.fillStyle(0xccbbaa); d.fillRect(802, 167, 3, 4);
+    d.fillStyle(0xddccbb); d.fillRect(798, 154, 3, 5);
+    d.fillStyle(0xccbbaa); d.fillRect(802, 155, 3, 4);
     // Sad brown banana on counter
-    d.fillStyle(0x887744); d.fillRect(774, 166, 5, 2);
-    d.fillStyle(0x776633); d.fillRect(775, 165, 3, 1);
+    d.fillStyle(0x887744); d.fillRect(774, 154, 5, 2);
+    d.fillStyle(0x776633); d.fillRect(775, 153, 3, 1);
 
     // ════ PRIYA'S DESK — organized chaos ════
     // "I BELIEVE IN UX" sticker on monitor bezel
-    d.fillStyle(0x4488cc); d.fillRect(866, 196, 8, 2);
+    d.fillStyle(0x4488cc); d.fillRect(866, 193, 8, 2);
     // Book as monitor stand
-    d.fillStyle(0x884422); d.fillRect(862, 196, 14, 3);
+    d.fillStyle(0x884422); d.fillRect(862, 193, 14, 3);
     // Color-coded sticky clusters (yellow=todo, pink=urgent, blue=ideas, green=done)
     // Already placed in drawFurniture, but add the "WHY???" on whiteboard
     this.add.text(938, 170, 'WHY???', {
@@ -767,28 +829,21 @@ export class BullpenScene extends Phaser.Scene {
     whiteG.lineStyle(1, 0xcc0000, 0.7);
     whiteG.strokeCircle(935, 168, 6);
 
-    // ════ WALL DECOR ════
-    // Employee of the Month frame (empty — "YOUR NAME HERE")
-    d.fillStyle(0x554433); d.fillRect(340, 80, 18, 14);
-    d.fillStyle(0xddddcc); d.fillRect(342, 82, 14, 10);
-    this.add.text(349, 84, 'EMPLOYEE\nOF THE\nMONTH', {
-      fontFamily: 'monospace', fontSize: '1.5px', color: '#888866',
-    }).setOrigin(0.5).setDepth(2);
-    this.add.text(349, 90, 'YOUR NAME\nHERE', {
-      fontFamily: 'monospace', fontSize: '1px', color: '#aaaaaa',
-    }).setOrigin(0.5).setDepth(2);
+    // ════ WALL DECOR (PixelLab sprites) ════
+    // Employee of the Month frame (empty)
+    this.add.image(340, 90, 'bp_employee_of_month').setOrigin(0.5, 0.5).setDepth(2);
 
-    // Fire safety map (outdated)
-    d.fillStyle(0xffffff); d.fillRect(580, 90, 12, 9);
-    d.fillStyle(0xcc3333); d.fillRect(580, 90, 12, 2);
-    this.add.text(586, 96, 'EXIT', { fontFamily: 'monospace', fontSize: '1.5px', color: '#cc3333' }).setOrigin(0.5).setDepth(2);
+    // SYNERGY motivational poster (absurdly awful)
+    this.add.image(200, 90, 'bp_poster_synergy').setOrigin(0.5, 0.5).setDepth(2);
 
-    // Ergonomics poster (taped at wrong height — ironic)
-    d.fillStyle(0xffffff); d.fillRect(700, 120, 10, 14);
-    d.fillStyle(0x4488cc); d.fillRect(700, 120, 10, 3);
-    // Tape at angles
-    d.fillStyle(0xeeddaa, 0.6); d.fillRect(699, 118, 5, 2);
-    d.fillStyle(0xeeddaa, 0.6); d.fillRect(708, 133, 4, 2);
+    // EXCELLENCE motivational poster (equally awful)
+    this.add.image(580, 90, 'bp_poster_excellence').setOrigin(0.5, 0.5).setDepth(2);
+
+    // Wall clock (government-issue) — above break area
+    this.add.image(760, 40, 'bp_wall_clock').setOrigin(0.5, 0.5).setDepth(2);
+
+    // Fire extinguisher (near supply closet)
+    this.add.image(620, 120, 'bp_fire_extinguisher').setOrigin(0.5, 0.5).setDepth(2);
 
     // ════ FLOOR DETAILS ════
     // Scuff marks on linoleum
@@ -833,36 +888,95 @@ export class BullpenScene extends Phaser.Scene {
     const deskX = 145;
     const deskY = 210;
 
-    // Step 1-2: Casey walks to desk
+    // Step 1: Casey walks to desk
     const pos = this.player.getPosition();
     const path = this.navGrid.findPath(pos.x, pos.y, deskX - 20, deskY);
     this.player.walkPath(path, () => {
-      // Step 3: Place laptop on desk (add laptop visual)
-      const laptopSprite = this.add.rectangle(145, 195, 16, 10, 0x333333).setDepth(23);
-      this.add.rectangle(145, 194, 14, 8, 0x4488cc).setDepth(24); // screen glow
+      // Step 2: Casey looks at the empty desk (brief pause of anticipation)
+      (this.player as any).sprite.setFrame(CHAR_FRAMES.IDLE_E);
+      this.time.delayedCall(800, () => {
 
-      // Step 4: Desk lamp flickers on
-      this.time.delayedCall(500, () => {
-        const lampGlow = this.add.circle(160, 185, 12, 0xffee88, 0.3).setDepth(21);
-        this.tweens.add({
-          targets: lampGlow, alpha: { from: 0, to: 0.3 },
-          duration: 200, yoyo: true, repeat: 2,
-          onComplete: () => lampGlow.setAlpha(0.25),
+        // Step 3: Place laptop on desk
+        const laptopSprite = this.add.rectangle(145, 195, 16, 10, 0x333333).setDepth(23);
+        const laptopScreen = this.add.rectangle(145, 194, 14, 8, 0x112233).setDepth(24);
+        if (this.cache.audio.exists('sfx_laptop_open')) {
+          this.sound.play('sfx_laptop_open', { volume: 0.3 });
+        }
+
+        // Step 4: Laptop screen boots up — glow from dark to bright + triumph fanfare
+        this.time.delayedCall(600, () => {
+          if (this.cache.audio.exists('sfx_triumph')) {
+            this.sound.play('sfx_triumph', { volume: 0.4 });
+          }
+          this.tweens.add({
+            targets: laptopScreen,
+            fillColor: { from: 0x112233, to: 0x4488cc },
+            duration: 800, ease: 'Power2',
+            onUpdate: (tween) => {
+              const v = tween.getValue() ?? 0;
+              const r = Math.floor(0x11 + (0x44 - 0x11) * (v as number));
+              const g = Math.floor(0x22 + (0x88 - 0x22) * (v as number));
+              const b = Math.floor(0x33 + (0xcc - 0x33) * (v as number));
+              laptopScreen.setFillStyle((r << 16) | (g << 8) | b);
+            },
+          });
+
+          // Warm glow spills onto desk
+          const screenGlow = this.add.circle(145, 198, 20, 0x4488cc, 0).setDepth(22);
+          this.tweens.add({
+            targets: screenGlow, alpha: 0.12, duration: 800, ease: 'Power2',
+          });
         });
-      });
 
-      // Step 5: Casey sits and types (face south idle)
-      this.time.delayedCall(1200, () => {
-        (this.player as any).sprite.setFrame(CHAR_FRAMES.IDLE_S);
+        // Step 5: Desk lamp flickers on
+        this.time.delayedCall(1400, () => {
+          const lampGlow = this.add.circle(160, 185, 12, 0xffee88, 0.3).setDepth(21);
+          this.tweens.add({
+            targets: lampGlow, alpha: { from: 0, to: 0.3 },
+            duration: 200, yoyo: true, repeat: 2,
+            onComplete: () => lampGlow.setAlpha(0.25),
+          });
 
-        // Step 6: Pause
-        this.time.delayedCall(2000, () => {
-          // Step 7-8: Priya walks over
-          this.walkPriyaToCasey(() => {
-            // Step 9: Priya arrives, brief pause
-            this.time.delayedCall(500, () => {
-              // Step 10-11: Auto-advancing dialogue
-              this.playCutsceneDialogue();
+          // Step 6: Casey sits — faces south, takes a breath
+          this.time.delayedCall(600, () => {
+            (this.player as any).sprite.setFrame(CHAR_FRAMES.IDLE_S);
+
+            // Step 7: Typing begins — Casey's idle-shift animation (hands moving)
+            this.time.delayedCall(1000, () => {
+              const sprite = (this.player as any).sprite as Phaser.GameObjects.Sprite;
+              if (this.anims.exists('casey_idle_shift')) {
+                sprite.play('casey_idle_shift');
+              }
+
+              // Step 8: Brief typing pause — the first keystrokes
+              this.time.delayedCall(2500, () => {
+                sprite.stop();
+                sprite.setFrame(CHAR_FRAMES.IDLE_S);
+
+                // Step 9: Kevin glances over (subtle environmental reaction)
+                this.time.delayedCall(500, () => {
+
+                  // Step 10: The printer, now fixed, whirs — prints something
+                  if (this.printerSprite) {
+                    this.tweens.add({
+                      targets: this.printerSprite,
+                      x: this.printerSprite.x - 1,
+                      duration: 100, yoyo: true, repeat: 3,
+                    });
+                  }
+
+                  // Step 11: Priya walks over
+                  this.time.delayedCall(1500, () => {
+                    this.walkPriyaToCasey(() => {
+                      // Step 12: Priya arrives, brief pause
+                      this.time.delayedCall(800, () => {
+                        // Step 13: Extended dialogue
+                        this.playCutsceneDialogue();
+                      });
+                    });
+                  });
+                });
+              });
             });
           });
         });
@@ -871,18 +985,21 @@ export class BullpenScene extends Phaser.Scene {
   }
 
   private walkPriyaToCasey(onDone: () => void): void {
-    // Create a simple moving Priya graphic
-    const priyaWalk = this.add.graphics().setDepth(490);
-    priyaWalk.fillStyle(0xcc6699);
-    priyaWalk.fillRect(-6, -15, 12, 30);
-    priyaWalk.fillStyle(0xddaa77);
-    priyaWalk.fillCircle(0, -20, 7);
-    priyaWalk.fillStyle(0xff6633);
-    priyaWalk.fillRect(-6, -10, 12, 4);
+    // Create Priya walk sprite using PixelLab walk spritesheet
+    if (!this.anims.exists('priya_walk_west')) {
+      this.anims.create({
+        key: 'priya_walk_west',
+        frames: this.anims.generateFrameNumbers('char_priya_walk', { start: 0, end: 5 }),
+        frameRate: 8, repeat: -1,
+      });
+    }
 
     const startX = 650, startY = 210;
     const targetX = 175, targetY = 210;
-    priyaWalk.setPosition(startX, startY);
+
+    const priyaSprite = this.add.sprite(startX, startY, 'char_priya_walk', 0)
+      .setOrigin(0.5, 1).setDepth(490);
+    priyaSprite.play('priya_walk_west');
 
     // Footstep sounds during walk
     const stepTimer = this.time.addEvent({
@@ -891,19 +1008,25 @@ export class BullpenScene extends Phaser.Scene {
         if (this.cache.audio.exists('footstep_casey')) {
           this.sound.play('footstep_casey', {
             volume: 0.12,
-            rate: 1.05 + Math.random() * 0.1, // slightly higher pitch
+            rate: 1.05 + Math.random() * 0.1,
           });
         }
       },
     });
 
     this.tweens.add({
-      targets: priyaWalk,
+      targets: priyaSprite,
       x: targetX, y: targetY,
       duration: 3000,
       ease: 'Sine.inOut',
       onComplete: () => {
         stepTimer.destroy();
+        // Switch to idle pose facing south
+        priyaSprite.stop();
+        priyaSprite.setTexture('char_priya', 0);
+        if (this.anims.exists('priya_research')) {
+          priyaSprite.play('priya_research');
+        }
         onDone();
       },
     });
@@ -911,9 +1034,17 @@ export class BullpenScene extends Phaser.Scene {
 
   private playCutsceneDialogue(): void {
     const lines = [
-      { speaker: 'priya', text: 'First commit?', portrait: null, delay: 3000 },
-      { speaker: 'casey', text: 'Just setting up the dev environment. But yeah... first commit incoming.', portrait: null, delay: 4000 },
-      { speaker: 'priya', text: 'Welcome to D.A.S.H., Casey. For real this time.', portrait: null, delay: 3500 },
+      { speaker: 'priya', text: 'You actually got it running.', portrait: null, delay: 3000 },
+      { speaker: 'casey', text: 'Was there any doubt?', portrait: null, delay: 2500 },
+      { speaker: 'priya', text: '...Yes. Considerable doubt.', portrait: null, delay: 3000 },
+      { speaker: 'casey', text: 'Fair.', portrait: null, delay: 2000 },
+      { speaker: 'priya', text: 'The last engineer couldn\'t get past the wifi password. The one before that spent two weeks looking for the bathroom key.', portrait: null, delay: 5000 },
+      { speaker: 'casey', text: 'I fixed a printer, picked a lock, and earned a laptop through sheer bureaucratic persistence. All before lunch.', portrait: null, delay: 5000 },
+      { speaker: 'priya', text: 'You know what? That might be the most productive first day anyone has had at D.A.S.H. in twenty years.', portrait: null, delay: 5000 },
+      { speaker: 'casey', text: 'The bar is underground. I just had to show up with a shovel.', portrait: null, delay: 4000 },
+      { speaker: 'priya', text: 'Twelve thousand people are waiting, Casey. Forty-seven days average processing time. Real people with real problems.', portrait: null, delay: 5500 },
+      { speaker: 'casey', text: 'Then let\'s fix it. Eighty-nine days left. What\'s first?', portrait: null, delay: 4000 },
+      { speaker: 'priya', text: 'First? First you deploy to production.', portrait: null, delay: 4000 },
     ];
 
     let lineIdx = 0;
@@ -971,46 +1102,220 @@ export class BullpenScene extends Phaser.Scene {
 
   private endingSequence(): void {
     const cam = this.cameras.main;
+    const W = 640, H = 360;
+    const FONT = '"Press Start 2P", monospace';
+    const sep = '════════════════════════════════════';
+
+    // Save completion
+    const st = GameState.getInstance();
+    st.setFlag('chapter_1_complete', true);
+    st.save();
+
+    // Stop any playing music, pick a random track for the ending screen
+    this.sound.stopAll();
+    const endTracks = ['bullpen_chill', 'soft_save_point', 'end_chapter_music'];
+    const pick = endTracks[Math.floor(Math.random() * endTracks.length)];
 
     // Step 12: Camera slowly zooms out
     cam.zoomTo(0.85, 3000);
-
-    // Step 13: DAY 1 OF 90 banner visible in zoomed view
 
     // Step 14: Fade to black after zoom
     this.time.delayedCall(3500, () => {
       cam.fadeOut(2000, 0, 0, 0);
 
       cam.once('camerafadeoutcomplete', () => {
-        // Step 15: "End of Chapter 1"
-        const endText = this.add.text(320, 180, 'End of Chapter 1: Onboarding', {
-          fontFamily: 'monospace', fontSize: '16px', color: '#e0e0e0', fontStyle: 'bold',
-        }).setOrigin(0.5).setDepth(2000).setScrollFactor(0).setAlpha(0);
+        // Start ending music
+        if (this.cache.audio.exists(pick)) {
+          const music = this.sound.add(pick, { loop: true, volume: 0 });
+          music.play();
+          this.tweens.add({ targets: music, volume: 0.35, duration: 2000 });
+        }
 
+        // ── Purple ending screen (matching title screen CRT aesthetic) ──
+        const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0a1a)
+          .setDepth(2000).setScrollFactor(0);
+
+        // Subtle purple gradient vignette
+        const vigGfx = this.add.graphics().setDepth(2001).setScrollFactor(0);
+        for (let i = 12; i >= 0; i--) {
+          const alpha = (1 - i / 12) * 0.15;
+          const inset = i * 8;
+          vigGfx.fillStyle(0x220033, alpha);
+          vigGfx.fillRect(inset, inset, W - inset * 2, H - inset * 2);
+        }
+
+        // Scanlines
+        const scanGfx = this.add.graphics().setDepth(2002).setScrollFactor(0);
+        scanGfx.fillStyle(0x000000, 0.08);
+        for (let y = 0; y < H; y += 3) {
+          scanGfx.fillRect(0, y, W, 1);
+        }
+
+        // ── Compute stats ──
+        const flags = st.flags;
+        const statsChecks = [
+          { key: 'talked_to_mrs_g', label: 'Met Mrs. Gutierrez' },
+          { key: 'examined_water_cooler', label: 'Examined Water Cooler' },
+          { key: 'seen_cat_flyer', label: 'Found Lost Cat Flyer' },
+          { key: 'flag_straightened', label: 'Straightened the Flag' },
+          { key: 'examined_bulletin_board', label: 'Read Bulletin Board' },
+          { key: 'printer_fixed', label: 'Fixed the Printer' },
+          { key: 'whiteboard_insight', label: 'Decoded Priya\'s Whiteboard' },
+          { key: 'examined_coat_rack', label: 'Examined Coat Rack' },
+          { key: 'priya_ally', label: 'Earned Priya\'s Trust' },
+          { key: 'has_laptop', label: 'Acquired a Laptop' },
+        ];
+        const achieved = statsChecks.filter(s => flags[s.key] === true);
+        const priyaRel = st.getRelationship('priya');
+
+        // All elements stored for cleanup
+        const allElements: Phaser.GameObjects.GameObject[] = [bg, vigGfx, scanGfx];
+
+        // ── Layout ──
+        // Title
+        const endText = this.add.text(W / 2, 35, 'End of Chapter 1: Onboarding', {
+          fontFamily: FONT, fontSize: '10px', color: '#e0d0ff', fontStyle: 'bold',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(endText);
+
+        const sepText = this.add.text(W / 2, 52, sep, {
+          fontFamily: FONT, fontSize: '5px', color: '#6644aa',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(sepText);
+
+        // Stats header
+        const statsHeader = this.add.text(W / 2, 72, `MISSION REPORT  ${achieved.length}/${statsChecks.length}`, {
+          fontFamily: FONT, fontSize: '7px', color: '#ccaaff',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(statsHeader);
+
+        // Stats list (two columns)
+        const colX1 = 80, colX2 = W / 2 + 40;
+        const statsStartY = 92;
+        const statTexts: Phaser.GameObjects.Text[] = [];
+        statsChecks.forEach((s, i) => {
+          const done = flags[s.key] === true;
+          const col = i < 5 ? colX1 : colX2;
+          const row = i < 5 ? i : i - 5;
+          const icon = done ? '>' : ' ';
+          const color = done ? '#88ff88' : '#554466';
+          const label = done ? s.label : '???';
+          const t = this.add.text(col, statsStartY + row * 16, `${icon} ${label}`, {
+            fontFamily: FONT, fontSize: '6px', color,
+          }).setDepth(2010).setScrollFactor(0).setAlpha(0);
+          statTexts.push(t);
+          allElements.push(t);
+        });
+
+        // Relationship
+        const hearts = priyaRel >= 3 ? '>>>' : priyaRel >= 2 ? '>> ' : priyaRel >= 1 ? '>  ' : '   ';
+        const relText = this.add.text(W / 2, statsStartY + 88, `PRIYA TRUST:  ${hearts}  (${priyaRel}/3)`, {
+          fontFamily: FONT, fontSize: '6px', color: '#ff9966',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(relText);
+
+        // Separator 2
+        const sepText2 = this.add.text(W / 2, statsStartY + 108, sep, {
+          fontFamily: FONT, fontSize: '5px', color: '#6644aa',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(sepText2);
+
+        // "A Code for America Adventure"
+        const cfaText = this.add.text(W / 2, statsStartY + 126, 'A Code for America Adventure', {
+          fontFamily: FONT, fontSize: '7px', color: '#aa88dd',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(cfaText);
+
+        // "Chapter 2: Discovery — Coming Soon"
+        const comingSoon = this.add.text(W / 2, statsStartY + 150, 'Chapter 2: Discovery  —  Coming Soon', {
+          fontFamily: FONT, fontSize: '7px', color: '#ccaaff',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(comingSoon);
+
+        // Blinking cursor
+        const cursor = this.add.rectangle(W / 2 + 130, statsStartY + 150, 6, 8, 0xccaaff)
+          .setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(cursor);
+
+        // "Play Again" button
+        const playAgainY = H - 30;
+        const playAgainText = this.add.text(W / 2, playAgainY, '> PLAY AGAIN', {
+          fontFamily: FONT, fontSize: '8px', color: '#8866bb',
+        }).setOrigin(0.5).setDepth(2010).setScrollFactor(0).setAlpha(0);
+        allElements.push(playAgainText);
+
+        // ── Animate in sequence ──
+        cam.fadeIn(500, 0, 0, 0);
+
+        // Phase 1: Title
         this.tweens.add({
-          targets: endText, alpha: 1, duration: 800,
-          onComplete: () => {
-            // Step 16-17: Hold, then swap text
-            this.time.delayedCall(3000, () => {
-              endText.setText('Chapter 2: Discovery — Coming Soon');
-              endText.setFontSize('12px');
-              endText.setColor('#ccaaff');
+          targets: [endText, sepText], alpha: 1, duration: 1000,
+        });
 
-              // Step 18: Hold
-              this.time.delayedCall(3000, () => {
-                // Step 19: Save and return to title
-                GameState.getInstance().setFlag('chapter_1_complete', true);
-                GameState.getInstance().save();
-
-                this.tweens.add({
-                  targets: endText, alpha: 0, duration: 1000,
-                  onComplete: () => {
-                    this.scene.start('TitleScene');
-                  },
-                });
-              });
+        // Phase 2: Stats roll in one by one
+        this.time.delayedCall(1200, () => {
+          this.tweens.add({ targets: statsHeader, alpha: 1, duration: 600 });
+          statTexts.forEach((t, i) => {
+            this.time.delayedCall(i * 200, () => {
+              this.tweens.add({ targets: t, alpha: 1, duration: 300 });
+              if (flags[statsChecks[i].key] === true) {
+                if (this.cache.audio.exists('sfx_text_blip')) {
+                  this.sound.play('sfx_text_blip', { volume: 0.08 });
+                }
+              }
             });
-          },
+          });
+        });
+
+        // Phase 3: Relationship + lower section
+        this.time.delayedCall(1200 + statsChecks.length * 200 + 500, () => {
+          this.tweens.add({ targets: relText, alpha: 1, duration: 600 });
+        });
+
+        this.time.delayedCall(1200 + statsChecks.length * 200 + 1200, () => {
+          this.tweens.add({ targets: [sepText2, cfaText], alpha: 1, duration: 800 });
+        });
+
+        // Phase 4: Coming soon + play again
+        this.time.delayedCall(1200 + statsChecks.length * 200 + 2500, () => {
+          this.tweens.add({ targets: [comingSoon], alpha: 1, duration: 1000 });
+          this.tweens.add({
+            targets: cursor, alpha: { from: 0.8, to: 0 },
+            duration: 530, yoyo: true, repeat: -1, delay: 500,
+          });
+
+          // Show play again button
+          this.time.delayedCall(1500, () => {
+            this.tweens.add({ targets: playAgainText, alpha: 1, duration: 800 });
+
+            // Enable input for play again
+            this.input.enabled = true;
+
+            // Hover effect
+            this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+              const b = playAgainText.getBounds();
+              if (pointer.x >= b.left - 8 && pointer.x <= b.right + 8
+                && pointer.y >= b.top - 4 && pointer.y <= b.bottom + 4) {
+                playAgainText.setColor('#ccaaff');
+              } else {
+                playAgainText.setColor('#8866bb');
+              }
+            });
+
+            this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+              if (pointer.rightButtonDown()) return;
+              const b = playAgainText.getBounds();
+              if (pointer.x >= b.left - 8 && pointer.x <= b.right + 8
+                && pointer.y >= b.top - 4 && pointer.y <= b.bottom + 4) {
+                if (this.cache.audio.exists('sfx_select')) {
+                  this.sound.play('sfx_select', { volume: 0.3 });
+                }
+                this.sound.stopAll();
+                GameState.getInstance().reset();
+                this.scene.start('TitleScene');
+              }
+            });
+          });
         });
       });
     });
@@ -1093,11 +1398,15 @@ export class BullpenScene extends Phaser.Scene {
     this.navGrid.addObstacle(108, 190, 64, 30);    // Casey's desk
     this.navGrid.addObstacle(223, 168, 300, 36);    // Cubicle row
     this.navGrid.addObstacle(545, 190, 50, 30);     // Printer
-    this.navGrid.addObstacle(695, 170, 130, 20);     // Break counter (pushed to wall)
-    this.navGrid.addObstacle(630, 240, 60, 24);      // Coffee table + chairs
+    this.navGrid.addObstacle(695, 160, 130, 16);     // Break counter
+    this.navGrid.addObstacle(600, 238, 100, 28);     // Coffee table + visitor chairs
     this.navGrid.addObstacle(800, 190, 20, 24);     // Mini fridge
-    this.navGrid.addObstacle(840, 190, 80, 24);     // Priya's desk
+    this.navGrid.addObstacle(830, 185, 20, 14);     // Water cooler
+    this.navGrid.addObstacle(840, 187, 80, 24);     // Priya's desk
     this.navGrid.addObstacle(915, 168, 40, 36);     // Whiteboard area
+    this.navGrid.addObstacle(512, 228, 16, 14);     // Trash can
+    this.navGrid.addObstacle(77, 218, 16, 14);      // Floor plant
+    this.navGrid.addObstacle(374, 280, 12, 12);     // Wet floor sign
   }
 
   // ── Ambient Life ──
@@ -1107,26 +1416,7 @@ export class BullpenScene extends Phaser.Scene {
 
     this.generateAmbientTextures();
 
-    // 1. Background NPC idle animations
-    // NPC at x=310: typing
-    if (this.anims.exists('bp_npc_typing')) this.anims.remove('bp_npc_typing');
-    this.anims.create({
-      key: 'bp_npc_typing',
-      frames: [{ key: 'bp_typing_0' }, { key: 'bp_typing_1' }, { key: 'bp_typing_2' }, { key: 'bp_typing_1' }],
-      frameRate: 4, repeat: -1,
-    });
-    const typingNpc = this.add.sprite(250, 190, 'bp_typing_0').setOrigin(0.5, 0.5).setDepth(19);
-    this.time.delayedCall(rOff(), () => typingNpc.play('bp_npc_typing'));
-
-    // NPC at x=370: on phone
-    if (this.anims.exists('bp_npc_phone')) this.anims.remove('bp_npc_phone');
-    this.anims.create({
-      key: 'bp_npc_phone',
-      frames: [{ key: 'bp_phone_0' }, { key: 'bp_phone_1' }, { key: 'bp_phone_0' }],
-      frameRate: 3, repeat: -1,
-    });
-    const phoneNpc = this.add.sprite(410, 190, 'bp_phone_0').setOrigin(0.5, 0.5).setDepth(19);
-    this.time.delayedCall(rOff() + 1000, () => phoneNpc.play('bp_npc_phone'));
+    // 1. Background NPC animations are now handled in drawNPCs() via PixelLab spritesheets
 
     // 2. Coffee maker brew light blink
     if (this.anims.exists('bp_brew_blink')) this.anims.remove('bp_brew_blink');
@@ -1135,7 +1425,7 @@ export class BullpenScene extends Phaser.Scene {
       frames: [{ key: 'bp_brew_on' }, { key: 'bp_brew_off' }],
       frameRate: 1, repeat: -1,
     });
-    const brewLight = this.add.sprite(730, 162, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(31);
+    const brewLight = this.add.sprite(730, 150, 'bp_brew_on').setOrigin(0.5, 0.5).setDepth(31);
     brewLight.play('bp_brew_blink');
 
     // 3. Dashboard TV screen flicker
@@ -1181,29 +1471,7 @@ export class BullpenScene extends Phaser.Scene {
     };
     this.time.delayedCall(rOff(), scheduleLightFlicker);
 
-    // 5. Priya idle at desk: writing cycle
-    if (this.anims.exists('bp_priya_idle')) this.anims.remove('bp_priya_idle');
-    this.anims.create({
-      key: 'bp_priya_idle',
-      frames: [
-        { key: 'bp_priya_write_0' }, { key: 'bp_priya_write_1' },
-        { key: 'bp_priya_write_0' }, { key: 'bp_priya_write_1' },
-        { key: 'bp_priya_write_0' }, { key: 'bp_priya_glance' },
-      ],
-      frameRate: 2, repeat: -1,
-    });
-    const priyaIdle = this.add.sprite(878, 188, 'bp_priya_write_0').setOrigin(0.5, 0.5).setDepth(19);
-    this.time.delayedCall(rOff() + 2000, () => priyaIdle.play('bp_priya_idle'));
-
-    // 6. Kevin idle: minimal typing
-    if (this.anims.exists('bp_kevin_idle')) this.anims.remove('bp_kevin_idle');
-    this.anims.create({
-      key: 'bp_kevin_idle',
-      frames: [{ key: 'bp_kevin_0' }, { key: 'bp_kevin_1' }],
-      frameRate: 2, repeat: -1,
-    });
-    const kevinIdle = this.add.sprite(330, 190, 'bp_kevin_0').setOrigin(0.5, 0.5).setDepth(19);
-    this.time.delayedCall(rOff() + 1500, () => kevinIdle.play('bp_kevin_idle'));
+    // 5-6. Priya & Kevin animations now handled in drawNPCs() via PixelLab spritesheets
 
     // 7. Printer paper jam LED blink (if not fixed)
     const printerLed = this.add.circle(578, 188, 2, 0xff4444).setDepth(31);
@@ -1219,25 +1487,94 @@ export class BullpenScene extends Phaser.Scene {
     };
     scheduleJamBlink();
 
+    // 7b. Printer random paper spew (before it's fixed)
+    const schedulePaperSpew = () => {
+      const delay = Phaser.Math.Between(6000, 14000);
+      this.time.delayedCall(delay, () => {
+        if (this.cutsceneActive || GameState.getInstance().hasFlag('printer_fixed')) return;
+        if (!this.printerSprite) return;
+
+        const px = this.printerSprite.x;
+        const py = this.printerSprite.y;
+
+        // Printer shakes violently
+        const origX = px;
+        this.tweens.add({
+          targets: this.printerSprite,
+          x: origX + 2, duration: 40, yoyo: true, repeat: 8, ease: 'Sine.inOut',
+          onComplete: () => { if (this.printerSprite) this.printerSprite.x = origX; },
+        });
+
+        // Shoot 1-3 pages
+        const pageCount = Phaser.Math.Between(1, 3);
+        for (let p = 0; p < pageCount; p++) {
+          this.time.delayedCall(p * 120, () => {
+            // Paper with printed lines
+            const paper = this.add.graphics().setDepth(32);
+            paper.fillStyle(0xffffff);
+            paper.fillRect(-5, -4, 10, 8);
+            paper.lineStyle(0.5, 0xcccccc);
+            paper.strokeRect(-5, -4, 10, 8);
+            // Printed text lines
+            paper.fillStyle(0x333333, 0.4);
+            paper.fillRect(-3, -2, 6, 1);
+            paper.fillRect(-3, 0, 4, 1);
+            paper.fillRect(-3, 2, 5, 1);
+            paper.setPosition(px, py - 15);
+
+            const dir = Phaser.Math.Between(-1, 1);
+            // Shoot upward and outward
+            this.tweens.add({
+              targets: paper,
+              y: py - 40 - Phaser.Math.Between(0, 15),
+              x: px + dir * Phaser.Math.Between(8, 20),
+              angle: Phaser.Math.Between(-60, 60),
+              duration: 350,
+              ease: 'Quad.easeOut',
+              onComplete: () => {
+                // Flutter down
+                this.tweens.add({
+                  targets: paper,
+                  y: (paper as any).y + 35 + Phaser.Math.Between(0, 10),
+                  x: (paper as any).x + Phaser.Math.Between(-5, 5),
+                  angle: (paper as any).angle + Phaser.Math.Between(-30, 30),
+                  alpha: 0,
+                  duration: 700,
+                  ease: 'Sine.easeIn',
+                  onComplete: () => paper.destroy(),
+                });
+              },
+            });
+
+            // Toner dust puff
+            for (let d = 0; d < 4; d++) {
+              const dust = this.add.circle(
+                px + Phaser.Math.Between(-8, 8),
+                py - 12,
+                Phaser.Math.Between(1, 2),
+                0x666666, 0.5,
+              ).setDepth(31);
+              this.tweens.add({
+                targets: dust,
+                y: dust.y - Phaser.Math.Between(5, 15),
+                x: dust.x + Phaser.Math.Between(-6, 6),
+                alpha: 0,
+                duration: Phaser.Math.Between(400, 800),
+                ease: 'Quad.easeOut',
+                onComplete: () => dust.destroy(),
+              });
+            }
+          });
+        }
+
+        schedulePaperSpew();
+      });
+    };
+    this.time.delayedCall(rOff() + 3000, schedulePaperSpew);
+
     // ── 8. LIVING ROOM TWEENS — subtle motions that make the space feel alive ──
 
-    // Phone NPC occasionally nods (tiny Y bob)
-    this.time.addEvent({
-      delay: 4000 + Math.random() * 3000, loop: true,
-      callback: () => {
-        if (this.cutsceneActive) return;
-        this.tweens.add({ targets: phoneNpc, y: phoneNpc.y + 1, duration: 200, yoyo: true, ease: 'Sine.inOut' });
-      },
-    });
-
-    // Typing NPC shifts in chair every 8-12 seconds
-    this.time.addEvent({
-      delay: 8000 + Math.random() * 4000, loop: true,
-      callback: () => {
-        if (this.cutsceneActive) return;
-        this.tweens.add({ targets: typingNpc, x: typingNpc.x + Phaser.Math.Between(-1, 1), duration: 400, yoyo: true, ease: 'Sine.inOut' });
-      },
-    });
+    // NPC idle tweens now handled by PixelLab breathing-idle spritesheets
 
     // Priya's desk plant — gentle leaf sway
     const plantLeaf = this.add.circle(918, 178, 2, 0x55cc55).setDepth(32);
@@ -1297,86 +1634,113 @@ export class BullpenScene extends Phaser.Scene {
     this.time.delayedCall(rOff() + 8000, schedulePrinterWhir);
   }
 
+  // --- Bullpen Intro Cutscene ---
+
+  private startBullpenIntro(): void {
+    this.introActive = true;
+
+    // Skip on click
+    const skipHandler = () => {
+      this.input.off('pointerdown', skipHandler);
+      this.endBullpenIntro();
+    };
+    this.input.on('pointerdown', skipHandler);
+
+    // Casey pauses, takes it all in
+    this.time.delayedCall(800, () => {
+      if (!this.introActive) return;
+      this.showBullpenBubble(
+        '"So this is the bullpen.\nWhere the magic happens.\nOr... doesn\'t."',
+        () => {
+          if (!this.introActive) return;
+          this.time.delayedCall(400, () => {
+            if (!this.introActive) return;
+            this.showBullpenBubble(
+              '"Ninety days to modernize all of this.\nNo pressure."',
+              () => {
+                if (!this.introActive) return;
+                this.time.delayedCall(400, () => {
+                  if (!this.introActive) return;
+                  this.showBullpenBubble(
+                    '"Step one: find an ally.\nStep two: find a desk.\nStep three: try not to break anything."',
+                    () => {
+                      if (!this.introActive) return;
+                      this.time.delayedCall(400, () => {
+                        if (!this.introActive) return;
+                        this.showBullpenBubble(
+                          '"Alright. Let\'s do this."',
+                          () => {
+                            if (!this.introActive) return;
+                            this.endBullpenIntro();
+                          },
+                        );
+                      });
+                    },
+                  );
+                });
+              },
+            );
+          });
+        },
+      );
+    });
+  }
+
+  private showBullpenBubble(text: string, onDone: () => void): void {
+    this.introBubble?.destroy();
+
+    const pos = this.player.getPosition();
+    this.introBubble = this.add.text(pos.x, pos.y - 60, text, {
+      fontFamily: 'monospace',
+      fontSize: '8px',
+      color: '#cccccc',
+      fontStyle: 'italic',
+      backgroundColor: '#1a1a2ecc',
+      padding: { x: 8, y: 6 },
+      wordWrap: { width: 220 },
+    });
+    this.introBubble.setOrigin(0.5, 1);
+    this.introBubble.setDepth(950);
+    this.introBubble.setAlpha(0);
+
+    this.tweens.add({
+      targets: this.introBubble,
+      alpha: 1,
+      duration: 300,
+    });
+
+    this.time.delayedCall(3000, () => {
+      if (!this.introBubble) return;
+      this.tweens.add({
+        targets: this.introBubble,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => {
+          this.introBubble?.destroy();
+          this.introBubble = null;
+          onDone();
+        },
+      });
+    });
+  }
+
+  private endBullpenIntro(): void {
+    if (!this.introActive) return;
+    this.introActive = false;
+
+    this.introBubble?.destroy();
+    this.introBubble = null;
+
+    GameState.getInstance().setFlag('bullpen_intro_complete', true);
+  }
+
   private generateAmbientTextures(): void {
-    // NPC typing frames (tiny silhouette with arm movement)
-    for (let f = 0; f < 3; f++) {
-      const g = this.add.graphics();
-      const skin = 0xccbb99;
-      const shirt = 0x558855;
-      // Body
-      g.fillStyle(shirt); g.fillRect(2, 6, 10, 14);
-      // Head
-      g.fillStyle(skin); g.fillCircle(7, 4, 4);
-      // Arms typing - slight movement per frame
-      g.fillStyle(skin);
-      g.fillRect(1 + f, 14, 3, 2);
-      g.fillRect(10 - f, 14, 3, 2);
-      g.generateTexture(`bp_typing_${f}`, 14, 22);
-      g.destroy();
-    }
-
-    // NPC phone frames
-    for (let f = 0; f < 2; f++) {
-      const g = this.add.graphics();
-      g.fillStyle(0x885555); g.fillRect(2, 6, 10, 14);
-      g.fillStyle(0xccbb99); g.fillCircle(7, 4, 4);
-      // Hand holding phone to ear
-      g.fillStyle(0xccbb99); g.fillRect(11, 2 + f, 3, 4);
-      g.fillStyle(0x333333); g.fillRect(12, 1 + f, 2, 5); // phone
-      g.generateTexture(`bp_phone_${f}`, 16, 22);
-      g.destroy();
-    }
-
     // Brew light frames
     for (const [suffix, color, alpha] of [['on', 0xff8800, 1], ['off', 0xff8800, 0.15]] as const) {
       const g = this.add.graphics();
       g.fillStyle(color as number, alpha as number);
       g.fillCircle(3, 3, 3);
       g.generateTexture(`bp_brew_${suffix}`, 7, 7);
-      g.destroy();
-    }
-
-    // Priya idle frames (writing + glance)
-    for (let f = 0; f < 3; f++) {
-      const g = this.add.graphics();
-      const skin = 0xddaa77;
-      const blazer = 0x4466aa;
-      const scarf = 0xff6633;
-      g.fillStyle(blazer); g.fillRect(2, 8, 12, 16);
-      g.fillStyle(scarf); g.fillRect(2, 10, 12, 3);
-      g.fillStyle(skin); g.fillCircle(8, 5, 5);
-      // Hair
-      g.fillStyle(0x222222); g.fillRect(4, 0, 8, 4);
-      // Pen behind ear
-      g.fillStyle(0x333333); g.fillRect(13, 3, 1, 5);
-      if (f < 2) {
-        // Writing: arm moves
-        g.fillStyle(skin); g.fillRect(1 + f, 18, 3, 2);
-        g.fillRect(12 - f, 18, 3, 2);
-      } else {
-        // Glancing at whiteboard: head turned slightly
-        g.fillStyle(skin); g.fillRect(12, 4, 3, 3);
-        g.fillStyle(skin); g.fillRect(3, 18, 3, 2);
-        g.fillRect(10, 18, 3, 2);
-      }
-      const key = f < 2 ? `bp_priya_write_${f}` : 'bp_priya_glance';
-      g.generateTexture(key, 16, 26);
-      g.destroy();
-    }
-
-    // Kevin idle frames (minimal)
-    for (let f = 0; f < 2; f++) {
-      const g = this.add.graphics();
-      g.fillStyle(0x666688); g.fillRect(2, 8, 10, 14);
-      g.fillStyle(0xccbb99); g.fillCircle(7, 5, 5);
-      // Headphones
-      g.fillStyle(0x333333);
-      g.fillRect(1, 3, 2, 6); g.fillRect(11, 3, 2, 6); g.fillRect(1, 2, 12, 2);
-      // Arms - barely move
-      g.fillStyle(0xccbb99);
-      g.fillRect(1, 16 + f, 3, 2);
-      g.fillRect(10, 16 + (1 - f), 3, 2);
-      g.generateTexture(`bp_kevin_${f}`, 14, 22);
       g.destroy();
     }
   }

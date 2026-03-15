@@ -230,7 +230,7 @@ export class HotspotManager {
     const cy = Phaser.Math.Clamp(y, menuExtent + 2, cam.height - menuExtent - 2);
 
     const container = this.scene.add.container(cx, cy);
-    container.setDepth(1000);
+    container.setDepth(1000).setScrollFactor(0);
 
     // Dark translucent background disc
     const bg = this.scene.add.graphics();
@@ -556,8 +556,8 @@ export class HotspotManager {
       const cx = poly.length >= 2 ? (poly[0] + poly[2]) / 2 : data.position.x;
       const cy = poly.length >= 4 ? poly[1] - 4 : data.position.y - 10;
       const label = this.scene.add.text(cx, cy, id, {
-        fontFamily: 'monospace', fontSize: '6px', color: '#ffffff',
-        backgroundColor: '#000000aa',
+        fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12px', color: '#ffffff',
+        backgroundColor: '#000000cc', padding: { x: 3, y: 2 },
       }).setOrigin(0.5, 1).setDepth(5001);
       // Store for cleanup
       if (!this.debugGraphics) return;

@@ -6,6 +6,7 @@
     "AUTHENTICATING BADGE................ PENDING",
     "INITIALIZING FICUS LIFE SUPPORT..... OK",
     "BREWING COFFEE...................... FAILED",
+    "  >> LAST KNOWN CUP: BEHIND WATER COOLER, LOBBY",
     "CHECKING PRINTER STATUS............. JAMMED",
     "DEPLOYING EMPATHY MODULE............ OK",
     "COUNTING REMAINING BUDGET........... $4.37",
@@ -21,6 +22,6 @@
     "REBOOTING MORALE.................... LOW",
     "CONTACTING HELP DESK............... HOLD TIME: 3 HRS"
   ],
-  "newGameEnd": "ALL SYSTEMS NOMINAL. GOOD LUCK.\n\n> PRESS ANY KEY TO REPORT FOR DUTY_",
-  "continueEnd": "RESTORING SESSION................... OK\nREHEATING COFFEE.................... STILL FAILED\n\n> WELCOME BACK, CASEY._"
+  "newGameEnd": "ALL SYSTEMS NOMINAL. GOOD LUCK.\n\n> PRESS [ENTER] TO REPORT FOR DUTY_",
+  "continueEnd": "RESTORING SESSION................... OK\nREHEATING COFFEE.................... STILL FAILED\n\n> PRESS [ENTER] TO CONTINUE_"
 }

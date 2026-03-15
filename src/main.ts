@@ -6,6 +6,7 @@ import { LobbyScene } from './scenes/LobbyScene';
 import { EndSliceScene } from './scenes/EndSliceScene';
 import { BullpenScene } from './scenes/BullpenScene';
 import { PauseMenuScene } from './scenes/PauseMenuScene';
+import { MailCartScene } from './scenes/MailCartScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -18,7 +19,11 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [TitleScene, BootScene, LobbyScene, TestScene, EndSliceScene, BullpenScene, PauseMenuScene],
+  physics: {
+    default: 'arcade',
+    arcade: { debug: false, gravity: { x: 0, y: 0 } },
+  },
+  scene: [TitleScene, BootScene, LobbyScene, MailCartScene, TestScene, EndSliceScene, BullpenScene, PauseMenuScene],
 };
 
 const game = new Phaser.Game(config);

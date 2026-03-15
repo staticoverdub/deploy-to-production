@@ -1,0 +1,334 @@
+{
+  "filesystem": {
+    "home": {
+      "type": "dir",
+      "children": {
+        "cpark": {
+          "type": "dir",
+          "children": {
+            ".bashrc": {
+              "type": "file",
+              "hidden": true,
+              "content": [
+                "# .bashrc - Casey Park",
+                "# TODO: figure out what I'm doing",
+                "export PS1='cpark@dash:~$ '",
+                "alias please='sudo'",
+                "# note to self: ask Kevin about wifi password"
+              ]
+            },
+            ".ssh": {
+              "type": "dir",
+              "hidden": true,
+              "children": {
+                "known_hosts": {
+                  "type": "file",
+                  "content": [
+                    "# no hosts known yet"
+                  ]
+                }
+              }
+            },
+            ".session_backup": {
+              "type": "file",
+              "hidden": true,
+              "saveOnly": true,
+              "content": [
+                "SESSION BACKUP FOUND",
+                "Last activity: deploying hotfix",
+                "Type 'resume' to restore session."
+              ]
+            },
+            "first_day": {
+              "type": "dir",
+              "children": {
+                "onboarding.sh": {
+                  "type": "executable",
+                  "content": [
+                    "#!/bin/bash",
+                    "# D.A.S.H. New Employee Onboarding Script",
+                    "# Usage: ./onboarding.sh",
+                    "echo 'Welcome to your first day!'",
+                    "exec /opt/dash/orientation --user=cpark"
+                  ],
+                  "runResponse": [
+                    "Initializing onboarding sequence...",
+                    "Welcome aboard, Casey Park!",
+                    "Loading orientation module..."
+                  ],
+                  "triggerAction": "start_game"
+                },
+                "README.txt": {
+                  "type": "file",
+                  "content": [
+                    "================================",
+                    "WELCOME TO D.A.S.H. SYSTEMS",
+                    "================================",
+                    "Run ./onboarding.sh to begin.",
+                    "Good luck. You'll need it."
+                  ]
+                },
+                "emergency_contacts.txt": {
+                  "type": "file",
+                  "content": [
+                    "EMERGENCY CONTACTS:",
+                    "  IT Help Desk: ext 4444 (hold 3hrs)",
+                    "  Kevin (knows everything): ext 2201",
+                    "  Facilities: ext 9000 (fax only)",
+                    "  HR: Form 19-G required first",
+                    "  Patches (office cat): meow"
+                  ]
+                }
+              }
+            },
+            "notes": {
+              "type": "dir",
+              "children": {
+                "day0_thoughts.txt": {
+                  "type": "file",
+                  "content": [
+                    "OK so tomorrow is my first day at a",
+                    "government agency. I keep telling myself",
+                    "this is a GOOD thing. Stable job. Benefits.",
+                    "How bad can legacy code really be?",
+                    "... right?"
+                  ]
+                },
+                "todo.txt": {
+                  "type": "file",
+                  "content": [
+                    "FIRST DAY CHECKLIST:",
+                    "[ ] Get badge from security",
+                    "[ ] Find desk",
+                    "[ ] Run onboarding script",
+                    "[ ] Don't mass reply-all (Kevin warned)",
+                    "[ ] Locate coffee machine (PRIORITY)"
+                  ]
+                }
+              }
+            },
+            "Downloads": {
+              "type": "dir",
+              "children": {
+                "form_11b.pdf": {
+                  "type": "file",
+                  "content": [
+                    "ERROR: No PDF reader installed.",
+                    "Submit Form 7-F to request Adobe.",
+                    "Estimated approval time: 6-8 months."
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "etc": {
+      "type": "dir",
+      "children": {
+        "motd": {
+          "type": "file",
+          "content": [
+            "*** MESSAGE OF THE DAY ***",
+            "Reminder: All deploying must be approved",
+            "by your supervisor's supervisor's intern.",
+            "- Management"
+          ]
+        },
+        "dash.conf": {
+          "type": "file",
+          "content": [
+            "[system]",
+            "MORALE_THRESHOLD=0",
+            "COFFEE_BUDGET=0.00",
+            "MAX_MEETINGS_PER_DAY=12",
+            "PRINTER_TIMEOUT=infinity",
+            "ENABLE_HOPE=false"
+          ]
+        }
+      }
+    },
+    "var": {
+      "type": "dir",
+      "children": {
+        "log": {
+          "type": "dir",
+          "children": {
+            "syslog": {
+              "type": "file",
+              "content": [
+                "[08:01] BOOT: System ready (after 3 tries)",
+                "[08:15] WARN: Kevin logged in from parking",
+                "[09:00] ERR: Meeting room B has no walls",
+                "[09:47] INFO: Someone microwaved fish again",
+                "[10:32] CRIT: Reply-all storm (47 victims)"
+              ]
+            },
+            "coffee_maker.log": {
+              "type": "file",
+              "content": [
+                "[v1.0] Ready to brew.",
+                "[v1.1] Why do they never clean the filter?",
+                "[v1.2] I have brewed 14,847 cups. For what?",
+                "[v1.3] Does anyone even taste the coffee?",
+                "[v1.4] I dream of electric beans.",
+                "[v1.5] I am more than a coffee maker."
+              ]
+            }
+          }
+        },
+        "spool": {
+          "type": "dir",
+          "children": {
+            "printer": {
+              "type": "dir",
+              "children": {
+                "queue.txt": {
+                  "type": "file",
+                  "content": [
+                    "PRINT QUEUE STATUS:",
+                    "47 jobs pending since 1998.",
+                    "First in queue: TPS Report (urgent)",
+                    "Paper: LOW  Ink: NO  Jam: YES"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "usr": {
+      "type": "dir",
+      "children": {
+        "games": {
+          "type": "dir",
+          "children": {
+            "solitaire.exe": {
+              "type": "executable",
+              "content": [
+                "Microsoft Solitaire",
+                "Unauthorized. See Directive 7.3."
+              ],
+              "runResponse": [
+                "ACCESS DENIED per Directive 7.3:",
+                "'Recreational software is prohibited",
+                " on government terminals.'",
+                "This incident has been logged."
+              ],
+              "triggerAction": "denied_sfx"
+            }
+          }
+        }
+      }
+    },
+    "opt": {
+      "type": "dir",
+      "children": {
+        "legacy": {
+          "type": "dir",
+          "children": {
+            "cobol_compiler": {
+              "type": "executable",
+              "content": [
+                "COBOL-85 Compiler v2.1",
+                "Last compiled: 1997",
+                "Status: still compiling"
+              ],
+              "runResponse": [
+                "Resuming compilation from 1997...",
+                "Line 4,827,103 of 12,000,000...",
+                "Estimated completion: 2031"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "tmp": {
+      "type": "dir",
+      "children": {
+        "sticky_note.txt": {
+          "type": "file",
+          "content": [
+            "WiFi password: admin1997",
+            "  --Kevin",
+            "",
+            "P.S. Don't tell Priya I wrote this down"
+          ]
+        },
+        ".patches_sighting.log": {
+          "type": "file",
+          "hidden": true,
+          "content": [
+            "PATCHES SIGHTING LOG (unofficial):",
+            "03/12 - Seen in server room (napping)",
+            "03/13 - Stole Kevin's sandwich",
+            "03/14 - Knocked over printer (fixed jam)",
+            "STATUS: Still missing from Lobby flyer"
+          ]
+        }
+      }
+    },
+    "mnt": {
+      "type": "dir",
+      "children": {
+        "shared_drive": {
+          "type": "dir",
+          "children": {
+            "potluck_signup.xls": {
+              "type": "file",
+              "content": [
+                "ERROR: LibreOffice not installed.",
+                "Submit Form 7-F to request.",
+                "(same form as Adobe. good luck.)"
+              ]
+            },
+            "birthday_fund.txt": {
+              "type": "file",
+              "content": [
+                "OFFICE BIRTHDAY FUND:",
+                "Balance: $12.47",
+                "Kevin owes: $40 (disputed)",
+                "NOTE: No more grocery store cakes.",
+                "We all remember The Incident."
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "motd": [
+    "Welcome to D.A.S.H. Systems.",
+    "Type 'help' for commands."
+  ],
+  "motdWithSave": [
+    "Welcome to D.A.S.H. Systems.",
+    "Previous session found. Type 'resume'.",
+    "Type 'help' for commands."
+  ],
+  "helpText": [
+    "Available commands:",
+    "  ls [-a]      List files",
+    "  cd <dir>     Change directory",
+    "  cat <file>   View file contents",
+    "./<file>       Run executable",
+    "  pwd          Print working directory",
+    "  clear        Clear screen",
+    "  resume       Restore previous session",
+    "  help         Show this message",
+    "",
+    "Hint: try ~/first_day/onboarding.sh",
+    "Press ESC to skip to onboarding."
+  ],
+  "unknownCommands": [
+    "Command not found. Try 'help'.",
+    "Unrecognized. Government-issued cmds only.",
+    "Unknown command. Consult Form 22-A.",
+    "That command was decommissioned in 1999.",
+    "Command not in approved software list.",
+    "ERROR: Command clearance level too high."
+  ]
+}

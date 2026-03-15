@@ -24,62 +24,35 @@
     "casey_desk": {
       "id": "casey_desk",
       "name": "Casey's Desk",
-      "position": {
-        "x": 140,
-        "y": 200
-      },
-      "polygon": [
-        110,
-        170,
-        180,
-        170,
-        180,
-        240,
-        110,
-        240
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 140, "y": 210 },
+      "polygon": [105, 180, 175, 180, 175, 240, 105, 240],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "My new desk. It's got a lamp, a sticky note, and the faint outline of where a monitor used to be. They really rolled out the red carpet.",
           "speaker": "casey",
           "portrait": "casey_wry",
-          "flagsSet": {
-            "needs_computer": true
-          }
+          "flagsSet": { "needs_computer": true }
         },
         "look__sticky_note": {
           "text": "'Welcome! \u2014JR.' Jordan Reeves, my manager who's on PTO. Three letters on a sticky note. That's my entire onboarding.",
           "speaker": "casey",
           "portrait": "casey_wry",
-          "condition": {
-            "flags": {
-              "needs_computer": true
-            }
-          }
+          "condition": { "flags": { "needs_computer": true } }
         },
         "use": {
           "text": "I'd love to start working, but I literally have no computer. Can't exactly modernize government systems with a desk lamp and good vibes.",
           "speaker": "casey",
           "portrait": "casey_frustrated",
-          "condition": {
-            "notItems": [
-              "laptop"
-            ]
-          }
+          "condition": { "notItems": ["laptop"] }
         },
         "use_laptop": {
-          "text": "I place the laptop on the desk, open it, and sit down. The desk lamp flickers on with a tap. Time to work.",
+          "text": "I set the laptop down, crack it open, and hit the power button. The fan spins up. The screen glows. For the first time today, this desk feels like mine.",
           "speaker": "casey",
           "portrait": "casey_triumphant",
           "animation": "end_scene_cutscene",
           "itemRemoved": "laptop",
-          "flagsSet": {
-            "bullpen_complete": true
-          },
+          "flagsSet": { "bullpen_complete": true },
           "triggerCutscene": "bullpen_end"
         }
       }
@@ -87,24 +60,9 @@
     "dead_printer": {
       "id": "dead_printer",
       "name": "The Dead Printer",
-      "position": {
-        "x": 260,
-        "y": 220
-      },
-      "polygon": [
-        230,
-        195,
-        290,
-        195,
-        290,
-        250,
-        230,
-        250
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 570, "y": 210 },
+      "polygon": [540, 185, 600, 185, 600, 235, 540, 235],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "An HP LaserJet with 47 jobs in the queue and a blinking paper jam light. Somewhere in government, there is a printer that works. This is not that printer.",
@@ -115,11 +73,7 @@
           "text": "I open the panel. Paper jam. Classic. I could probably fix this but I've got bigger fish to fry.",
           "speaker": "casey",
           "portrait": "casey_examining",
-          "condition": {
-            "notItems": [
-              "cup_of_water"
-            ]
-          }
+          "condition": { "notItems": ["cup_of_water"] }
         },
         "use_cup_of_water": {
           "text": "I pour a little water on the stuck paper to loosen it... and it actually works. The jam clears. 47 jobs start printing immediately. The entire bullpen turns to look at me.",
@@ -128,9 +82,7 @@
           "animation": "printer_roars_to_life_everyone_looks",
           "soundEffect": "printer_burst",
           "itemRemoved": "cup_of_water",
-          "flagsSet": {
-            "printer_fixed": true
-          },
+          "flagsSet": { "printer_fixed": true },
           "triggerEvent": "bullpen_printer_reaction"
         }
       }
@@ -138,24 +90,9 @@
     "coffee_maker": {
       "id": "coffee_maker",
       "name": "Coffee Maker",
-      "position": {
-        "x": 420,
-        "y": 180
-      },
-      "polygon": [
-        400,
-        160,
-        440,
-        160,
-        440,
-        210,
-        400,
-        210
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 730, "y": 145 },
+      "polygon": [712, 118, 748, 118, 748, 155, 712, 155],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "The coffee maker is empty. The 'brew' light is on. In government, this is classified as a Level 1 incident.",
@@ -172,24 +109,9 @@
     "microwave": {
       "id": "microwave",
       "name": "Microwave",
-      "position": {
-        "x": 450,
-        "y": 180
-      },
-      "polygon": [
-        435,
-        160,
-        470,
-        160,
-        470,
-        210,
-        435,
-        210
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 765, "y": 145 },
+      "polygon": [747, 118, 783, 118, 783, 155, 747, 155],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "'CLEAN YOUR OWN DISHES \u2014 MGMT.' This sign has been here so long it's become load-bearing. Remove it and the entire social contract of this office collapses.",
@@ -207,24 +129,9 @@
     "mini_fridge": {
       "id": "mini_fridge",
       "name": "Mini Fridge",
-      "position": {
-        "x": 480,
-        "y": 210
-      },
-      "polygon": [
-        465,
-        195,
-        500,
-        195,
-        500,
-        240,
-        465,
-        240
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 810, "y": 185 },
+      "polygon": [793, 160, 827, 160, 827, 195, 793, 195],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "Every container is labeled. 'DAVE'S \u2014 DO NOT TOUCH.' 'PROPERTY OF ACCOUNTING.' 'THIS IS NOT YOUR YOGURT.' The territorial politics of a shared fridge could fill a doctoral thesis.",
@@ -238,26 +145,39 @@
         }
       }
     },
+    "lockers": {
+      "id": "lockers",
+      "name": "Employee Lockers",
+      "position": { "x": 95, "y": 140 },
+      "polygon": [78, 108, 126, 108, 126, 170, 78, 170],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Three employee lockers. Two are locked tight. One is slightly ajar — the name plate reads 'HAL.' Wherever Hal went, he left in a hurry.",
+          "speaker": "casey",
+          "portrait": "casey_curious"
+        },
+        "use": {
+          "text": "I open Hal's locker. Inside: a Windows NT Administration Guide from 1998, a 'Y2K Preparedness' pamphlet, and a half-eaten granola bar. The guide might be... no. No it will not be useful. But I'm taking it anyway.",
+          "speaker": "casey",
+          "portrait": "casey_amused",
+          "itemGiven": "nt_admin_guide",
+          "flagsSet": { "locker_searched": true }
+        },
+        "use__already_searched": {
+          "text": "Nothing else in here. Just the ghost of Hal's career.",
+          "speaker": "casey",
+          "portrait": "casey_wry",
+          "condition": { "flags": { "locker_searched": true } }
+        }
+      }
+    },
     "priya_desk": {
       "id": "priya_desk",
       "name": "Priya's Desk",
-      "position": {
-        "x": 640,
-        "y": 200
-      },
-      "polygon": [
-        600,
-        170,
-        690,
-        170,
-        690,
-        240,
-        600,
-        240
-      ],
-      "verbs": [
-        "look"
-      ],
+      "position": { "x": 880, "y": 200 },
+      "polygon": [828, 178, 932, 178, 932, 215, 828, 215],
+      "verbs": ["look"],
       "interactions": {
         "look": {
           "text": "This desk belongs to someone who cares. Sticky notes in color-coded clusters, user journey maps that actually make sense, a plant that someone waters. This is my kind of person.",
@@ -268,9 +188,7 @@
           "text": "This is a complete map of the current benefits application process. 47 steps. Three different systems. Two manual handoffs. And a fax machine. It's a horror movie in flowchart form. But it also means someone already understands the problem.",
           "speaker": "casey",
           "portrait": "casey_fascinated",
-          "flagsSet": {
-            "examined_priya_whiteboard": true
-          },
+          "flagsSet": { "examined_priya_whiteboard": true },
           "subHotspot": "whiteboard_on_desk"
         },
         "look__whiteboard_deep": {
@@ -283,9 +201,7 @@
               "priya_test_active": true
             }
           },
-          "flagsSet": {
-            "whiteboard_insight": true
-          },
+          "flagsSet": { "whiteboard_insight": true },
           "subHotspot": "whiteboard_close_up"
         }
       }
@@ -293,32 +209,15 @@
     "dashboard_tv": {
       "id": "dashboard_tv",
       "name": "Dashboard TV",
-      "position": {
-        "x": 700,
-        "y": 60
-      },
-      "polygon": [
-        660,
-        30,
-        740,
-        30,
-        740,
-        90,
-        660,
-        90
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 720, "y": 80 },
+      "polygon": [688, 50, 752, 50, 752, 110, 688, 110],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "Processing time: 47 days. Backlog: twelve thousand applications. Satisfaction: 23 percent. Every number on this dashboard is a person waiting for help they were promised. I'm going to change these numbers.",
           "speaker": "casey",
           "portrait": "casey_determined",
-          "flagsSet": {
-            "casey_seen_dashboard": true
-          }
+          "flagsSet": { "casey_seen_dashboard": true }
         },
         "use": {
           "text": "I can't interact with it from here. But I'm memorizing these numbers. They're my scoreboard for the next 90 days.",
@@ -330,24 +229,9 @@
     "war_room_door": {
       "id": "war_room_door",
       "name": "War Room",
-      "position": {
-        "x": 790,
-        "y": 180
-      },
-      "polygon": [
-        760,
-        130,
-        830,
-        130,
-        830,
-        240,
-        760,
-        240
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 480, "y": 150 },
+      "polygon": [430, 100, 530, 100, 530, 175, 430, 175],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "The War Room. Through the glass I can see a sprint board that hasn't been updated in weeks. Some cards are in 'In Progress.' None are in 'Done.' That tracks.",
@@ -364,24 +248,9 @@
     "day_90_banner": {
       "id": "day_90_banner",
       "name": "Day 1 of 90 Banner",
-      "position": {
-        "x": 720,
-        "y": 30
-      },
-      "polygon": [
-        650,
-        10,
-        800,
-        10,
-        800,
-        45,
-        650,
-        45
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 480, "y": 60 },
+      "polygon": [420, 46, 540, 46, 540, 74, 420, 74],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "Day 1 of 90. Ninety days to modernize an agency that's been running on duct tape and COBOL since before I was born. No pressure.",
@@ -398,42 +267,21 @@
     "coat_rack": {
       "id": "coat_rack",
       "name": "Coat Rack",
-      "position": {
-        "x": 40,
-        "y": 160
-      },
-      "polygon": [
-        20,
-        130,
-        60,
-        130,
-        60,
-        200,
-        20,
-        200
-      ],
-      "verbs": [
-        "look",
-        "pickup"
-      ],
+      "position": { "x": 50, "y": 160 },
+      "polygon": [30, 120, 70, 120, 70, 170, 30, 170],
+      "verbs": ["look", "pickup"],
       "interactions": {
         "look": {
           "text": "One jacket, unclaimed. It's been here so long it's practically a historical artifact. Someone left D.A.S.H. in such a hurry they forgot their coat. That's either very good or very bad.",
           "speaker": "casey",
           "portrait": "casey_curious",
-          "flagsSet": {
-            "examined_coat_rack": true
-          }
+          "flagsSet": { "examined_coat_rack": true }
         },
         "look__jacket_pocket": {
           "text": "There's a crumpled sticky note in the pocket. The ink is faded and smudged. I can make out: 'Srv rm pw: adm_n1___'. Some kind of password, but half the characters are gone. I'll hang onto this.",
           "speaker": "casey",
           "portrait": "casey_curious",
-          "condition": {
-            "flags": {
-              "examined_coat_rack": true
-            }
-          },
+          "condition": { "flags": { "examined_coat_rack": true } },
           "itemGiven": "faded_password_note",
           "subHotspot": "jacket_pocket"
         },
@@ -448,24 +296,9 @@
     "supply_closet": {
       "id": "supply_closet",
       "name": "Supply Closet",
-      "position": {
-        "x": 300,
-        "y": 160
-      },
-      "polygon": [
-        280,
-        130,
-        320,
-        130,
-        320,
-        200,
-        280,
-        200
-      ],
-      "verbs": [
-        "look",
-        "use"
-      ],
+      "position": { "x": 660, "y": 130 },
+      "polygon": [635, 70, 685, 70, 685, 168, 635, 168],
+      "verbs": ["look", "use"],
       "interactions": {
         "look": {
           "text": "The supply closet. Locked with a keypad. In a government office, the supply closet is more secure than most data centers.",
@@ -476,11 +309,17 @@
           "text": "I try the handle. Locked. The keypad has four digits. I try 1234. Nothing. I try 0000. Nothing. I need the actual code.",
           "speaker": "casey",
           "portrait": "casey_frustrated",
-          "condition": {
-            "notItems": [
-              "supply_closet_code"
-            ]
-          }
+          "condition": { "notItems": ["supply_closet_code"] }
+        },
+        "use__with_code": {
+          "text": "Priya's code works. Inside: monitors, keyboards, mice, cables, and... a stack of brand new laptops still in their boxes. A supply closet full of equipment that nobody can access because the person who set the code retired. Government.",
+          "speaker": "casey",
+          "portrait": "casey_incredulous",
+          "animation": "closet_opens_reveal",
+          "itemRemoved": "supply_closet_code",
+          "itemGiven": "laptop",
+          "flagsSet": { "has_laptop": true },
+          "condition": { "flags": { "has_supply_code": true } }
         },
         "use_supply_closet_code": {
           "text": "Priya's code works. Inside: monitors, keyboards, mice, cables, and... a stack of brand new laptops still in their boxes. A supply closet full of equipment that nobody can access because the person who set the code retired. Government.",
@@ -489,33 +328,16 @@
           "animation": "closet_opens_reveal",
           "itemRemoved": "supply_closet_code",
           "itemGiven": "laptop",
-          "flagsSet": {
-            "has_laptop": true
-          }
+          "flagsSet": { "has_laptop": true }
         }
       }
     },
     "kevin": {
       "id": "kevin",
       "name": "Kevin",
-      "position": {
-        "x": 220,
-        "y": 200
-      },
-      "polygon": [
-        200,
-        175,
-        245,
-        175,
-        245,
-        235,
-        200,
-        235
-      ],
-      "verbs": [
-        "look",
-        "talkto"
-      ],
+      "position": { "x": 330, "y": 195 },
+      "polygon": [306, 160, 354, 160, 354, 205, 306, 205],
+      "verbs": ["look", "talkto"],
       "interactions": {
         "look": {
           "text": "His monitor shows 4,000 unread emails. His face shows zero emotion. This man has transcended.",
@@ -531,24 +353,9 @@
     "priya_npc": {
       "id": "priya_npc",
       "name": "Priya",
-      "position": {
-        "x": 650,
-        "y": 200
-      },
-      "polygon": [
-        630,
-        175,
-        670,
-        175,
-        670,
-        235,
-        630,
-        235
-      ],
-      "verbs": [
-        "look",
-        "talkto"
-      ],
+      "position": { "x": 878, "y": 195 },
+      "polygon": [855, 158, 901, 158, 901, 205, 855, 205],
+      "verbs": ["look", "talkto"],
       "interactions": {
         "look": {
           "text": "Priya Kapoor. UX Researcher. The pen behind her ear looks like it has been there so long it is load-bearing.",
@@ -558,6 +365,63 @@
         "talkto": {
           "text": "",
           "triggerDialogue": "priya"
+        }
+      }
+    },
+    "npc_typing": {
+      "id": "npc_typing",
+      "name": "Typing Woman",
+      "position": { "x": 250, "y": 195 },
+      "polygon": [226, 160, 274, 160, 274, 205, 226, 205],
+      "verbs": ["look", "talkto"],
+      "interactions": {
+        "look": {
+          "text": "She's typing so fast her fingers are a blur. Her screen shows six spreadsheets open simultaneously. This woman has evolved beyond the need for a mouse.",
+          "speaker": "casey",
+          "portrait": "casey_impressed"
+        },
+        "talkto": {
+          "text": "She holds up one finger without breaking eye contact with her monitor. 'Can't talk. Quarterly audit. Come back in... April.' It's January.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        }
+      }
+    },
+    "npc_phone": {
+      "id": "npc_phone",
+      "name": "Phone Guy",
+      "position": { "x": 410, "y": 195 },
+      "polygon": [386, 160, 434, 160, 434, 205, 386, 205],
+      "verbs": ["look", "talkto"],
+      "interactions": {
+        "look": {
+          "text": "He's been on the same call since I walked in. He keeps saying 'uh-huh' and 'absolutely' while doodling what appears to be a very detailed dragon.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "talkto": {
+          "text": "He covers the receiver. 'Hey, new person. Word of advice: don't drink the coffee. Seriously.' He goes back to his call before I can respond.",
+          "speaker": "casey",
+          "portrait": "casey_curious"
+        }
+      }
+    },
+    "wet_floor_sign": {
+      "id": "wet_floor_sign",
+      "name": "Wet Floor Sign",
+      "position": { "x": 380, "y": 290 },
+      "polygon": [364, 260, 396, 260, 396, 300, 364, 300],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "A 'WET FLOOR' caution sign. Based on the dust, it's been here since at least the Clinton administration. The floor is not wet. The floor has never been wet. The sign has transcended its purpose and become a permanent fixture of this office.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "I try to fold it up. It's rusted open. This sign is staying right here for another twenty years.",
+          "speaker": "casey",
+          "portrait": "casey_wry"
         }
       }
     }
