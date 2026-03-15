@@ -105,7 +105,7 @@ export class InventoryUI {
         slotContainer.add(label);
       }
 
-      slotBg.setInteractive({});
+      slotBg.setInteractive();
 
       slotBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         if (pointer.rightButtonDown()) {

@@ -61,6 +61,8 @@ const SPEAKER_COLORS: Record<string, string> = {
   gladys: '#ffcc88',
   mrs_gutierrez: '#ffaaaa',
   voss: '#ccaaff',
+  priya: '#ff9966',
+  kevin: '#8888aa',
 };
 
 const PORTRAIT_COLORS: Record<string, number> = {
@@ -68,6 +70,8 @@ const PORTRAIT_COLORS: Record<string, number> = {
   gladys: 0xcc8844,
   mrs_gutierrez: 0xcc6666,
   voss: 0x8866cc,
+  priya: 0xcc6633,
+  kevin: 0x666688,
 };
 
 // Speaker to voice babble audio key mapping
@@ -77,6 +81,7 @@ const VOICE_KEYS: Record<string, string> = {
   mrs_gutierrez: 'voice_mrs_g',
   voss: 'voice_voss',
   kevin: 'voice_kevin',
+  priya: 'voice_priya',
 };
 
 // Formatted display names for speakers
@@ -85,6 +90,8 @@ const SPEAKER_DISPLAY_NAMES: Record<string, string> = {
   gladys: 'Gladys',
   mrs_gutierrez: 'Mrs. Gutierrez',
   voss: 'Voss',
+  priya: 'Priya',
+  kevin: 'Kevin',
 };
 
 export class DialogueManager {
@@ -110,6 +117,9 @@ export class DialogueManager {
   private speakerText: Phaser.GameObjects.Text | null = null;
   private bodyText: Phaser.GameObjects.Text | null = null;
   private optionElements: Phaser.GameObjects.GameObject[] = [];
+  // Stored option data for bounds-based click detection
+  private visibleOptions: { text: Phaser.GameObjects.Text; opt: PlayerOption }[] = [];
+  private optionsShowing = false;
 
   // Callbacks
   onDialogueEnd: ((treeId: string) => void) | null = null;
@@ -272,57 +282,56 @@ export class DialogueManager {
     });
     this.container.add(this.bodyText);
 
-    // Click handler: advance or skip typewriter
-    this.scene.input.on('pointerdown', this.handleClick, this);
+    // Click handler: DOM mousedown on canvas directly.
+    // Bypasses Phaser's input system so hotspot zones can't eat clicks.
+    // _dialogueOpenTime prevents the same mousedown that opened the dialogue
+    // from immediately dismissing it (100ms grace period).
+    this._dialogueOpenTime = Date.now();
+    this._canvasClickHandler = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      // Ignore clicks within 100ms of dialogue opening (same event that triggered it)
+      if (Date.now() - this._dialogueOpenTime < 100) return;
+      const rect = this.scene.game.canvas.getBoundingClientRect();
+      const scaleX = this.scene.game.canvas.width / rect.width;
+      const scaleY = this.scene.game.canvas.height / rect.height;
+      const fakePointer = {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+        rightButtonDown: () => false,
+      } as unknown as Phaser.Input.Pointer;
+      this.handleClick(fakePointer);
+    };
+    // Register immediately — the 100ms grace period prevents premature dismissal
+    this.scene.game.canvas.addEventListener('mousedown', this._canvasClickHandler);
   }
+
+  private _canvasClickHandler: ((e: MouseEvent) => void) | null = null;
+  private _dialogueOpenTime = 0;
 
   private updatePortrait(speaker: string, portraitKey: string | null): void {
     if (!this.portraitContainer) return;
     this.portraitContainer.removeAll(true);
 
     // Portrait border
-    const border = this.scene.add.rectangle(
-      0,
-      0,
-      PORTRAIT_SIZE + 4,
-      PORTRAIT_SIZE + 4,
-    );
+    const border = this.scene.add.rectangle(0, 0, PORTRAIT_SIZE + 4, PORTRAIT_SIZE + 4);
     border.setStrokeStyle(1, 0x444466);
     border.setFillStyle(0x111122, 0.8);
     this.portraitContainer.add(border);
 
-    // Try to use a loaded portrait: exact key first, then speaker default, then placeholder
     const textureKey = this.resolvePortraitTexture(speaker, portraitKey);
     if (textureKey) {
       const portrait = this.scene.add.image(0, 0, textureKey);
       portrait.setDisplaySize(PORTRAIT_SIZE, PORTRAIT_SIZE);
       this.portraitContainer.add(portrait);
     } else {
-      // Placeholder: colored square with initial
       const color = PORTRAIT_COLORS[speaker] ?? 0x666666;
-      const bg = this.scene.add.rectangle(
-        0,
-        0,
-        PORTRAIT_SIZE,
-        PORTRAIT_SIZE,
-        color,
-        0.6,
+      this.portraitContainer.add(
+        this.scene.add.rectangle(0, 0, PORTRAIT_SIZE, PORTRAIT_SIZE, color, 0.6)
       );
-      this.portraitContainer.add(bg);
-
       const displayName = SPEAKER_DISPLAY_NAMES[speaker] ?? speaker;
-      const initial = this.scene.add.text(
-        0,
-        0,
-        displayName.charAt(0).toUpperCase(),
-        {
-          fontFamily: 'monospace',
-          fontSize: '24px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-        },
-      );
-      initial.setOrigin(0.5);
+      const initial = this.scene.add.text(0, 0, displayName.charAt(0).toUpperCase(), {
+        fontFamily: 'monospace', fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
+      }).setOrigin(0.5);
       this.portraitContainer.add(initial);
     }
   }
@@ -392,9 +401,7 @@ export class DialogueManager {
       this.scene.sound.play(node.soundEffect, { volume: 0.4 });
     }
 
-    if (node.tutorialTrigger) {
-      console.log(`[Tutorial] ${node.tutorialTrigger}`);
-    }
+    // tutorialTrigger: reserved for future use
 
     // Update portrait
     this.updatePortrait(node.speaker, node.portrait);
@@ -470,33 +477,49 @@ export class DialogueManager {
     if (this.currentNode && this.currentNode.options.length > 0) {
       this.showOptions(this.currentNode.options);
     }
+    // Terminal nodes (no options, no autoAdvance) wait for click via handleClick
   }
 
   private showOptions(options: PlayerOption[]): void {
     this.clearOptions();
-    const state = GameState.getInstance();
     const cam = this.scene.cameras.main;
+    const GAP = 6; // vertical gap between options
 
-    // Filter options by conditions -- hidden, not grayed
     const visible = options.filter((opt) =>
       this.checkOptionCondition(opt.condition),
     );
-
     if (visible.length === 0) return;
 
-    const baseY =
-      cam.height -
-      BOX_HEIGHT -
-      BOX_MARGIN -
-      OPTION_LINE_HEIGHT * visible.length -
-      8;
+    // First pass: create texts off-screen to measure their rendered heights
+    const measured: { text: Phaser.GameObjects.Text; opt: PlayerOption; h: number }[] = [];
+    let totalHeight = 0;
+    for (const opt of visible) {
+      const text = this.scene.add.text(
+        -9999, -9999,
+        `\u25B8 ${opt.text}`,
+        {
+          fontFamily: 'monospace',
+          fontSize: '9px',
+          color: '#aaaacc',
+          wordWrap: { width: cam.width - BOX_MARGIN * 2 - 32 },
+          lineSpacing: 2,
+        },
+      );
+      const h = text.height;
+      measured.push({ text, opt, h });
+      totalHeight += h + GAP;
+    }
+    totalHeight -= GAP; // no gap after last item
+
+    // Position options above the dialogue box
+    const baseY = cam.height - BOX_HEIGHT - BOX_MARGIN - totalHeight - 10;
 
     // Options background
     const optBg = this.scene.add.rectangle(
       cam.width / 2,
-      baseY + (OPTION_LINE_HEIGHT * visible.length) / 2,
+      baseY + totalHeight / 2,
       cam.width - BOX_MARGIN * 2,
-      OPTION_LINE_HEIGHT * visible.length + 8,
+      totalHeight + 12,
       0x0a0a1a,
       0.88,
     );
@@ -504,49 +527,17 @@ export class DialogueManager {
     this.container?.add(optBg);
     this.optionElements.push(optBg);
 
-    visible.forEach((opt, i) => {
-      const y = baseY + i * OPTION_LINE_HEIGHT + 4;
-      const text = this.scene.add.text(
-        BOX_MARGIN + 16,
-        y,
-        `\u25B8 ${opt.text}`,
-        {
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          color: '#aaaacc',
-          wordWrap: { width: cam.width - BOX_MARGIN * 2 - 32 },
-        },
-      );
-      text.setInteractive({});
-      text.on('pointerover', () => text.setColor('#ffffff'));
-      text.on('pointerout', () => text.setColor('#aaaacc'));
-      text.on('pointerdown', () => {
-        // Play select SFX
-        if (this.scene.cache.audio.exists('sfx_select')) {
-          this.scene.sound.play('sfx_select', { volume: 0.25 });
-        }
-        // Apply option side effects
-        if (opt.flagsSet) {
-          for (const [flag, value] of Object.entries(opt.flagsSet)) {
-            if (typeof value === 'boolean') {
-              state.setFlag(flag, value);
-            } else {
-              (state as any).flags[flag] = value;
-            }
-          }
-        }
-        if (opt.relationshipChanges) {
-          for (const [npc, delta] of Object.entries(
-            opt.relationshipChanges,
-          )) {
-            state.modifyRelationship(npc, delta);
-          }
-        }
-        this.showNode(opt.nextNodeId);
-      });
+    // Second pass: position texts at correct Y with measured heights
+    this.visibleOptions = [];
+    let curY = baseY;
+    for (const { text, opt, h } of measured) {
+      text.setPosition(BOX_MARGIN + 16, curY);
       this.container?.add(text);
       this.optionElements.push(text);
-    });
+      this.visibleOptions.push({ text, opt });
+      curY += h + GAP;
+    }
+    this.optionsShowing = true;
   }
 
   private clearOptions(): void {
@@ -554,6 +545,8 @@ export class DialogueManager {
       obj.destroy();
     }
     this.optionElements = [];
+    this.visibleOptions = [];
+    this.optionsShowing = false;
   }
 
   private checkOptionCondition(condition?: OptionCondition): boolean {
@@ -587,29 +580,59 @@ export class DialogueManager {
     return true;
   }
 
+  private _lastClickTime = 0;
+
   private handleClick = (pointer: Phaser.Input.Pointer): void => {
+    // Debounce: prevent double-firing
+    const now = Date.now();
+    if (now - this._lastClickTime < 50) return;
+    this._lastClickTime = now;
+
     if (!this.currentTree) return;
     if (pointer.rightButtonDown()) return;
 
-    // Don't handle clicks on option texts
-    const hitObjects = this.scene.input.hitTestPointer(pointer);
-    if (hitObjects.some((obj) => this.optionElements.includes(obj))) {
+    // If options are showing, check bounds-based click on each option
+    if (this.optionsShowing && this.visibleOptions.length > 0) {
+      const px = pointer.x, py = pointer.y;
+      const state = GameState.getInstance();
+
+      for (const { text, opt } of this.visibleOptions) {
+        const b = text.getBounds();
+        if (px >= b.left && px <= b.right && py >= b.top - 2 && py <= b.bottom + 2) {
+          // Play select SFX
+          if (this.scene.cache.audio.exists('sfx_select')) {
+            this.scene.sound.play('sfx_select', { volume: 0.25 });
+          }
+          // Apply option side effects
+          if (opt.flagsSet) {
+            for (const [flag, value] of Object.entries(opt.flagsSet)) {
+              if (typeof value === 'boolean') {
+                state.setFlag(flag, value);
+              } else {
+                (state as any).flags[flag] = value;
+              }
+            }
+          }
+          if (opt.relationshipChanges) {
+            for (const [npc, delta] of Object.entries(opt.relationshipChanges)) {
+              state.modifyRelationship(npc, delta);
+            }
+          }
+          this.showNode(opt.nextNodeId);
+          return;
+        }
+      }
+      // Click was outside all options — do nothing (wait for valid option click)
       return;
     }
 
     if (this.isTyping) {
-      // Skip to full text
       this.finishTyping();
       return;
     }
 
-    // If there are options showing, don't advance (wait for option click)
-    if (this.currentNode && this.currentNode.options.length > 0) {
-      return;
-    }
-
-    // No options: check autoAdvance or end
-    if (this.currentNode?.autoAdvance) {
+    // No options visible and not typing — check autoAdvance or end
+    if (this.currentNode && this.currentNode.autoAdvance) {
       this.showNode(this.currentNode.autoAdvance);
     } else {
       this.endDialogue();
@@ -629,7 +652,10 @@ export class DialogueManager {
     }
 
     this.clearOptions();
-    this.scene.input.off('pointerdown', this.handleClick, this);
+    if (this._canvasClickHandler) {
+      this.scene.game.canvas.removeEventListener('mousedown', this._canvasClickHandler);
+      this._canvasClickHandler = null;
+    }
 
     if (this.container) {
       this.container.destroy();

@@ -55,7 +55,7 @@ export class PauseMenuScene extends Phaser.Scene {
       color: '#aaaacc',
     }).setOrigin(0.5);
 
-    bg.setInteractive({});
+    bg.setInteractive();
     bg.on('pointerover', () => {
       bg.setFillStyle(0x333366, 0.9);
       text.setColor('#ffffff');

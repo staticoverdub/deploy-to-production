@@ -27,13 +27,9 @@ export class CursorManager {
       && !/\b(Win|Mac|Linux)\b/i.test(navigator.userAgent);
     if (isTouchOnly) return;
 
-    this.generateAllCursors();
-
-    // Hide OS cursor — belt and suspenders
-    scene.game.canvas.style.cursor = 'none';
-    scene.input.manager.setDefaultCursor('none');
-    if (scene.game.canvas.parentElement) {
-      scene.game.canvas.parentElement.style.cursor = 'none';
+    // Only generate cursor textures once (they're global across scenes)
+    if (!scene.textures.exists('cursor_default')) {
+      this.generateAllCursors();
     }
 
     this.sprite = scene.add.image(0, 0, 'cursor_default');

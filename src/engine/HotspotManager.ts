@@ -22,6 +22,8 @@ export interface HotspotInteraction {
   itemRemoved?: string;
   soundEffect?: string;
   triggerSceneTransition?: string;
+  triggerEvent?: string;
+  triggerCutscene?: string;
   subHotspot?: string;
   delay?: number;
 }
@@ -74,11 +76,16 @@ export class HotspotManager {
   // Pending scene transition (deferred until after dialogue/monologue ends)
   private _pendingSceneTransition: string | null = null;
 
+  // Debug
+  private debugGraphics: Phaser.GameObjects.Graphics | null = null;
+  private debugMode = false;
+
   // Callbacks
   onInteraction: ((hotspotId: string, verb: Verb, response: HotspotInteraction) => void) | null = null;
   onWalkTo: ((x: number, y: number, callback: () => void) => void) | null = null;
   getSelectedItem: (() => string | null) | null = null;
   onCursorChange: ((verb: string | null) => void) | null = null;
+  onTriggerEvent: ((eventName: string) => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -195,6 +202,13 @@ export class HotspotManager {
   }
 
   // --- Verb menu (LucasArts-style radial) ---
+  // Uses bounds-based click detection (no setInteractive on buttons)
+  // to avoid Phaser container input bugs.
+
+  private verbMenuButtons: { wx: number; wy: number; w: number; h: number; verb: Verb; hotspotId: string }[] = [];
+  private verbMenuTimeout: Phaser.Time.TimerEvent | null = null;
+  private verbMenuClickHandler: ((pointer: Phaser.Input.Pointer) => void) | null = null;
+  private verbMenuEscHandler: (() => void) | null = null;
 
   private showVerbMenu(x: number, y: number, hotspotId: string): void {
     this.closeVerbMenu();
@@ -207,7 +221,7 @@ export class HotspotManager {
     const radius = 36;
     const btnW = 72;
     const btnH = 24;
-    const menuExtent = radius + btnH / 2 + 4; // total radius including buttons
+    const menuExtent = radius + btnH / 2 + 4;
     const angles = this.distributeAngles(verbs.length);
 
     // Clamp position so the full wheel stays within the canvas
@@ -232,51 +246,67 @@ export class HotspotManager {
     dot.fillCircle(0, 0, 3);
     container.add(dot);
 
+    // Store button world positions for bounds-based click detection
+    this.verbMenuButtons = [];
+
     verbs.forEach((verb, i) => {
       const vx = Math.cos(angles[i]) * radius;
       const vy = Math.sin(angles[i]) * radius;
 
-      // Button background (chunky, visible)
       const btnBg = this.scene.add.rectangle(vx, vy, btnW, btnH, 0x1a1a2e, 0.95);
       btnBg.setStrokeStyle(1, 0x444466);
 
-      // Label
       const label = this.scene.add.text(vx, vy, VERB_LABELS[verb] ?? verb, {
-        fontFamily: 'monospace',
-        fontSize: '10px',
-        color: '#aaaacc',
-        fontStyle: 'bold',
-      });
-      label.setOrigin(0.5);
-
-      btnBg.setInteractive({});
-      btnBg.on('pointerover', () => {
-        btnBg.setFillStyle(VERB_COLORS[verb] ?? 0x444466, 0.5);
-        btnBg.setStrokeStyle(1, 0xaaaacc);
-        label.setColor('#ffffff');
-      });
-      btnBg.on('pointerout', () => {
-        btnBg.setFillStyle(0x1a1a2e, 0.95);
-        btnBg.setStrokeStyle(1, 0x444466);
-        label.setColor('#aaaacc');
-      });
-      btnBg.on('pointerdown', () => {
-        if (this.scene.cache.audio.exists('sfx_ui_click')) {
-          this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
-        }
-        this.closeVerbMenu();
-        this.triggerInteraction(hotspotId, verb);
-      });
+        fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc', fontStyle: 'bold',
+      }).setOrigin(0.5);
 
       container.add([btnBg, label]);
+
+      // Store world-space bounds for this button
+      this.verbMenuButtons.push({
+        wx: cx + vx, wy: cy + vy,
+        w: btnW, h: btnH,
+        verb, hotspotId,
+      });
     });
 
     this.verbMenu = container;
+
+    // Global left-click handler: check button hits or close if outside
+    this.verbMenuClickHandler = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) return;
+      const px = pointer.x, py = pointer.y;
+
+      // Check each button
+      for (const btn of this.verbMenuButtons) {
+        if (px >= btn.wx - btn.w / 2 && px <= btn.wx + btn.w / 2
+          && py >= btn.wy - btn.h / 2 && py <= btn.wy + btn.h / 2) {
+          if (this.scene.cache.audio.exists('sfx_ui_click')) {
+            this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
+          }
+          const v = btn.verb;
+          const hid = btn.hotspotId;
+          this.closeVerbMenu();
+          this.triggerInteraction(hid, v);
+          return;
+        }
+      }
+
+      // Click was outside all buttons — close menu
+      this.closeVerbMenu();
+    };
+    this.scene.input.on('pointerdown', this.verbMenuClickHandler);
+
+    // Escape key closes menu
+    this.verbMenuEscHandler = () => this.closeVerbMenu();
+    this.scene.input.keyboard?.once('keydown-ESC', this.verbMenuEscHandler);
+
+    // Auto-close after 10 seconds
+    this.verbMenuTimeout = this.scene.time.delayedCall(10000, () => this.closeVerbMenu());
   }
 
   private distributeAngles(count: number): number[] {
     if (count <= 4) {
-      // Cardinal positions: top, right, bottom, left
       return [-Math.PI / 2, 0, Math.PI / 2, Math.PI].slice(0, count);
     }
     const angles: number[] = [];
@@ -287,7 +317,23 @@ export class HotspotManager {
   }
 
   closeVerbMenu(): void {
-    if (this.verbMenu) { this.verbMenu.destroy(); this.verbMenu = null; }
+    if (this.verbMenu) {
+      this.verbMenu.destroy();
+      this.verbMenu = null;
+    }
+    this.verbMenuButtons = [];
+    if (this.verbMenuClickHandler) {
+      this.scene.input.off('pointerdown', this.verbMenuClickHandler);
+      this.verbMenuClickHandler = null;
+    }
+    if (this.verbMenuEscHandler) {
+      this.scene.input.keyboard?.off('keydown-ESC', this.verbMenuEscHandler);
+      this.verbMenuEscHandler = null;
+    }
+    if (this.verbMenuTimeout) {
+      this.verbMenuTimeout.destroy();
+      this.verbMenuTimeout = null;
+    }
   }
 
   // --- Interaction resolution ---
@@ -329,10 +375,20 @@ export class HotspotManager {
     }
 
     // 3. Check variants (verb__*) first, then base verb
+    // Sort variants: ones WITH conditions first (more specific match wins)
     const variants = candidates.filter(([k]) => k.includes('__'));
     const base = candidates.filter(([k]) => !k.includes('__'));
 
-    for (const [, interaction] of variants) {
+    // Conditioned variants first, then unconditioned variants
+    const conditioned = variants.filter(([, i]) => i.condition && (i.condition.flags || i.condition.notFlags || i.condition.notItems));
+    const unconditioned = variants.filter(([, i]) => !i.condition || !(i.condition.flags || i.condition.notFlags || i.condition.notItems));
+
+    for (const [, interaction] of conditioned) {
+      if (this.checkCondition(interaction.condition, state)) {
+        return interaction;
+      }
+    }
+    for (const [, interaction] of unconditioned) {
       if (this.checkCondition(interaction.condition, state)) {
         return interaction;
       }
@@ -402,6 +458,12 @@ export class HotspotManager {
     if (response.triggerSceneTransition) {
       this._pendingSceneTransition = response.triggerSceneTransition;
     }
+    if (response.triggerEvent && this.onTriggerEvent) {
+      // Fire after a short delay so the dialogue text shows first
+      this.scene.time.delayedCall(200, () => {
+        if (this.onTriggerEvent) this.onTriggerEvent(response.triggerEvent!);
+      });
+    }
 
     if (this.onInteraction) {
       this.onInteraction(hotspotId, verb, response);
@@ -446,8 +508,76 @@ export class HotspotManager {
     this.hotspots.delete(id);
   }
 
+  toggleDebug(): void {
+    this.debugMode = !this.debugMode;
+    if (this.debugMode) {
+      this.drawDebugOverlays();
+    } else {
+      this.debugGraphics?.destroy();
+      this.debugGraphics = null;
+    }
+  }
+
+  private drawDebugOverlays(): void {
+    this.debugGraphics?.destroy();
+    this.debugGraphics = this.scene.add.graphics().setDepth(5000);
+    const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x88ff00];
+    let colorIdx = 0;
+
+    for (const [id, data] of this.hotspots) {
+      const poly = data.polygon;
+      const color = colors[colorIdx % colors.length];
+      colorIdx++;
+
+      // Draw filled polygon
+      this.debugGraphics.fillStyle(color, 0.25);
+      this.debugGraphics.lineStyle(1, color, 0.8);
+
+      if (poly.length >= 6) {
+        this.debugGraphics.beginPath();
+        this.debugGraphics.moveTo(poly[0], poly[1]);
+        for (let i = 2; i < poly.length; i += 2) {
+          this.debugGraphics.lineTo(poly[i], poly[i + 1]);
+        }
+        this.debugGraphics.closePath();
+        this.debugGraphics.fillPath();
+        this.debugGraphics.strokePath();
+      } else {
+        // Fallback: draw bounding box from zone
+        const zone = this.zones.get(id);
+        if (zone) {
+          const b = zone.getBounds();
+          this.debugGraphics.fillRect(b.x, b.y, b.width, b.height);
+          this.debugGraphics.strokeRect(b.x, b.y, b.width, b.height);
+        }
+      }
+
+      // Label
+      const cx = poly.length >= 2 ? (poly[0] + poly[2]) / 2 : data.position.x;
+      const cy = poly.length >= 4 ? poly[1] - 4 : data.position.y - 10;
+      const label = this.scene.add.text(cx, cy, id, {
+        fontFamily: 'monospace', fontSize: '6px', color: '#ffffff',
+        backgroundColor: '#000000aa',
+      }).setOrigin(0.5, 1).setDepth(5001);
+      // Store for cleanup
+      if (!this.debugGraphics) return;
+      (this.debugGraphics as any)._debugLabels = (this.debugGraphics as any)._debugLabels || [];
+      (this.debugGraphics as any)._debugLabels.push(label);
+    }
+
+    // Override destroy to also clean up labels
+    const origDestroy = this.debugGraphics.destroy.bind(this.debugGraphics);
+    this.debugGraphics.destroy = () => {
+      const labels = (this.debugGraphics as any)?._debugLabels;
+      if (labels) for (const l of labels) l.destroy();
+      origDestroy();
+    };
+  }
+
   destroy(): void {
     this.closeVerbMenu();
+    this.debugGraphics?.destroy();
+    this.debugGraphics = null;
     for (const zone of this.zones.values()) zone.destroy();
     this.zones.clear();
     this.hotspots.clear();

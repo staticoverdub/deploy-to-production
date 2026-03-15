@@ -32,7 +32,7 @@
       "id": "potted_plant",
       "name": "Sad Potted Plant",
       "position": { "x": 80, "y": 220 },
-      "polygon": [64, 200, 96, 200, 96, 260, 64, 260],
+      "polygon": [59, 120, 91, 120, 91, 168, 59, 168],
       "verbs": ["look", "use", "pickup"],
       "interactions": {
         "look": {
@@ -58,7 +58,7 @@
       "id": "waiting_chairs",
       "name": "Waiting Chairs",
       "position": { "x": 180, "y": 240 },
-      "polygon": [130, 220, 240, 220, 240, 270, 130, 270],
+      "polygon": [87, 156, 183, 156, 183, 204, 87, 204],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -79,7 +79,7 @@
       "id": "water_cooler",
       "name": "Water Cooler",
       "position": { "x": 200, "y": 200 },
-      "polygon": [186, 180, 214, 180, 214, 230, 186, 230],
+      "polygon": [185, 134, 217, 134, 217, 182, 185, 182],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -109,8 +109,8 @@
     "now_serving_display": {
       "id": "now_serving_display",
       "name": "\"Now Serving\" Display",
-      "position": { "x": 320, "y": 60 },
-      "polygon": [290, 40, 350, 40, 350, 80, 290, 80],
+      "position": { "x": 320, "y": 200 },
+      "polygon": [273, 26, 321, 26, 321, 58, 273, 58],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -129,8 +129,8 @@
     "motivational_poster": {
       "id": "motivational_poster",
       "name": "Motivational Poster",
-      "position": { "x": 240, "y": 80 },
-      "polygon": [215, 55, 265, 55, 265, 105, 215, 105],
+      "position": { "x": 240, "y": 200 },
+      "polygon": [224, 62, 256, 62, 256, 94, 224, 94],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -150,8 +150,8 @@
     "bulletin_board": {
       "id": "bulletin_board",
       "name": "Bulletin Board",
-      "position": { "x": 440, "y": 120 },
-      "polygon": [400, 80, 480, 80, 480, 170, 400, 170],
+      "position": { "x": 440, "y": 200 },
+      "polygon": [416, 98, 464, 98, 464, 146, 416, 146],
       "verbs": ["look", "use", "pickup"],
       "interactions": {
         "look": {
@@ -190,7 +190,7 @@
       "id": "security_desk",
       "name": "Security Desk",
       "position": { "x": 320, "y": 200 },
-      "polygon": [270, 170, 370, 170, 370, 240, 270, 240],
+      "polygon": [256, 178, 384, 178, 384, 242, 256, 242],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -222,7 +222,7 @@
       "id": "turnstile",
       "name": "Turnstile",
       "position": { "x": 400, "y": 210 },
-      "polygon": [380, 190, 420, 190, 420, 250, 380, 250],
+      "polygon": [376, 186, 424, 186, 424, 234, 376, 234],
       "verbs": ["look", "use"],
       "interactions": {
         "look": {
@@ -252,7 +252,7 @@
     "american_flag": {
       "id": "american_flag",
       "name": "American Flag",
-      "position": { "x": 510, "y": 100 },
+      "position": { "x": 510, "y": 200 },
       "polygon": [486, 66, 534, 66, 534, 114, 486, 114],
       "verbs": ["look", "use"],
       "interactions": {
@@ -265,13 +265,21 @@
           "text": "Also it's slightly crooked.",
           "speaker": "casey",
           "portrait": "casey_amused",
-          "delay": 1500
+          "delay": 1500,
+          "condition": { "notFlags": { "flag_straightened": true } }
+        },
+        "look__crooked_again": {
+          "text": "...it's crooked again. I swear I just fixed that.",
+          "speaker": "casey",
+          "portrait": "casey_incredulous",
+          "condition": { "flags": { "flag_straightened": true } }
         },
         "use": {
           "text": "I straighten the flag. It feels important.",
           "speaker": "casey",
           "portrait": "casey_sincere",
-          "animation": "casey_straightens_flag"
+          "flagsSet": { "flag_straightened": true },
+          "soundEffect": "sfx_ui_click"
         }
       }
     }

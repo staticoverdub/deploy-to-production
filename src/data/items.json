@@ -32,6 +32,36 @@
       "icon": "icon_flyer",
       "usableOn": [],
       "carriesForward": true
+    },
+    "faded_password_note": {
+      "id": "faded_password_note",
+      "name": "Faded Password Note",
+      "description": "A crumpled sticky note from the coat rack jacket. Partially legible: 'Srv rm pw: adm_n1___'. The rest is smudged beyond recognition.",
+      "icon": "icon_note_faded",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "umbrella": {
+      "id": "umbrella",
+      "name": "Umbrella",
+      "description": "A forgotten umbrella from the coat rack. It's one of those cheap collapsible ones that breaks the second it actually rains.",
+      "icon": "icon_umbrella",
+      "usableOn": [],
+      "carriesForward": true
+    },
+    "supply_closet_code": {
+      "id": "supply_closet_code",
+      "name": "Supply Closet Code",
+      "description": "A sticky note from Priya. '1-9-9-7.' The year the system was deployed. Of course it is.",
+      "icon": "icon_note_code",
+      "usableOn": ["supply_closet"]
+    },
+    "laptop": {
+      "id": "laptop",
+      "name": "Laptop",
+      "description": "A brand new government-issue laptop, still in its plastic wrap. It's not a MacBook, but it'll compile code.",
+      "icon": "icon_laptop",
+      "usableOn": ["casey_desk"]
     }
   },
 

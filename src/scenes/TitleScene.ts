@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameState } from '../engine/GameState';
 import { CursorManager } from '../engine/CursorManager';
+import { DebugMenu } from '../engine/DebugMenu';
 import sfxTextBlipUrl from '../assets/audio/sfx/sfx_text_blip.mp3';
 import sfxBackspaceBurstUrl from '../assets/audio/sfx/sfx_backspace_burst.mp3';
 import sfxSelectUrl from '../assets/audio/sfx/sfx_select.mp3';
@@ -53,6 +54,7 @@ export class TitleScene extends Phaser.Scene {
   private currentString = '';
 
   private cursorManager: CursorManager | null = null;
+  private debugMenu: DebugMenu | null = null;
   private powerLed: Phaser.GameObjects.Arc | null = null;
   private screenFlash: Phaser.GameObjects.Rectangle | null = null;
 
@@ -110,6 +112,7 @@ export class TitleScene extends Phaser.Scene {
 
     // Custom cursor (purely visual — no setInteractive on it)
     this.cursorManager = new CursorManager(this);
+    this.debugMenu = new DebugMenu(this);
 
     // ── SINGLE GLOBAL CLICK HANDLER ──
     // All click logic goes through here: skip, menu, easter eggs, boot confirm
@@ -124,6 +127,7 @@ export class TitleScene extends Phaser.Scene {
       const pointer = this.input.activePointer;
       this.cursorManager.update(pointer);
 
+      this.debugMenu?.update();
       // Update cursor state based on hover
       if (this.menuReady && !this.transitioning) {
         if (this.isOverMenu(pointer.x, pointer.y)) {
@@ -595,7 +599,18 @@ export class TitleScene extends Phaser.Scene {
               onComplete: () => {
                 line.destroy();
                 this.time.delayedCall(500, () => {
-                  this.scene.start('LobbyScene', loadSave ? { loadSave: true } : undefined);
+                  if (loadSave) {
+                    // Route to correct scene based on saved flags
+                    const st = GameState.getInstance();
+                    st.load();
+                    if (st.hasFlag('scene_bullpen_entered')) {
+                      this.scene.start('BullpenScene');
+                    } else {
+                      this.scene.start('LobbyScene', { loadSave: true });
+                    }
+                  } else {
+                    this.scene.start('LobbyScene');
+                  }
                 });
               },
             });

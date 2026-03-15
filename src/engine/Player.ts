@@ -33,6 +33,13 @@ export const MRSG_FRAMES = {
 
 const IDLE_ANIMS = ['idle_shift', 'idle_phone', 'idle_look', 'idle_sigh'];
 
+// Footstep config per character texture
+const FOOTSTEP_CONFIG: Record<string, { key: string; volume: number }> = {
+  char_casey: { key: 'footstep_casey', volume: 0.15 },
+  char_voss:  { key: 'footstep_voss', volume: 0.25 },
+  char_mrsg:  { key: 'footstep_mrs_g', volume: 0.1 },
+};
+
 export class Player {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
@@ -42,11 +49,13 @@ export class Player {
   private targetY: number | null = null;
   private isWalking = false;
   private onArrival: (() => void) | null = null;
+  private waypoints: { x: number; y: number }[] = [];
   private facing: 'south' | 'west' | 'east' | 'north' = 'south';
   private textureKey: string;
 
   private idleTimer = 0;
   private idlePlaying = false;
+  private lastFootstepFrame = -1;
 
   constructor(scene: Phaser.Scene, x: number, y: number, textureKey = 'char_casey') {
     this.scene = scene;
@@ -102,22 +111,38 @@ export class Player {
   }
 
   walkTo(x: number, y: number, onArrival?: () => void): void {
+    this.onArrival = onArrival ?? null;
+    this.idleTimer = 0;
+    this.idlePlaying = false;
+    this.waypoints = [];
+    this.setTarget(x, y);
+  }
+
+  walkPath(path: { x: number; y: number }[], onArrival?: () => void): void {
+    this.onArrival = onArrival ?? null;
+    this.idleTimer = 0;
+    this.idlePlaying = false;
+    if (path.length === 0) {
+      this.isWalking = false;
+      if (this.onArrival) { const cb = this.onArrival; this.onArrival = null; cb(); }
+      return;
+    }
+    this.waypoints = path.slice(1); // remaining waypoints after first
+    this.setTarget(path[0].x, path[0].y);
+  }
+
+  private setTarget(x: number, y: number): void {
     this.targetX = x;
     this.targetY = y;
     this.isWalking = true;
-    this.idleTimer = 0;
-    this.idlePlaying = false;
-    this.onArrival = onArrival ?? null;
 
     const dx = x - this.container.x;
     const dy = y - this.container.y;
-
     if (Math.abs(dx) > Math.abs(dy)) {
       this.facing = dx > 0 ? 'east' : 'west';
     } else {
       this.facing = dy > 0 ? 'south' : 'north';
     }
-
     this.playWalkAnim();
   }
 
@@ -165,21 +190,31 @@ export class Player {
 
       if (dist <= step) {
         this.container.setPosition(this.targetX, this.targetY);
-        this.isWalking = false;
-        this.targetX = null;
-        this.targetY = null;
-        this.setIdleFrame();
 
-        if (this.onArrival) {
-          const cb = this.onArrival;
-          this.onArrival = null;
-          cb();
+        // Check for more waypoints
+        if (this.waypoints.length > 0) {
+          const next = this.waypoints.shift()!;
+          this.setTarget(next.x, next.y);
+        } else {
+          this.isWalking = false;
+          this.targetX = null;
+          this.targetY = null;
+          this.setIdleFrame();
+
+          if (this.onArrival) {
+            const cb = this.onArrival;
+            this.onArrival = null;
+            cb();
+          }
         }
       } else {
         const nx = dx / dist;
         const ny = dy / dist;
         this.container.x += nx * step;
         this.container.y += ny * step;
+
+        // Footstep sound on every other animation frame
+        this.playFootstep();
       }
     } else if (!this.idlePlaying) {
       this.idleTimer += delta;
@@ -202,6 +237,25 @@ export class Player {
       this.setIdleFrame();
       this.idlePlaying = false;
     });
+  }
+
+  private playFootstep(): void {
+    const config = FOOTSTEP_CONFIG[this.textureKey];
+    if (!config) return;
+    if (!this.scene.cache.audio.exists(config.key)) return;
+
+    // Get current animation frame index (relative to the animation, not spritesheet)
+    const anim = this.sprite.anims;
+    if (!anim.currentAnim) return;
+    const frameIdx = anim.currentFrame?.index ?? -1;
+    if (frameIdx === this.lastFootstepFrame) return;
+    this.lastFootstepFrame = frameIdx;
+
+    // Play on even frames (0, 2, 4) — every other foot hits the ground
+    if (frameIdx % 2 === 0) {
+      const pitch = 0.95 + Math.random() * 0.1; // random 0.95-1.05
+      this.scene.sound.play(config.key, { volume: config.volume, rate: pitch });
+    }
   }
 
   getPosition(): { x: number; y: number } {

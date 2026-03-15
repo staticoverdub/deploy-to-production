@@ -59,7 +59,7 @@ export class BootScene extends Phaser.Scene {
         fontStyle: 'bold',
       }).setOrigin(0.5);
 
-      continueBtn.setInteractive({});
+      continueBtn.setInteractive();
       continueBtn.on('pointerover', () => continueBtn.setColor('#ffffff'));
       continueBtn.on('pointerout', () => continueBtn.setColor('#aaccff'));
       continueBtn.on('pointerdown', () => {
@@ -81,7 +81,7 @@ export class BootScene extends Phaser.Scene {
         color: '#666688',
       }).setOrigin(0.5);
 
-      newGameBtn.setInteractive({});
+      newGameBtn.setInteractive();
       newGameBtn.on('pointerover', () => newGameBtn.setColor('#aaaacc'));
       newGameBtn.on('pointerout', () => newGameBtn.setColor('#666688'));
       newGameBtn.on('pointerdown', () => {
