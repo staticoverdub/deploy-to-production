@@ -13,7 +13,6 @@ import voiceCaseyUrl from '../assets/audio/sfx/voices/voice_casey.mp3';
 import voiceKevinUrl from '../assets/audio/sfx/voices/voice_kevin.mp3';
 import bootLinesData from '../data/boot_lines.json';
 import filesystemData from '../data/terminal_filesystem.json';
-import cfaLogoUrl from '../assets/ui/cfa-logo.png';
 
 // ── Colors (IBM 3278 amber — BRIGHT) ──
 
@@ -105,7 +104,6 @@ export class TitleScene extends Phaser.Scene {
     this.load.audio('sfx_crt_static', sfxCrtStaticUrl);
     this.load.audio('voice_casey', voiceCaseyUrl);
     this.load.audio('voice_kevin', voiceKevinUrl);
-    this.load.image('cfa_logo', cfaLogoUrl);
   }
 
   create(): void {
@@ -1180,16 +1178,9 @@ export class TitleScene extends Phaser.Scene {
           this.terminalText?.setText('');
           this.glowText?.setText('');
 
-          // Show CfA logo centered
+          // End message centered on screen
           const cx = SCREEN_X + SCREEN_W / 2;
-          const logoY = SCREEN_Y + 50;
-          const logo = this.add.image(cx, logoY, 'cfa_logo')
-            .setOrigin(0.5, 0).setDepth(14).setAlpha(0);
-          this.screenContainer.add(logo);
-          this.tweens.add({ targets: logo, alpha: 1, duration: 400 });
-
-          // End message below logo, larger font
-          const msgY = logoY + logo.height + 20;
+          const msgY = SCREEN_Y + 80;
           const endText = this.add.text(cx, msgY, endMsg, {
             fontFamily: FONT, fontSize: '10px', color: AMBER,
             align: 'center', lineSpacing: 10,

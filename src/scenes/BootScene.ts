@@ -1,14 +1,9 @@
 import Phaser from 'phaser';
 import { GameState } from '../engine/GameState';
-import cfaLogo from '../assets/ui/cfa-logo.png';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
-  }
-
-  preload(): void {
-    this.load.image('cfa-logo', cfaLogo);
   }
 
   create(): void {
@@ -24,29 +19,11 @@ export class BootScene extends Phaser.Scene {
     });
     title.setOrigin(0.5);
 
-    // "A [logo] Adventure" — position the three elements inline
-    const subtitleY = height / 2 + 4;
-    const subtitleStyle = {
+    const subtitle = this.add.text(width / 2, height / 2 + 4, 'A Civic Tech Adventure', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#888888',
-    };
-
-    const aText = this.add.text(0, subtitleY, 'A ', subtitleStyle).setOrigin(0, 0.5);
-    const logo = this.add.image(0, subtitleY, 'cfa-logo');
-    const logoScale = 0.36;
-    logo.setScale(logoScale);
-    logo.setOrigin(0, 0.5);
-    const adventureText = this.add.text(0, subtitleY, ' Adventure', subtitleStyle).setOrigin(0, 0.5);
-
-    // Calculate total width and center the row
-    const logoDisplayWidth = logo.width * logoScale;
-    const totalWidth = aText.width + logoDisplayWidth + adventureText.width;
-    const startX = (width - totalWidth) / 2;
-
-    aText.setX(startX);
-    logo.setX(startX + aText.width);
-    adventureText.setX(startX + aText.width + logoDisplayWidth);
+    }).setOrigin(0.5);
 
     const hasSave = GameState.getInstance().hasSave();
 
