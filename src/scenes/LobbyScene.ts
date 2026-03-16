@@ -47,6 +47,7 @@ import iconFlyerUrl from '../assets/sprites/items/icon_lost_cat_flyer.png';
 import iconCupEmptyUrl from '../assets/sprites/items/icon_paper_cup.png';
 import iconCupWaterUrl from '../assets/sprites/items/icon_cup_of_water.png';
 import iconBadgeUrl from '../assets/sprites/items/icon_temporary_badge.png';
+import iconLobbyCoffeeUrl from '../assets/sprites/items/icon_lobby_coffee.png';
 // Audio
 import lobbyMusicUrl from '../assets/audio/lobby_music.mp3';
 // SFX
@@ -114,6 +115,7 @@ export class LobbyScene extends Phaser.Scene {
   private turnstileLed: Phaser.GameObjects.Arc | null = null;
   private nowServingText: Phaser.GameObjects.Text | null = null;
   private flagSprite: Phaser.GameObjects.Image | null = null;
+  private lobbyCoffeeSprite: Phaser.GameObjects.Image | null = null;
 
   // Load support
   private shouldLoadSave = false;
@@ -189,6 +191,7 @@ export class LobbyScene extends Phaser.Scene {
     this.load.image('icon_cup_empty', iconCupEmptyUrl);
     this.load.image('icon_cup_water', iconCupWaterUrl);
     this.load.image('icon_badge', iconBadgeUrl);
+    this.load.image('icon_lobby_coffee', iconLobbyCoffeeUrl);
   }
 
   create(): void {
@@ -318,6 +321,12 @@ export class LobbyScene extends Phaser.Scene {
             });
           },
         });
+      }
+
+      // Remove coffee cup sprite when picked up
+      if (hotspotId === 'lobby_coffee_cup' && _verb === 'pickup' && this.lobbyCoffeeSprite) {
+        this.lobbyCoffeeSprite.destroy();
+        this.lobbyCoffeeSprite = null;
       }
 
       // Regular hotspot interaction
@@ -877,7 +886,7 @@ export class LobbyScene extends Phaser.Scene {
     // Hidden coffee cup — tucked on the floor behind the water cooler
     // Only visible if not already picked up
     if (!GameState.getInstance().hasItem('lobby_coffee') && !GameState.getInstance().hasFlag('lobby_coffee_taken')) {
-      this.add.image(218, 178, 'obj_lobby_coffee').setOrigin(0.5, 1).setDepth(19).setScale(0.4);
+      this.lobbyCoffeeSprite = this.add.image(218, 178, 'obj_lobby_coffee').setOrigin(0.5, 1).setDepth(19).setScale(0.4);
     }
 
     // Now Serving Display — on wall
@@ -901,10 +910,10 @@ export class LobbyScene extends Phaser.Scene {
     this.turnstileLed = this.add.circle(355, 200, 2, 0xcc3333).setDepth(34);
 
     // ── Lore objects (PixelLab sprites) ──
-    this.add.image(575, 124, 'obj_suggestion_box').setOrigin(0.5, 0.5).setDepth(10);
+    this.add.image(360, 78, 'obj_suggestion_box').setOrigin(0.5, 0.5).setDepth(10);
     this.add.image(150, 50, 'obj_lobby_clock').setOrigin(0.5, 0.5).setDepth(10);
     this.add.image(135, 275, 'obj_floor_plaque').setOrigin(0.5, 0.5).setDepth(2);
-    this.add.image(590, 200, 'obj_pamphlet_rack').setOrigin(0.5, 0.5).setDepth(10);
+    this.add.image(380, 140, 'obj_pamphlet_rack').setOrigin(0.5, 0.5).setDepth(10);
 
     // ── Security barrier/railing ──
     // Runs from turnstile right edge (x=424) to the right wall (x=640)

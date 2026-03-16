@@ -40,6 +40,7 @@ export class InventoryUI {
   private slots: Phaser.GameObjects.Container[] = [];
   private selectedItem: string | null = null;
   private ghostIcon: Phaser.GameObjects.Container | null = null;
+  private inspectPanel: Phaser.GameObjects.Container | null = null;
 
   onExamineItem: ((text: string) => void) | null = null;
 
@@ -110,7 +111,7 @@ export class InventoryUI {
 
       slotBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         if (pointer.rightButtonDown()) {
-          if (this.onExamineItem) this.onExamineItem(def.description);
+          this.showInspectPanel(def);
           return;
         }
 
@@ -187,8 +188,88 @@ export class InventoryUI {
     return ITEM_DEFS[itemId];
   }
 
+  private showInspectPanel(def: ItemDefinition): void {
+    this.dismissInspectPanel();
+
+    const cam = this.scene.cameras.main;
+    const cx = cam.width / 2;
+    const cy = cam.height / 2 - 20;
+    const panelW = 260;
+    const iconSize = 48;
+    const padding = 12;
+
+    this.inspectPanel = this.scene.add.container(0, 0).setDepth(2000).setScrollFactor(0);
+
+    // Dim overlay
+    const overlay = this.scene.add.rectangle(cam.width / 2, cam.height / 2, cam.width, cam.height, 0x000000, 0.5);
+    overlay.setInteractive();
+    overlay.on('pointerdown', () => this.dismissInspectPanel());
+    this.inspectPanel.add(overlay);
+
+    // Item name
+    const nameText = this.scene.add.text(cx, cy - iconSize / 2 - padding - 4, def.name.toUpperCase(), {
+      fontFamily: 'monospace', fontSize: '9px', color: '#ffdd44', fontStyle: 'bold',
+      align: 'center',
+    }).setOrigin(0.5, 1);
+    this.inspectPanel.add(nameText);
+
+    // Icon (scaled up)
+    if (this.scene.textures.exists(def.icon)) {
+      const icon = this.scene.add.image(cx, cy, def.icon);
+      icon.setDisplaySize(iconSize, iconSize);
+      this.inspectPanel.add(icon);
+
+      // Icon border
+      const border = this.scene.add.rectangle(cx, cy, iconSize + 4, iconSize + 4);
+      border.setStrokeStyle(1, 0x555577);
+      border.setFillStyle(0x222244, 0.4);
+      this.inspectPanel.add(border);
+      this.inspectPanel.moveTo(border, 1); // behind icon
+    }
+
+    // Description text (word-wrapped)
+    const descText = this.scene.add.text(cx, cy + iconSize / 2 + padding, def.description, {
+      fontFamily: 'monospace', fontSize: '7px', color: '#cccccc',
+      align: 'center', wordWrap: { width: panelW - padding * 2 }, lineSpacing: 3,
+    }).setOrigin(0.5, 0);
+    this.inspectPanel.add(descText);
+
+    // "Right-click to close" hint
+    const hint = this.scene.add.text(cx, descText.y + descText.height + padding + 2, '[ click to close ]', {
+      fontFamily: 'monospace', fontSize: '6px', color: '#666688',
+      align: 'center',
+    }).setOrigin(0.5, 0);
+    this.inspectPanel.add(hint);
+
+    // Panel background (sized to fit content)
+    const topY = nameText.y - nameText.height - padding;
+    const bottomY = hint.y + hint.height + padding;
+    const panelH = bottomY - topY;
+    const panelBg = this.scene.add.rectangle(cx, topY + panelH / 2, panelW, panelH, 0x0a0a1a, 0.92);
+    panelBg.setStrokeStyle(1, 0x444466);
+    this.inspectPanel.add(panelBg);
+    this.inspectPanel.moveTo(panelBg, 1); // behind everything except overlay
+
+    // SFX
+    if (this.scene.cache.audio.exists('sfx_ui_click')) {
+      this.scene.sound.play('sfx_ui_click', { volume: 0.2 });
+    }
+  }
+
+  private dismissInspectPanel(): void {
+    if (this.inspectPanel) {
+      this.inspectPanel.destroy();
+      this.inspectPanel = null;
+    }
+  }
+
+  get isInspecting(): boolean {
+    return this.inspectPanel !== null;
+  }
+
   destroy(): void {
     this.deselectItem();
+    this.dismissInspectPanel();
     this.container.destroy();
   }
 }

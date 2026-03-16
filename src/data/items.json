@@ -67,7 +67,7 @@
       "id": "lobby_coffee",
       "name": "Abandoned Coffee",
       "description": "A full cup of still-warm coffee that someone left behind the water cooler. It's government-grade, which means it could strip paint or fuel a rocket. Either way, it'll keep me going.",
-      "icon": "icon_cup_water",
+      "icon": "icon_lobby_coffee",
       "usableOn": [],
       "carriesForward": true
     },
@@ -75,7 +75,7 @@
       "id": "nt_admin_guide",
       "name": "NT Admin Guide",
       "description": "Windows NT Server Administration Guide, copyright 1998. Chapter 7: 'Configuring Your Network for the Information Superhighway.' Completely useless but I can't bring myself to throw it away.",
-      "icon": "icon_note_faded",
+      "icon": "icon_nt_guide",
       "usableOn": []
     }
   },

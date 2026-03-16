@@ -98,7 +98,6 @@ export class MailCartScene extends Phaser.Scene {
   private keyDown!: Phaser.Input.Keyboard.Key;
   private keyW!: Phaser.Input.Keyboard.Key;
   private keyS!: Phaser.Input.Keyboard.Key;
-  private keyEsc!: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super({ key: 'MailCartScene' });
@@ -225,7 +224,11 @@ export class MailCartScene extends Phaser.Scene {
     this.keyDown = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
     this.keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     this.keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.keyEsc = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    // Prevent browser from scrolling on arrow keys
+    this.input.keyboard!.addCapture([
+      Phaser.Input.Keyboard.KeyCodes.UP,
+      Phaser.Input.Keyboard.KeyCodes.DOWN,
+    ]);
 
     this.input.on('pointerdown', () => {
       if (this.gameActive) this.shoot();
@@ -235,7 +238,6 @@ export class MailCartScene extends Phaser.Scene {
     this.keyDown.on('down', () => { if (this.gameActive) this.changeLane(1); });
     this.keyW.on('down', () => { if (this.gameActive) this.changeLane(-1); });
     this.keyS.on('down', () => { if (this.gameActive) this.changeLane(1); });
-    this.keyEsc.on('down', () => { this.skipToEnd(); });
 
     // Intro sequence
     this.showIntro();
@@ -774,7 +776,7 @@ export class MailCartScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
-    const controlsText = this.add.text(320, 210, 'W/S or \u2191/\u2193  Dodge\nClick        Shoot\nESC          Skip', {
+    const controlsText = this.add.text(320, 210, 'W/S or \u2191/\u2193  Dodge\nClick        Shoot', {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#aaaaaa',
@@ -831,24 +833,12 @@ export class MailCartScene extends Phaser.Scene {
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(201).setScrollFactor(0).setInteractive();
 
-    const skipBtn = this.add.text(320, 250, '[ Skip Minigame ]', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#888888',
-      stroke: '#000000', strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(201).setScrollFactor(0).setInteractive();
-
     retryBtn.on('pointerdown', () => {
       this.scene.restart();
     });
 
     retryBtn.on('pointerover', () => retryBtn.setColor('#ffffff'));
     retryBtn.on('pointerout', () => retryBtn.setColor('#FFD000'));
-
-    skipBtn.on('pointerdown', () => {
-      this.skipToEnd();
-    });
-
-    skipBtn.on('pointerover', () => skipBtn.setColor('#ffffff'));
-    skipBtn.on('pointerout', () => skipBtn.setColor('#888888'));
   }
 
   private victory(): void {
@@ -878,11 +868,6 @@ export class MailCartScene extends Phaser.Scene {
         });
       },
     });
-  }
-
-  private skipToEnd(): void {
-    this.gameActive = false;
-    this.transitionToBullpen();
   }
 
   private transitionToBullpen(): void {

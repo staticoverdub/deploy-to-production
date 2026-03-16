@@ -34,6 +34,8 @@ import iconFlyerUrl from '../assets/sprites/items/icon_lost_cat_flyer.png';
 import iconCupEmptyUrl from '../assets/sprites/items/icon_paper_cup.png';
 import iconCupWaterUrl from '../assets/sprites/items/icon_cup_of_water.png';
 import iconBadgeUrl from '../assets/sprites/items/icon_temporary_badge.png';
+import iconLobbyCoffeeUrl from '../assets/sprites/items/icon_lobby_coffee.png';
+import iconNtGuideUrl from '../assets/sprites/items/icon_nt_admin_guide.png';
 import bullpenMusicUrl from '../assets/audio/music/bullpen_theme.mp3';
 import bullpenChillUrl from '../assets/audio/music/bullpen_chill.mp3';
 import puzzleThinkingUrl from '../assets/audio/music/puzzle_thinking.mp3';
@@ -160,6 +162,8 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('icon_cup_empty', iconCupEmptyUrl);
     this.load.image('icon_cup_water', iconCupWaterUrl);
     this.load.image('icon_badge', iconBadgeUrl);
+    this.load.image('icon_lobby_coffee', iconLobbyCoffeeUrl);
+    this.load.image('icon_nt_guide', iconNtGuideUrl);
     this.load.image('icon_note_faded', iconNoteFadedUrl);
     this.load.image('icon_umbrella', iconUmbrellaUrl);
     this.load.image('icon_note_code', iconNoteCodeUrl);
@@ -1668,6 +1672,10 @@ export class BullpenScene extends Phaser.Scene {
     };
     this.input.on('pointerdown', skipHandler);
 
+    // Walk Casey further into the room so text bubbles aren't clipped
+    const pos = this.player.getPosition();
+    const entryPath = this.navGrid.findPath(pos.x, pos.y, 200, 200);
+    this.player.walkPath(entryPath, () => {
     // Casey pauses, takes it all in
     this.time.delayedCall(800, () => {
       if (!this.introActive) return;
@@ -1706,6 +1714,7 @@ export class BullpenScene extends Phaser.Scene {
         },
       );
     });
+    }); // end walkPath callback
   }
 
   private showBullpenBubble(text: string, onDone: () => void): void {
