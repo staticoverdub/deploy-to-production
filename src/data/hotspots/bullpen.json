@@ -424,6 +424,118 @@
           "portrait": "casey_wry"
         }
       }
+    },
+
+    "filing_cabinet": {
+      "id": "filing_cabinet",
+      "name": "Filing Cabinet",
+      "position": { "x": 190, "y": 130 },
+      "polygon": [170, 108, 210, 108, 210, 165, 170, 165],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "Four drawers, all labeled 'MISC.' The top one is jammed open by sheer paper volume. I spot a form labeled 'REQUEST FOR ADDITIONAL FILING CABINET SPACE (FORM 22-C).' Filed in the cabinet it was meant to replace. The irony is structural.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "I try the second drawer. Forms for ordering more filing cabinets. Third drawer: forms for decommissioning the cabinets ordered with the forms from the second drawer. Fourth drawer: welded shut. Someone made a decision and I respect it.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated"
+        }
+      }
+    },
+
+    "fax_machine": {
+      "id": "fax_machine",
+      "name": "Fax Machine",
+      "position": { "x": 580, "y": 150 },
+      "polygon": [558, 130, 602, 130, 602, 170, 558, 170],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "A fax machine. Still plugged in. Still humming. The display reads: '3 PENDING TRANSMISSIONS.' Someone, somewhere, is still faxing documents to this office. And this machine has been faithfully receiving them into a tray that nobody has checked since the Bush administration. Which Bush? Doesn't matter.",
+          "speaker": "casey",
+          "portrait": "casey_incredulous"
+        },
+        "use": {
+          "text": "I pull out the pending faxes. Cover sheet: 'URGENT — TIME SENSITIVE — PLEASE RESPOND BY 03/15/2006.' The second one is a benefits application. A real person sent this, and it's been sitting here for twenty years. I put it back carefully. This is why I'm here.",
+          "speaker": "casey",
+          "portrait": "casey_determined"
+        }
+      }
+    },
+
+    "ancient_desktop": {
+      "id": "ancient_desktop",
+      "name": "Abandoned Workstation",
+      "position": { "x": 460, "y": 220 },
+      "polygon": [435, 200, 485, 200, 485, 245, 435, 245],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "A beige CRT monitor at an empty desk, still powered on. The screen shows a Windows NT login prompt, cursor blinking patiently. I check the system date. 2003. This computer has been waiting for someone to log in for over twenty years. It's more patient than anyone in this building.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated"
+        },
+        "use__no_note": {
+          "text": "The login screen stares back at me. Username and password required. Somewhere in this building, there's a sticky note with the answer. There always is.",
+          "speaker": "casey",
+          "portrait": "casey_thinking",
+          "condition": { "notItems": ["faded_password_note"] }
+        },
+        "use": {
+          "text": "I glance at the faded note in my pocket and try the partial password. Invalid. I'd need to figure out the missing characters. But wherever Hal went, he left a lot of unfinished business on this machine.",
+          "speaker": "casey",
+          "portrait": "casey_curious",
+          "condition": { "items": ["faded_password_note"] }
+        }
+      }
+    },
+
+    "breakroom_whiteboard": {
+      "id": "breakroom_whiteboard",
+      "name": "Break Room Whiteboard",
+      "position": { "x": 770, "y": 70 },
+      "polygon": [742, 44, 798, 44, 798, 96, 742, 96],
+      "verbs": ["look"],
+      "interactions": {
+        "look": {
+          "text": "A whiteboard that started as a meeting agenda and devolved into war. 'PLEASE LABEL YOUR FOOD — MGMT.' Below: 'I'LL LABEL MY FOOD WHEN YOU STOP EATING IT, DAVE.' Below that: 'I'M NOT DAVE.' Below that, in red: 'THAT'S EXACTLY WHAT DAVE WOULD SAY.' There are seventeen layers to this conflict. It's magnificent.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated"
+        }
+      }
+    },
+
+    "breakroom_table": {
+      "id": "breakroom_table",
+      "name": "Break Room Table",
+      "position": { "x": 770, "y": 220 },
+      "polygon": [738, 200, 790, 200, 790, 245, 738, 245],
+      "verbs": ["look"],
+      "interactions": {
+        "look": {
+          "text": "The break room table is covered in coffee ring stains and laminated warnings. 'CLEAN UP AFTER YOURSELF.' 'THIS MEANS YOU.' 'YES, YOU, SPECIFICALLY.' There's also a signup sheet for the office softball team. It has one name on it. Kevin. Written twice.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        }
+      }
+    },
+
+    "office_calendar": {
+      "id": "office_calendar",
+      "name": "Wall Calendar",
+      "position": { "x": 600, "y": 60 },
+      "polygon": [582, 40, 618, 40, 618, 80, 582, 80],
+      "verbs": ["look"],
+      "interactions": {
+        "look": {
+          "text": "A wall calendar stuck on September 2019. The 15th is circled: 'SPRINT RETRO (mandatory!!!)'. The 16th through 30th are all crossed out with a single word: 'AUDIT.' October is blank. November has a sticky note: 'Hal's last day — cake in break room?' I hope Hal got his cake.",
+          "speaker": "casey",
+          "portrait": "casey_sympathetic"
+        }
+      }
     }
   },
   "genericFallbacks": {

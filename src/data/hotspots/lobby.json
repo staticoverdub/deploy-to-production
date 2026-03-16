@@ -312,6 +312,81 @@
           "soundEffect": "sfx_ui_click"
         }
       }
+    },
+
+    "suggestion_box": {
+      "id": "suggestion_box",
+      "name": "Suggestion Box",
+      "position": { "x": 360, "y": 78 },
+      "polygon": [344, 62, 376, 62, 376, 94, 344, 94],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "A wooden suggestion box bolted to the wall. The slot is cobwebbed over. A brass plaque reads: 'YOUR IDEAS MATTER!' Someone scratched 'DO THEY THOUGH?' underneath with a ballpoint pen.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        },
+        "use": {
+          "text": "I try the lid. Rusted shut. I peer through the slot. There's one yellowed card inside. I can barely make out the handwriting: 'Please fix the air conditioning. — Hal, 2003.' Rest in peace, Hal's comfort.",
+          "speaker": "casey",
+          "portrait": "casey_sympathetic"
+        }
+      }
+    },
+
+    "wall_clock": {
+      "id": "wall_clock",
+      "name": "Wall Clock",
+      "position": { "x": 150, "y": 50 },
+      "polygon": [134, 30, 166, 30, 166, 70, 134, 70],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "An analog clock permanently frozen at 4:47. The battery died years ago but nobody's replaced it because there's a requisition form for batteries, and the form requires supervisor approval, and the supervisor is on PTO until further notice.",
+          "speaker": "casey",
+          "portrait": "casey_wry"
+        },
+        "use": {
+          "text": "I tap the glass. The second hand shudders, lurches forward one tick, and gives up. Honestly? Same.",
+          "speaker": "casey",
+          "portrait": "casey_sympathetic"
+        }
+      }
+    },
+
+    "floor_plaque": {
+      "id": "floor_plaque",
+      "name": "Floor Plaque",
+      "position": { "x": 135, "y": 275 },
+      "polygon": [115, 260, 155, 260, 155, 290, 115, 290],
+      "verbs": ["look"],
+      "interactions": {
+        "look": {
+          "text": "A brass plaque set into the floor, nearly invisible under decades of shoe scuffs: 'THIS BUILDING DEDICATED TO THE SERVICE OF THE PEOPLE — 1974.' Fifty years of budget cuts, reorgs, and hiring freezes, and the plaque is still here. Under everything, it's still here.",
+          "speaker": "casey",
+          "portrait": "casey_sincere"
+        }
+      }
+    },
+
+    "pamphlet_rack": {
+      "id": "pamphlet_rack",
+      "name": "Pamphlet Rack",
+      "position": { "x": 380, "y": 140 },
+      "polygon": [364, 112, 396, 112, 396, 168, 364, 168],
+      "verbs": ["look", "use"],
+      "interactions": {
+        "look": {
+          "text": "'So You Need a Birth Certificate!' 'Understanding Your Tax Obligations: A Citizen's Guide, 1999 Edition.' 'Dial-Up Internet: Getting Connected!' These pamphlets are a time capsule. Someone should donate them to the Smithsonian.",
+          "speaker": "casey",
+          "portrait": "casey_fascinated"
+        },
+        "use": {
+          "text": "I flip through the internet guide. 'Step 1: Locate your telephone jack. Step 2: Configure your modem speed (recommended: 56k).' There's a whole chapter on Netiquette. This is art.",
+          "speaker": "casey",
+          "portrait": "casey_amused"
+        }
+      }
     }
   },
 

@@ -34,6 +34,8 @@ import iconFlyerUrl from '../assets/sprites/items/icon_lost_cat_flyer.png';
 import iconCupEmptyUrl from '../assets/sprites/items/icon_paper_cup.png';
 import iconCupWaterUrl from '../assets/sprites/items/icon_cup_of_water.png';
 import iconBadgeUrl from '../assets/sprites/items/icon_temporary_badge.png';
+import iconLobbyCoffeeUrl from '../assets/sprites/items/icon_lobby_coffee.png';
+import iconNtGuideUrl from '../assets/sprites/items/icon_nt_admin_guide.png';
 import bullpenMusicUrl from '../assets/audio/music/bullpen_theme.mp3';
 import bullpenChillUrl from '../assets/audio/music/bullpen_chill.mp3';
 import puzzleThinkingUrl from '../assets/audio/music/puzzle_thinking.mp3';
@@ -80,6 +82,13 @@ import bpEmployeeOfMonthUrl from '../assets/sprites/bullpen/employee_of_month.pn
 import bpFireExtinguisherUrl from '../assets/sprites/bullpen/fire_extinguisher.png';
 import bpLockersUrl from '../assets/sprites/bullpen/lockers.png';
 import bpWetFloorSignUrl from '../assets/sprites/bullpen/wet_floor_sign.png';
+// Lore object sprites
+import bpFilingCabinetUrl from '../assets/sprites/bullpen/filing_cabinet.png';
+import bpFaxMachineUrl from '../assets/sprites/bullpen/fax_machine.png';
+import bpAncientDesktopUrl from '../assets/sprites/bullpen/ancient_desktop.png';
+import bpBreakroomWhiteboardUrl from '../assets/sprites/bullpen/breakroom_whiteboard.png';
+import bpBreakroomTableUrl from '../assets/sprites/bullpen/breakroom_table.png';
+import bpOfficeCalendarUrl from '../assets/sprites/bullpen/office_calendar.png';
 
 const bullpenHotspots = bullpenHotspotsRaw as unknown as SceneHotspotFile;
 
@@ -153,6 +162,8 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('icon_cup_empty', iconCupEmptyUrl);
     this.load.image('icon_cup_water', iconCupWaterUrl);
     this.load.image('icon_badge', iconBadgeUrl);
+    this.load.image('icon_lobby_coffee', iconLobbyCoffeeUrl);
+    this.load.image('icon_nt_guide', iconNtGuideUrl);
     this.load.image('icon_note_faded', iconNoteFadedUrl);
     this.load.image('icon_umbrella', iconUmbrellaUrl);
     this.load.image('icon_note_code', iconNoteCodeUrl);
@@ -187,6 +198,13 @@ export class BullpenScene extends Phaser.Scene {
     this.load.image('bp_fire_extinguisher', bpFireExtinguisherUrl);
     this.load.image('bp_lockers', bpLockersUrl);
     this.load.image('bp_wet_floor_sign', bpWetFloorSignUrl);
+    // Lore objects
+    this.load.image('bp_filing_cabinet', bpFilingCabinetUrl);
+    this.load.image('bp_fax_machine', bpFaxMachineUrl);
+    this.load.image('bp_ancient_desktop', bpAncientDesktopUrl);
+    this.load.image('bp_breakroom_whiteboard', bpBreakroomWhiteboardUrl);
+    this.load.image('bp_breakroom_table', bpBreakroomTableUrl);
+    this.load.image('bp_office_calendar', bpOfficeCalendarUrl);
 
     // PixelLab character spritesheets: frame 0 = idle south, frames 1-4 = breathing-idle
     const ssConfig64 = { frameWidth: 64, frameHeight: 64 };
@@ -677,6 +695,14 @@ export class BullpenScene extends Phaser.Scene {
 
     // Whiteboard: base at y=182 (taller than Casey, on floor behind desk)
     this.add.image(935, 182, 'bp_whiteboard').setOrigin(0.5, 1).setDepth(10);
+
+    // ── Lore objects (PixelLab sprites) ──
+    this.add.image(190, 165, 'bp_filing_cabinet').setOrigin(0.5, 1).setDepth(12);
+    this.add.image(580, 170, 'bp_fax_machine').setOrigin(0.5, 1).setDepth(30);
+    this.add.image(460, 220, 'bp_ancient_desktop').setOrigin(0.5, 0.5).setDepth(29);
+    this.add.image(770, 70, 'bp_breakroom_whiteboard').setOrigin(0.5, 0.5).setDepth(10);
+    this.add.image(770, 236, 'bp_breakroom_table').setOrigin(0.5, 1).setDepth(25);
+    this.add.image(600, 60, 'bp_office_calendar').setOrigin(0.5, 0.5).setDepth(10);
   }
 
   private drawNPCs(): void {
@@ -1646,6 +1672,10 @@ export class BullpenScene extends Phaser.Scene {
     };
     this.input.on('pointerdown', skipHandler);
 
+    // Walk Casey further into the room so text bubbles aren't clipped
+    const pos = this.player.getPosition();
+    const entryPath = this.navGrid.findPath(pos.x, pos.y, 200, 200);
+    this.player.walkPath(entryPath, () => {
     // Casey pauses, takes it all in
     this.time.delayedCall(800, () => {
       if (!this.introActive) return;
@@ -1684,6 +1714,7 @@ export class BullpenScene extends Phaser.Scene {
         },
       );
     });
+    }); // end walkPath callback
   }
 
   private showBullpenBubble(text: string, onDone: () => void): void {
