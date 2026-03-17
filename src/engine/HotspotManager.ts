@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameState } from './GameState';
+import { isTouchDevice, LONG_PRESS_MS } from './TouchDetector';
 
 // --- Data types matching lobby_hotspots.json ---
 
@@ -75,6 +76,11 @@ export class HotspotManager {
 
   // Pending scene transition (deferred until after dialogue/monologue ends)
   private _pendingSceneTransition: string | null = null;
+
+  // Long-press state (touch devices)
+  private longPressTimer: Phaser.Time.TimerEvent | null = null;
+  private longPressTriggered = false;
+  private longPressStartPos: { x: number; y: number } = { x: 0, y: 0 };
 
   // Debug
   private debugGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -163,6 +169,7 @@ export class HotspotManager {
     // Left-click
     zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.rightButtonDown()) return;
+      if (this.longPressTriggered) return; // long-press already handled
       this.closeVerbMenu();
 
       const selectedItem = this.getSelectedItem?.();
@@ -184,6 +191,21 @@ export class HotspotManager {
 
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.rightButtonDown()) {
+        // Start long-press timer on touch devices
+        if (isTouchDevice() && pointer.wasTouch) {
+          this.longPressTriggered = false;
+          this.longPressStartPos = { x: pointer.x, y: pointer.y };
+          this.cancelLongPress();
+          this.longPressTimer = this.scene.time.delayedCall(LONG_PRESS_MS, () => {
+            const hitZones = this.scene.input.hitTestPointer(pointer);
+            const hotspotZone = hitZones.find((obj) => obj.getData('hotspotId') !== undefined);
+            if (hotspotZone) {
+              this.longPressTriggered = true;
+              this.showVerbMenu(pointer.x, pointer.y, hotspotZone.getData('hotspotId') as string);
+            }
+          });
+        }
+
         if (this.verbMenu) {
           const bounds = this.verbMenu.getBounds();
           if (!bounds.contains(pointer.x, pointer.y)) {
@@ -199,6 +221,30 @@ export class HotspotManager {
         this.showVerbMenu(pointer.x, pointer.y, hotspotZone.getData('hotspotId') as string);
       }
     });
+
+    // Cancel long-press if finger moves too far
+    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!isTouchDevice() || !this.longPressTimer) return;
+      const dx = pointer.x - this.longPressStartPos.x;
+      const dy = pointer.y - this.longPressStartPos.y;
+      if (dx * dx + dy * dy > 100) { // 10px threshold
+        this.cancelLongPress();
+      }
+    });
+
+    // Reset long-press on pointer up
+    this.scene.input.on('pointerup', () => {
+      this.cancelLongPress();
+      // Reset triggered flag after a frame so zone handler can check it
+      this.scene.time.delayedCall(0, () => { this.longPressTriggered = false; });
+    });
+  }
+
+  private cancelLongPress(): void {
+    if (this.longPressTimer) {
+      this.longPressTimer.destroy();
+      this.longPressTimer = null;
+    }
   }
 
   // --- Verb menu (LucasArts-style radial) ---
@@ -218,9 +264,10 @@ export class HotspotManager {
 
     const verbs: Verb[] = (data.verbs.length > 0 ? data.verbs : ['look', 'use', 'pickup', 'talkto']) as Verb[];
 
+    const isTouch = isTouchDevice();
     const radius = 36;
-    const btnW = 72;
-    const btnH = 24;
+    const btnW = isTouch ? 80 : 72;
+    const btnH = isTouch ? 28 : 24;
     const menuExtent = radius + btnH / 2 + 4;
     const angles = this.distributeAngles(verbs.length);
 
@@ -576,6 +623,7 @@ export class HotspotManager {
 
   destroy(): void {
     this.closeVerbMenu();
+    this.cancelLongPress();
     this.debugGraphics?.destroy();
     this.debugGraphics = null;
     for (const zone of this.zones.values()) zone.destroy();

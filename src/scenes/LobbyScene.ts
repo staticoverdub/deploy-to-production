@@ -7,6 +7,7 @@ import { GameState } from '../engine/GameState';
 import { CursorManager, CursorState } from '../engine/CursorManager';
 import { NavGrid } from '../engine/NavGrid';
 import { DebugMenu } from '../engine/DebugMenu';
+import { createPauseButton } from '../engine/PauseButton';
 import lobbyHotspotsRaw from '../data/hotspots/lobby.json';
 import gladysData from '../data/dialogues/gladys.json';
 import mrsGutierrezData from '../data/dialogues/mrs_gutierrez.json';
@@ -401,6 +402,7 @@ export class LobbyScene extends Phaser.Scene {
       this.scene.pause();
       this.scene.launch('PauseMenuScene', { parentScene: 'LobbyScene' });
     });
+    createPauseButton(this, 'LobbyScene');
 
     // Debug overlay toggle (D key) — shows hotspot zones + nav grid
     this.input.keyboard?.on('keydown-D', () => {

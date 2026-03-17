@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../engine/GameState';
 import { CursorManager } from '../engine/CursorManager';
 import { DebugMenu } from '../engine/DebugMenu';
+import { isTouchDevice } from '../engine/TouchDetector';
 import sfxTextBlipUrl from '../assets/audio/sfx/sfx_text_blip.mp3';
 import sfxBackspaceBurstUrl from '../assets/audio/sfx/sfx_backspace_burst.mp3';
 import sfxSelectUrl from '../assets/audio/sfx/sfx_select.mp3';
@@ -91,6 +92,7 @@ export class TitleScene extends Phaser.Scene {
   private eggModelActive = false;
   private eggCornerClicks = 0;
   private eggCatShown = false;
+  private mobileCommandPalette: Phaser.GameObjects.Container | null = null;
 
   constructor() { super({ key: 'TitleScene' }); }
 
@@ -492,6 +494,80 @@ export class TitleScene extends Phaser.Scene {
 
     this.redrawScreen();
     this.installKeyboardHandler();
+
+    if (isTouchDevice()) {
+      this.createMobileCommandPalette();
+    }
+  }
+
+  private createMobileCommandPalette(): void {
+    this.destroyMobileCommandPalette();
+
+    const commands = [
+      { label: 'ls', cmd: 'ls' },
+      { label: 'cat motd', cmd: 'cat motd' },
+      { label: 'resume', cmd: 'resume' },
+      { label: 'help', cmd: 'help' },
+      { label: 'clear', cmd: 'clear' },
+      { label: 'Skip >', cmd: null }, // ESC equivalent
+    ];
+
+    const y = BOTTOM_BEZEL > 0 ? 360 - BOTTOM_BEZEL / 2 - 2 : 348;
+    const totalW = 584;
+    const btnW = Math.floor(totalW / commands.length) - 4;
+    const startX = BEZEL + 2;
+
+    this.mobileCommandPalette = this.add.container(0, 0).setDepth(100).setScrollFactor(0);
+
+    commands.forEach((item, i) => {
+      const x = startX + i * (btnW + 4) + btnW / 2;
+
+      const bg = this.add.rectangle(x, y, btnW, 16, 0x1a1a2e, 0.85);
+      bg.setStrokeStyle(1, 0x444466);
+      bg.setInteractive();
+      this.mobileCommandPalette!.add(bg);
+
+      const label = this.add.text(x, y, item.label, {
+        fontFamily: 'monospace', fontSize: '7px', color: '#FFD000', fontStyle: 'bold',
+      }).setOrigin(0.5);
+      this.mobileCommandPalette!.add(label);
+
+      bg.on('pointerdown', () => {
+        if (!this.terminalMode || this.transitioning) return;
+
+        if (item.cmd === null) {
+          // Skip — same as ESC
+          if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
+          this.terminalMode = false;
+          this.removeKeyboardHandler();
+          this.startBootSequence(false);
+          return;
+        }
+
+        // Simulate typing the command and pressing Enter
+        this.inputBuffer = item.cmd;
+        this.redrawScreen();
+        // Small delay to show the typed command, then execute
+        this.time.delayedCall(100, () => {
+          if (!this.terminalMode) return;
+          this.commandHistory.unshift(item.cmd!);
+          if (this.commandHistory.length > 50) this.commandHistory.pop();
+          this.historyIndex = -1;
+          this.appendOutput([this.getPromptString() + this.inputBuffer]);
+          const input = this.inputBuffer;
+          this.inputBuffer = '';
+          if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+          this.executeCommand(input);
+        });
+      });
+    });
+  }
+
+  private destroyMobileCommandPalette(): void {
+    if (this.mobileCommandPalette) {
+      this.mobileCommandPalette.destroy();
+      this.mobileCommandPalette = null;
+    }
   }
 
   private skipToTerminal(): void {
@@ -634,6 +710,7 @@ export class TitleScene extends Phaser.Scene {
       window.removeEventListener('keydown', this.keyboardHandler);
       this.keyboardHandler = null;
     }
+    this.destroyMobileCommandPalette();
   }
 
   // ═══════════════════════════════════════════

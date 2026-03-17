@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { cursor: none !important; }
+    .hide-cursor *, .hide-cursor *::before, .hide-cursor *::after { cursor: none !important; }
     html, body {
       margin: 0;
       padding: 0;
@@ -34,6 +34,13 @@
       height: 100%;
     }
   </style>
+  <script>
+    // Synchronously hide cursor on desktop before first paint
+    if (!('ontouchstart' in window && navigator.maxTouchPoints > 0
+        && !/\b(Win|Mac|Linux)\b/i.test(navigator.userAgent))) {
+      document.documentElement.classList.add('hide-cursor');
+    }
+  </script>
 </head>
 <body>
   <div id="game-container"></div>

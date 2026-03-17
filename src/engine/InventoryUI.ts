@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameState } from './GameState';
+import { isTouchDevice, LONG_PRESS_MS } from './TouchDetector';
 import itemsFile from '../data/items.json';
 
 export interface ItemDefinition {
@@ -41,6 +42,8 @@ export class InventoryUI {
   private selectedItem: string | null = null;
   private ghostIcon: Phaser.GameObjects.Container | null = null;
   private inspectPanel: Phaser.GameObjects.Container | null = null;
+  private slotLongPressTimer: Phaser.Time.TimerEvent | null = null;
+  private slotLongPressTriggered = false;
 
   onExamineItem: ((text: string) => void) | null = null;
 
@@ -115,6 +118,18 @@ export class InventoryUI {
           return;
         }
 
+        // Long-press to inspect on touch devices
+        if (isTouchDevice() && pointer.wasTouch) {
+          this.slotLongPressTriggered = false;
+          if (this.slotLongPressTimer) { this.slotLongPressTimer.destroy(); this.slotLongPressTimer = null; }
+          this.slotLongPressTimer = this.scene.time.delayedCall(LONG_PRESS_MS, () => {
+            this.slotLongPressTriggered = true;
+            this.showInspectPanel(def);
+          });
+        }
+
+        if (this.slotLongPressTriggered) return;
+
         if (this.scene.cache.audio.exists('sfx_ui_click')) {
           this.scene.sound.play('sfx_ui_click', { volume: 0.3 });
         }
@@ -128,6 +143,11 @@ export class InventoryUI {
         } else {
           this.selectItem(itemId);
         }
+      });
+
+      slotBg.on('pointerup', () => {
+        if (this.slotLongPressTimer) { this.slotLongPressTimer.destroy(); this.slotLongPressTimer = null; }
+        this.scene.time.delayedCall(0, () => { this.slotLongPressTriggered = false; });
       });
 
       slotBg.on('pointerover', () => {

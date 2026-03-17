@@ -7,6 +7,7 @@ import { EndSliceScene } from './scenes/EndSliceScene';
 import { BullpenScene } from './scenes/BullpenScene';
 import { PauseMenuScene } from './scenes/PauseMenuScene';
 import { MailCartScene } from './scenes/MailCartScene';
+import { isTouchDevice } from './engine/TouchDetector';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -28,22 +29,27 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new Phaser.Game(config);
 
-// Nuclear cursor hide: observe DOM for any new elements Phaser creates
-// and force cursor:none on them (Phaser's scale manager creates wrapper divs)
-const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
-      if (node instanceof HTMLElement) {
-        node.style.setProperty('cursor', 'none', 'important');
+// Hide cursor only on desktop (touch devices use native finger input)
+if (!isTouchDevice()) {
+  document.body.classList.add('hide-cursor');
+
+  // Nuclear cursor hide: observe DOM for any new elements Phaser creates
+  // and force cursor:none on them (Phaser's scale manager creates wrapper divs)
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          node.style.setProperty('cursor', 'none', 'important');
+        }
       }
     }
-  }
-});
-observer.observe(document.body, { childList: true, subtree: true });
-
-// Also force on existing elements after a tick
-requestAnimationFrame(() => {
-  document.querySelectorAll('*').forEach((el) => {
-    (el as HTMLElement).style.setProperty('cursor', 'none', 'important');
   });
-});
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Also force on existing elements after a tick
+  requestAnimationFrame(() => {
+    document.querySelectorAll('*').forEach((el) => {
+      (el as HTMLElement).style.setProperty('cursor', 'none', 'important');
+    });
+  });
+}
