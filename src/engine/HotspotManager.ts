@@ -266,9 +266,9 @@ export class HotspotManager {
     const verbs: Verb[] = (data.verbs.length > 0 ? data.verbs : ['look', 'use', 'pickup', 'talkto']) as Verb[];
 
     const isTouch = isTouchDevice();
-    const radius = 36;
-    const btnW = isTouch ? 80 : 72;
-    const btnH = isTouch ? 28 : 24;
+    const radius = isTouch ? 50 : 36;
+    const btnW = isTouch ? 110 : 72;
+    const btnH = isTouch ? 40 : 24;
     const menuExtent = radius + btnH / 2 + 4;
     const angles = this.distributeAngles(verbs.length);
 
@@ -305,7 +305,7 @@ export class HotspotManager {
       btnBg.setStrokeStyle(1, 0x444466);
 
       const label = this.scene.add.text(vx, vy, VERB_LABELS[verb] ?? verb, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc', fontStyle: 'bold',
+        fontFamily: 'monospace', fontSize: isTouch ? '12px' : '10px', color: '#aaaacc', fontStyle: 'bold',
       }).setOrigin(0.5);
 
       container.add([btnBg, label]);
