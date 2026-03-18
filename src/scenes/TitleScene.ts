@@ -507,7 +507,6 @@ export class TitleScene extends Phaser.Scene {
     this.destroyMobileCommandPalette();
 
     const commands = [
-      { label: '\u2328', cmd: '__keyboard__' }, // keyboard icon — opens phone keyboard
       { label: 'ls', cmd: 'ls' },
       { label: 'cat motd', cmd: 'cat motd' },
       { label: 'resume', cmd: 'resume' },
@@ -542,11 +541,6 @@ export class TitleScene extends Phaser.Scene {
       bg.on('pointerdown', () => {
         if (!this.terminalMode || this.transitioning) return;
 
-        if (item.cmd === '__keyboard__') {
-          // Handled by DOM overlay button (Phaser events can't trigger focus)
-          return;
-        }
-
         if (item.cmd === null) {
           // Skip — same as ESC
           if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.25 });
@@ -578,20 +572,13 @@ export class TitleScene extends Phaser.Scene {
   private createMobileInput(): void {
     this.destroyMobileInput();
 
-    // Position the input directly over the ⌨ button area so tapping it
-    // is a direct user gesture on an <input> — iOS Safari won't show the
-    // keyboard for programmatic focus(), only for direct taps on inputs.
+    // Cover the entire terminal screen with a transparent <input> so that
+    // tapping anywhere on the terminal brings up the iOS/Android keyboard.
+    // iOS Safari only shows the keyboard for direct taps on input elements.
     const canvas = this.game.canvas;
     const canvasRect = canvas.getBoundingClientRect();
     const scaleX = canvasRect.width / 640;
     const scaleY = canvasRect.height / 360;
-
-    const totalW = 584;
-    const btnCount = 7;
-    const btnW = Math.floor(totalW / btnCount) - 4;
-    const startX = BEZEL + 2;
-    const gameBtnX = startX + btnW / 2;
-    const gameBtnY = BOTTOM_BEZEL > 0 ? 360 - BOTTOM_BEZEL / 2 - 2 : 348;
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -599,13 +586,12 @@ export class TitleScene extends Phaser.Scene {
     input.autocapitalize = 'off';
     input.autocomplete = 'off';
     input.spellcheck = false;
-    input.placeholder = '\u2328';
     input.style.cssText = `
       position:fixed;
-      left:${canvasRect.left + gameBtnX * scaleX - (btnW * scaleX) / 2}px;
-      top:${canvasRect.top + gameBtnY * scaleY - 8 * scaleY}px;
-      width:${btnW * scaleX}px;
-      height:${16 * scaleY}px;
+      left:${canvasRect.left + SCREEN_X * scaleX}px;
+      top:${canvasRect.top + SCREEN_Y * scaleY}px;
+      width:${SCREEN_W * scaleX}px;
+      height:${SCREEN_H * scaleY}px;
       z-index:10000;
       opacity:0.01;
       font-size:16px;
