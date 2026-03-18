@@ -96,7 +96,6 @@ export class TitleScene extends Phaser.Scene {
   private mobileInput: HTMLInputElement | null = null;
   private mobileInputHandler: ((e: Event) => void) | null = null;
   private mobileKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
-  private mobileKeyboardBtn: HTMLButtonElement | null = null;
 
   constructor() { super({ key: 'TitleScene' }); }
 
@@ -579,20 +578,47 @@ export class TitleScene extends Phaser.Scene {
   private createMobileInput(): void {
     this.destroyMobileInput();
 
+    // Position the input directly over the ⌨ button area so tapping it
+    // is a direct user gesture on an <input> — iOS Safari won't show the
+    // keyboard for programmatic focus(), only for direct taps on inputs.
+    const canvas = this.game.canvas;
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / 640;
+    const scaleY = canvasRect.height / 360;
+
+    const totalW = 584;
+    const btnCount = 7;
+    const btnW = Math.floor(totalW / btnCount) - 4;
+    const startX = BEZEL + 2;
+    const gameBtnX = startX + btnW / 2;
+    const gameBtnY = BOTTOM_BEZEL > 0 ? 360 - BOTTOM_BEZEL / 2 - 2 : 348;
+
     const input = document.createElement('input');
     input.type = 'text';
     input.enterKeyHint = 'send';
     input.autocapitalize = 'off';
     input.autocomplete = 'off';
     input.spellcheck = false;
-    // Position off-screen but not display:none (that prevents focus on mobile)
-    input.style.cssText = 'position:fixed;left:-9999px;top:50%;opacity:0;width:1px;height:1px;border:none;';
+    input.placeholder = '\u2328';
+    input.style.cssText = `
+      position:fixed;
+      left:${canvasRect.left + gameBtnX * scaleX - (btnW * scaleX) / 2}px;
+      top:${canvasRect.top + gameBtnY * scaleY - 8 * scaleY}px;
+      width:${btnW * scaleX}px;
+      height:${16 * scaleY}px;
+      z-index:10000;
+      opacity:0.01;
+      font-size:16px;
+      border:none;
+      padding:0;
+      margin:0;
+      background:transparent;
+      color:transparent;
+      caret-color:transparent;
+      -webkit-appearance:none;
+    `;
     document.body.appendChild(input);
     this.mobileInput = input;
-
-    // Create a real DOM button overlaid on the ⌨ Phaser button so that
-    // focus() happens inside a real user-gesture handler (required by mobile browsers)
-    this.createKeyboardOverlayButton();
 
     // Pipe typed characters into inputBuffer
     this.mobileInputHandler = () => {
@@ -633,59 +659,12 @@ export class TitleScene extends Phaser.Scene {
           this.inputBuffer = this.inputBuffer.slice(0, -1);
           this.redrawScreen();
         }
-        // Don't preventDefault — let the hidden input clear naturally
       }
     };
     input.addEventListener('keydown', this.mobileKeydownHandler);
   }
 
-  private createKeyboardOverlayButton(): void {
-    // Position a real DOM button over the ⌨ Phaser button so that
-    // tapping it triggers focus() inside a real user gesture (required by iOS/Android)
-    const canvas = this.game.canvas;
-    const canvasRect = canvas.getBoundingClientRect();
-    const scaleX = canvasRect.width / 640;
-    const scaleY = canvasRect.height / 360;
-
-    // The ⌨ button is the first in the palette (index 0)
-    const totalW = 584;
-    const btnCount = 7; // number of palette buttons
-    const btnW = Math.floor(totalW / btnCount) - 4;
-    const startX = BEZEL + 2;
-    const gameBtnX = startX + btnW / 2;
-    const gameBtnY = BOTTOM_BEZEL > 0 ? 360 - BOTTOM_BEZEL / 2 - 2 : 348;
-
-    const btn = document.createElement('button');
-    btn.textContent = '\u2328';
-    btn.style.cssText = `
-      position:fixed;
-      left:${canvasRect.left + gameBtnX * scaleX - (btnW * scaleX) / 2}px;
-      top:${canvasRect.top + gameBtnY * scaleY - 8 * scaleY}px;
-      width:${btnW * scaleX}px;
-      height:${16 * scaleY}px;
-      opacity:0;
-      z-index:10000;
-      border:none;
-      padding:0;
-      margin:0;
-      -webkit-appearance:none;
-    `;
-    document.body.appendChild(btn);
-    this.mobileKeyboardBtn = btn;
-
-    btn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (this.mobileInput) {
-        this.mobileInput.focus();
-      }
-    });
-  }
-
   private destroyMobileInput(): void {
-    if (this.mobileKeyboardBtn) {
-      this.mobileKeyboardBtn.remove();
-      this.mobileKeyboardBtn = null;
-    }
     if (this.mobileInput) {
       if (this.mobileInputHandler) {
         this.mobileInput.removeEventListener('input', this.mobileInputHandler);
