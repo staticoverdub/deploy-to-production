@@ -170,6 +170,7 @@ export class HotspotManager {
     zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.rightButtonDown()) return;
       if (this.longPressTriggered) return; // long-press already handled
+      if (this.verbMenu) return; // let verb menu click handler process it
       this.closeVerbMenu();
 
       const selectedItem = this.getSelectedItem?.();
