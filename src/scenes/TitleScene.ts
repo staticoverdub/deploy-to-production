@@ -10,6 +10,9 @@ import sfxCrtOnUrl from '../assets/audio/sfx/sfx_crt_on.mp3';
 import sfxCrtOffUrl from '../assets/audio/sfx/sfx_crt_off.mp3';
 import sfxTerminalTypingUrl from '../assets/audio/sfx/sfx_terminal_typing.mp3';
 import sfxCrtStaticUrl from '../assets/audio/sfx/sfx_crt_static.mp3';
+import sfxCrtHumUrl from '../assets/audio/sfx/sfx_crt_hum.mp3';
+import sfxKeyClickUrl from '../assets/audio/sfx/sfx_key_click.mp3';
+import sfxCmdExecuteUrl from '../assets/audio/sfx/sfx_cmd_execute.mp3';
 import voiceCaseyUrl from '../assets/audio/sfx/voices/voice_casey.mp3';
 import voiceKevinUrl from '../assets/audio/sfx/voices/voice_kevin.mp3';
 import bootLinesData from '../data/boot_lines.json';
@@ -93,6 +96,7 @@ export class TitleScene extends Phaser.Scene {
   private eggCornerClicks = 0;
   private eggCatShown = false;
   private mobileCommandPalette: Phaser.GameObjects.Container | null = null;
+  private crtHumSound: Phaser.Sound.BaseSound | null = null;
   private mobileInput: HTMLInputElement | null = null;
   private mobileInputHandler: ((e: Event) => void) | null = null;
   private mobileKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -107,6 +111,9 @@ export class TitleScene extends Phaser.Scene {
     this.load.audio('sfx_crt_off', sfxCrtOffUrl);
     this.load.audio('sfx_terminal_typing', sfxTerminalTypingUrl);
     this.load.audio('sfx_crt_static', sfxCrtStaticUrl);
+    this.load.audio('sfx_crt_hum', sfxCrtHumUrl);
+    this.load.audio('sfx_key_click', sfxKeyClickUrl);
+    this.load.audio('sfx_cmd_execute', sfxCmdExecuteUrl);
     this.load.audio('voice_casey', voiceCaseyUrl);
     this.load.audio('voice_kevin', voiceKevinUrl);
   }
@@ -478,6 +485,12 @@ export class TitleScene extends Phaser.Scene {
     this.terminalMode = true;
     this.hideCursor();
 
+    // Ambient CRT hum
+    if (this.cache.audio.exists('sfx_crt_hum') && !this.crtHumSound) {
+      this.crtHumSound = this.sound.add('sfx_crt_hum', { loop: true, volume: 0.08 });
+      this.crtHumSound.play();
+    }
+
     // Clear screen and show condensed header + MOTD + prompt
     this.outputLines = [];
     const hasSave = GameState.getInstance().hasSave();
@@ -562,7 +575,7 @@ export class TitleScene extends Phaser.Scene {
           this.appendOutput([this.getPromptString() + this.inputBuffer]);
           const input = this.inputBuffer;
           this.inputBuffer = '';
-          if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+          if (this.cache.audio.exists('sfx_cmd_execute')) this.sound.play('sfx_cmd_execute', { volume: 0.2 });
           this.executeCommand(input);
         });
       });
@@ -643,7 +656,7 @@ export class TitleScene extends Phaser.Scene {
         this.appendOutput([this.getPromptString() + this.inputBuffer]);
         const text = this.inputBuffer;
         this.inputBuffer = '';
-        if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+        if (this.cache.audio.exists('sfx_cmd_execute')) this.sound.play('sfx_cmd_execute', { volume: 0.2 });
         this.executeCommand(text);
         input.value = '';
         return;
@@ -767,7 +780,7 @@ export class TitleScene extends Phaser.Scene {
         this.appendOutput([this.getPromptString() + this.inputBuffer]);
         const input = this.inputBuffer;
         this.inputBuffer = '';
-        if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+        if (this.cache.audio.exists('sfx_cmd_execute')) this.sound.play('sfx_cmd_execute', { volume: 0.2 });
         this.executeCommand(input);
         return;
       }
@@ -823,6 +836,11 @@ export class TitleScene extends Phaser.Scene {
       this.keyboardHandler = null;
     }
     this.destroyMobileCommandPalette();
+    if (this.crtHumSound) {
+      this.crtHumSound.stop();
+      this.crtHumSound.destroy();
+      this.crtHumSound = null;
+    }
   }
 
   // ═══════════════════════════════════════════
@@ -1711,7 +1729,10 @@ export class TitleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════
 
   private playBlip(volume: number): void {
-    if (this.cache.audio.exists('sfx_text_blip')) {
+    // Prefer mechanical key click for terminal typing, fall back to text blip
+    if (this.cache.audio.exists('sfx_key_click')) {
+      this.sound.play('sfx_key_click', { volume: volume * 0.8 });
+    } else if (this.cache.audio.exists('sfx_text_blip')) {
       this.sound.play('sfx_text_blip', { volume });
     }
   }
