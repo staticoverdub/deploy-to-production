@@ -93,6 +93,9 @@ export class TitleScene extends Phaser.Scene {
   private eggCornerClicks = 0;
   private eggCatShown = false;
   private mobileCommandPalette: Phaser.GameObjects.Container | null = null;
+  private mobileInput: HTMLInputElement | null = null;
+  private mobileInputHandler: ((e: Event) => void) | null = null;
+  private mobileKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor() { super({ key: 'TitleScene' }); }
 
@@ -504,6 +507,7 @@ export class TitleScene extends Phaser.Scene {
     this.destroyMobileCommandPalette();
 
     const commands = [
+      { label: '\u2328', cmd: '__keyboard__' }, // keyboard icon — opens phone keyboard
       { label: 'ls', cmd: 'ls' },
       { label: 'cat motd', cmd: 'cat motd' },
       { label: 'resume', cmd: 'resume' },
@@ -518,6 +522,9 @@ export class TitleScene extends Phaser.Scene {
     const startX = BEZEL + 2;
 
     this.mobileCommandPalette = this.add.container(0, 0).setDepth(100).setScrollFactor(0);
+
+    // Create hidden HTML input for phone keyboard
+    this.createMobileInput();
 
     commands.forEach((item, i) => {
       const x = startX + i * (btnW + 4) + btnW / 2;
@@ -534,6 +541,12 @@ export class TitleScene extends Phaser.Scene {
 
       bg.on('pointerdown', () => {
         if (!this.terminalMode || this.transitioning) return;
+
+        if (item.cmd === '__keyboard__') {
+          // Focus the hidden input to bring up phone keyboard
+          this.mobileInput?.focus();
+          return;
+        }
 
         if (item.cmd === null) {
           // Skip — same as ESC
@@ -563,11 +576,85 @@ export class TitleScene extends Phaser.Scene {
     });
   }
 
+  private createMobileInput(): void {
+    this.destroyMobileInput();
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.autocapitalize = 'off';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    // Position off-screen but not display:none (that prevents focus on mobile)
+    input.style.cssText = 'position:fixed;left:-9999px;top:50%;opacity:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(input);
+    this.mobileInput = input;
+
+    // Pipe typed characters into inputBuffer
+    this.mobileInputHandler = () => {
+      if (!this.terminalMode || this.transitioning) return;
+      const val = input.value;
+      if (val.length > 0) {
+        this.inputBuffer += val;
+        this.playBlip(0.06);
+        this.redrawScreen();
+      }
+      input.value = '';
+    };
+    input.addEventListener('input', this.mobileInputHandler);
+
+    // Handle Enter and Backspace from the phone keyboard
+    this.mobileKeydownHandler = (e: KeyboardEvent) => {
+      if (!this.terminalMode || this.transitioning) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const cmd = this.inputBuffer.trim();
+        if (cmd.length > 0) {
+          this.commandHistory.unshift(cmd);
+          if (this.commandHistory.length > 50) this.commandHistory.pop();
+        }
+        this.historyIndex = -1;
+        this.appendOutput([this.getPromptString() + this.inputBuffer]);
+        const text = this.inputBuffer;
+        this.inputBuffer = '';
+        if (this.cache.audio.exists('sfx_select')) this.sound.play('sfx_select', { volume: 0.15 });
+        this.executeCommand(text);
+        input.value = '';
+        return;
+      }
+
+      if (e.key === 'Backspace') {
+        if (this.inputBuffer.length > 0) {
+          this.inputBuffer = this.inputBuffer.slice(0, -1);
+          this.redrawScreen();
+        }
+        // Don't preventDefault — let the hidden input clear naturally
+      }
+    };
+    input.addEventListener('keydown', this.mobileKeydownHandler);
+  }
+
+  private destroyMobileInput(): void {
+    if (this.mobileInput) {
+      if (this.mobileInputHandler) {
+        this.mobileInput.removeEventListener('input', this.mobileInputHandler);
+        this.mobileInputHandler = null;
+      }
+      if (this.mobileKeydownHandler) {
+        this.mobileInput.removeEventListener('keydown', this.mobileKeydownHandler);
+        this.mobileKeydownHandler = null;
+      }
+      this.mobileInput.remove();
+      this.mobileInput = null;
+    }
+  }
+
   private destroyMobileCommandPalette(): void {
     if (this.mobileCommandPalette) {
       this.mobileCommandPalette.destroy();
       this.mobileCommandPalette = null;
     }
+    this.destroyMobileInput();
   }
 
   private skipToTerminal(): void {
