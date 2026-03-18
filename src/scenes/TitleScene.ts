@@ -96,6 +96,7 @@ export class TitleScene extends Phaser.Scene {
   private mobileInput: HTMLInputElement | null = null;
   private mobileInputHandler: ((e: Event) => void) | null = null;
   private mobileKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
+  private mobileKeyboardBtn: HTMLButtonElement | null = null;
 
   constructor() { super({ key: 'TitleScene' }); }
 
@@ -543,8 +544,7 @@ export class TitleScene extends Phaser.Scene {
         if (!this.terminalMode || this.transitioning) return;
 
         if (item.cmd === '__keyboard__') {
-          // Focus the hidden input to bring up phone keyboard
-          this.mobileInput?.focus();
+          // Handled by DOM overlay button (Phaser events can't trigger focus)
           return;
         }
 
@@ -581,6 +581,7 @@ export class TitleScene extends Phaser.Scene {
 
     const input = document.createElement('input');
     input.type = 'text';
+    input.enterKeyHint = 'send';
     input.autocapitalize = 'off';
     input.autocomplete = 'off';
     input.spellcheck = false;
@@ -588,6 +589,10 @@ export class TitleScene extends Phaser.Scene {
     input.style.cssText = 'position:fixed;left:-9999px;top:50%;opacity:0;width:1px;height:1px;border:none;';
     document.body.appendChild(input);
     this.mobileInput = input;
+
+    // Create a real DOM button overlaid on the ⌨ Phaser button so that
+    // focus() happens inside a real user-gesture handler (required by mobile browsers)
+    this.createKeyboardOverlayButton();
 
     // Pipe typed characters into inputBuffer
     this.mobileInputHandler = () => {
@@ -634,7 +639,53 @@ export class TitleScene extends Phaser.Scene {
     input.addEventListener('keydown', this.mobileKeydownHandler);
   }
 
+  private createKeyboardOverlayButton(): void {
+    // Position a real DOM button over the ⌨ Phaser button so that
+    // tapping it triggers focus() inside a real user gesture (required by iOS/Android)
+    const canvas = this.game.canvas;
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / 640;
+    const scaleY = canvasRect.height / 360;
+
+    // The ⌨ button is the first in the palette (index 0)
+    const totalW = 584;
+    const btnCount = 7; // number of palette buttons
+    const btnW = Math.floor(totalW / btnCount) - 4;
+    const startX = BEZEL + 2;
+    const gameBtnX = startX + btnW / 2;
+    const gameBtnY = BOTTOM_BEZEL > 0 ? 360 - BOTTOM_BEZEL / 2 - 2 : 348;
+
+    const btn = document.createElement('button');
+    btn.textContent = '\u2328';
+    btn.style.cssText = `
+      position:fixed;
+      left:${canvasRect.left + gameBtnX * scaleX - (btnW * scaleX) / 2}px;
+      top:${canvasRect.top + gameBtnY * scaleY - 8 * scaleY}px;
+      width:${btnW * scaleX}px;
+      height:${16 * scaleY}px;
+      opacity:0;
+      z-index:10000;
+      border:none;
+      padding:0;
+      margin:0;
+      -webkit-appearance:none;
+    `;
+    document.body.appendChild(btn);
+    this.mobileKeyboardBtn = btn;
+
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (this.mobileInput) {
+        this.mobileInput.focus();
+      }
+    });
+  }
+
   private destroyMobileInput(): void {
+    if (this.mobileKeyboardBtn) {
+      this.mobileKeyboardBtn.remove();
+      this.mobileKeyboardBtn = null;
+    }
     if (this.mobileInput) {
       if (this.mobileInputHandler) {
         this.mobileInput.removeEventListener('input', this.mobileInputHandler);
