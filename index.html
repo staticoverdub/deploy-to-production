@@ -37,7 +37,7 @@
   <script>
     // Synchronously hide cursor on desktop before first paint
     if (!('ontouchstart' in window && navigator.maxTouchPoints > 0
-        && !/\b(Win|Mac|Linux)\b/i.test(navigator.userAgent))) {
+        && window.matchMedia('(pointer: coarse)').matches)) {
       document.documentElement.classList.add('hide-cursor');
     }
   </script>
