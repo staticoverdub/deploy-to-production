@@ -7,7 +7,7 @@ export function isTouchDevice(): boolean {
   if (_cached !== null) return _cached;
   _cached = 'ontouchstart' in window
     && navigator.maxTouchPoints > 0
-    && !/\b(Win|Mac|Linux)\b/i.test(navigator.userAgent);
+    && window.matchMedia('(pointer: coarse)').matches;
   return _cached;
 }
 
