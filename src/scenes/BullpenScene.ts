@@ -7,6 +7,7 @@ import { GameState } from '../engine/GameState';
 import { CursorManager, CursorState } from '../engine/CursorManager';
 import { NavGrid } from '../engine/NavGrid';
 import { DebugMenu } from '../engine/DebugMenu';
+import { createPauseButton } from '../engine/PauseButton';
 
 // Data
 import bullpenHotspotsRaw from '../data/hotspots/bullpen.json';
@@ -393,6 +394,7 @@ export class BullpenScene extends Phaser.Scene {
       this.scene.pause();
       this.scene.launch('PauseMenuScene', { parentScene: 'BullpenScene' });
     });
+    createPauseButton(this, 'BullpenScene');
 
     // Debug
     this.input.keyboard?.on('keydown-D', () => {

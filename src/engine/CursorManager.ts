@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { isTouchDevice } from './TouchDetector';
 
 export type CursorState = 'default' | 'look' | 'talk' | 'use' | 'pickup' | 'walk' | 'inventory';
 
@@ -23,9 +24,7 @@ export class CursorManager {
     this.scene = scene;
 
     // Skip on touch-only devices
-    const isTouchOnly = 'ontouchstart' in window && navigator.maxTouchPoints > 0
-      && !/\b(Win|Mac|Linux)\b/i.test(navigator.userAgent);
-    if (isTouchOnly) return;
+    if (isTouchDevice()) return;
 
     // Only generate cursor textures once (they're global across scenes)
     if (!scene.textures.exists('cursor_default')) {

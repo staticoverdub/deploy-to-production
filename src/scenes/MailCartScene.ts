@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { MailCartHUD } from '../engine/MailCartHUD';
 import { GameState } from '../engine/GameState';
+import { isTouchDevice } from '../engine/TouchDetector';
 import waveData from '../data/mailcart_waves.json';
 
 // Vite URL imports for audio assets
@@ -230,14 +231,22 @@ export class MailCartScene extends Phaser.Scene {
       Phaser.Input.Keyboard.KeyCodes.DOWN,
     ]);
 
-    this.input.on('pointerdown', () => {
-      if (this.gameActive) this.shoot();
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!this.gameActive) return;
+      // On touch devices, ignore taps in the left control zone
+      if (isTouchDevice() && pointer.x < 70) return;
+      this.shoot();
     });
 
     this.keyUp.on('down', () => { if (this.gameActive) this.changeLane(-1); });
     this.keyDown.on('down', () => { if (this.gameActive) this.changeLane(1); });
     this.keyW.on('down', () => { if (this.gameActive) this.changeLane(-1); });
     this.keyS.on('down', () => { if (this.gameActive) this.changeLane(1); });
+
+    // Touch lane-change buttons
+    if (isTouchDevice()) {
+      this.createTouchLaneButtons();
+    }
 
     // Intro sequence
     this.showIntro();
@@ -764,6 +773,18 @@ export class MailCartScene extends Phaser.Scene {
     });
   }
 
+  private createTouchLaneButtons(): void {
+    // UP arrow triangle
+    const upBtn = this.add.triangle(40, 160, 0, 30, 20, 0, 40, 30, 0xaaaacc, 0.3)
+      .setDepth(500).setScrollFactor(0).setInteractive();
+    upBtn.on('pointerdown', () => { if (this.gameActive) this.changeLane(-1); });
+
+    // DOWN arrow triangle
+    const downBtn = this.add.triangle(40, 260, 0, 0, 20, 30, 40, 0, 0xaaaacc, 0.3)
+      .setDepth(500).setScrollFactor(0).setInteractive();
+    downBtn.on('pointerdown', () => { if (this.gameActive) this.changeLane(1); });
+  }
+
   // --- Game flow ---
 
   private showIntro(): void {
@@ -776,7 +797,10 @@ export class MailCartScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
-    const controlsText = this.add.text(320, 210, 'W/S or \u2191/\u2193  Dodge\nClick        Shoot', {
+    const controlsStr = isTouchDevice()
+      ? 'Arrows    Dodge\nTap       Shoot'
+      : 'W/S or \u2191/\u2193  Dodge\nClick        Shoot';
+    const controlsText = this.add.text(320, 210, controlsStr, {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#aaaaaa',
