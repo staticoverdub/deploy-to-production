@@ -572,13 +572,17 @@ export class TitleScene extends Phaser.Scene {
   private createMobileInput(): void {
     this.destroyMobileInput();
 
-    // Cover the entire terminal screen with a transparent <input> so that
-    // tapping anywhere on the terminal brings up the iOS/Android keyboard.
-    // iOS Safari only shows the keyboard for direct taps on input elements.
+    // Visible terminal-styled input bar at the bottom of the CRT screen.
+    // iOS Safari refuses to show the keyboard for invisible/off-screen inputs.
+    // A real, visible, tappable input is the only reliable approach.
     const canvas = this.game.canvas;
     const canvasRect = canvas.getBoundingClientRect();
     const scaleX = canvasRect.width / 640;
     const scaleY = canvasRect.height / 360;
+
+    // Position at the bottom edge of the CRT screen area
+    const inputGameY = SCREEN_Y + SCREEN_H - 2; // just inside bottom of screen
+    const inputH = 24;
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -586,22 +590,27 @@ export class TitleScene extends Phaser.Scene {
     input.autocapitalize = 'off';
     input.autocomplete = 'off';
     input.spellcheck = false;
+    input.placeholder = 'tap to type...';
     input.style.cssText = `
       position:fixed;
       left:${canvasRect.left + SCREEN_X * scaleX}px;
-      top:${canvasRect.top + SCREEN_Y * scaleY}px;
+      top:${canvasRect.top + inputGameY * scaleY - inputH}px;
       width:${SCREEN_W * scaleX}px;
-      height:${SCREEN_H * scaleY}px;
+      height:${inputH}px;
       z-index:10000;
-      opacity:0.01;
+      font-family:monospace;
       font-size:16px;
       border:none;
-      padding:0;
+      padding:0 8px;
       margin:0;
-      background:transparent;
-      color:transparent;
-      caret-color:transparent;
+      box-sizing:border-box;
+      background:rgba(10,10,8,0.9);
+      color:#FFD000;
+      caret-color:#FFD000;
+      outline:none;
+      border-top:1px solid #333300;
       -webkit-appearance:none;
+      border-radius:0;
     `;
     document.body.appendChild(input);
     this.mobileInput = input;
